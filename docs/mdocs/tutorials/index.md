@@ -47,4 +47,4 @@ You will also need to [download](https://drive.switch.ch/index.php/s/zOJDpqh2ZGx
 
 ### Other guides
 
-* [Visualizing with *Scalismo-ui*](scalismo-ui-introduction.html) 
+* [Visualizing with *Scalismo-ui*](tutorials/scalismo-ui-introduction.html) 
