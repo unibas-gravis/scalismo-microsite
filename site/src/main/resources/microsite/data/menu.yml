@@ -1,0 +1,23 @@
+options:
+
+  #############################
+  # Type Classes Menu Options #
+  #############################
+
+  - title: Tutorials
+    url: tutorials.html
+    menu_type: tutorials
+    menu_section: tutorials
+
+  - title: Semigroups and Monoids
+    url: typeclasses/semigroup.html
+    menu_type: typeclasses
+    menu_section: semigroupsandmonoids
+
+    nested_options:
+      - title: Semigroup
+        url: typeclasses/semigroup.html
+        menu_section: semigroupsandmonoids
+      - title: Monoid
+        url: typeclasses/monoid.html
+        menu_section: semigroupsandmonoids
