@@ -1,5 +1,6 @@
 import microsites.ExtraMdFileConfig
 
+
 organization  := "ch.unibas.cs.gravis"
 
 name := """scalismo-website"""
@@ -40,11 +41,14 @@ lazy val microsite = project
   .settings(
     micrositeName := "scalismo",
     micrositeDescription := "Scalismo - Scalable Image Analysis and Shape Modelling ",
-    micrositeGithubOwner := "unibas-gravis",
-    micrositeGithubRepo := "scalismo",
+    micrositeGithubOwner := "marcelluethi",
+    micrositeGithubRepo := "scalismo.github.io",
+    //micrositePushSiteWith := GitHub4s,
+      micrositeAuthor := "University of Basel",
     //micrositeBaseUrl := "https://scalismo.org",
     micrositeDocumentationUrl := "http://unibas-gravis.github.io/scalismo/latest/api/index.html",
     micrositeDocumentationLabelDescription := "API Documentation",
+
     //micrositeOrganizationHomepage := "https://gravis.dmi.unibas.ch",
     micrositeCompilingDocsTool := WithMdoc,
      mdocIn := new java.io.File("docs/mdocs/"),
