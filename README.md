@@ -14,6 +14,9 @@ To deploy it locally, do the following:
 * Run ```jekyll serve```
 
 Open ```127.0.0.1:4000``` to see the webpage.
+
+*Hint, (re-)move the tutorial files in ```docs/mdocs/tutorials/``` while working on the layout, to 
+speed up building of the website*. 
       
       
 #### Making changes
