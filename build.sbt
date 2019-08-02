@@ -45,7 +45,7 @@ lazy val microsite = project
     micrositeGithubRepo := "scalismo.github.io",
     //micrositePushSiteWith := GitHub4s,
       micrositeAuthor := "University of Basel",
-    //micrositeBaseUrl := "https://scalismo.org",
+    micrositeBaseUrl := "scalismo.github.io",
     micrositeDocumentationUrl := "http://unibas-gravis.github.io/scalismo/latest/api/index.html",
     micrositeDocumentationLabelDescription := "API Documentation",
 
