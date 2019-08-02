@@ -2,7 +2,7 @@ import microsites.ExtraMdFileConfig
 
 organization  := "ch.unibas.cs.gravis"
 
-name := """scalismo-tutorial"""
+name := """scalismo-website"""
 version       := "0.16.0"
 
 scalaVersion  := "2.12.8"
@@ -43,18 +43,12 @@ lazy val microsite = project
     micrositeGithubOwner := "unibas-gravis",
     micrositeGithubRepo := "scalismo",
     //micrositeBaseUrl := "https://scalismo.org",
-    micrositeDocumentationUrl := "https://scalismo.org/docs",
+    micrositeDocumentationUrl := "http://unibas-gravis.github.io/scalismo/latest/api/index.html",
     micrositeDocumentationLabelDescription := "API Documentation",
     //micrositeOrganizationHomepage := "https://gravis.dmi.unibas.ch",
     micrositeCompilingDocsTool := WithMdoc,
      mdocIn := new java.io.File("docs/mdocs/"),
      //micrositeExtraMdFiles := Map()
-//    micrositeExtraMdFiles := Map(
-//      file("README.md") -> ExtraMdFileConfig(
-//        "home.md",
-//        "home",
-//        Map("title" -> "Home", "section" -> "home", "position" -> "0")
-//      )
-//    )
+
   )
   
