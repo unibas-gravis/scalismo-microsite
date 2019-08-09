@@ -42,13 +42,14 @@ lazy val microsite = project
     micrositeName := "scalismo",
     micrositeDescription := "Scalismo - Scalable Image Analysis and Shape Modelling ",
     micrositeGithubOwner := "marcelluethi",
-    micrositeGithubRepo := "scalismo.github.io",
+    micrositeGithubRepo := "scalismo-microsite",
     micrositeGitHostingService := GitHub,
     micrositeGitHostingUrl := "https://github.com/unibas-gravis/scalismo",
 
     //micrositePushSiteWith := GitHub4s,
-      micrositeAuthor := "University of Basel",
-    micrositeBaseUrl := "scalismo.github.io",
+      micrositeAuthor := "Gravis Group, University of Basel",
+      micrositeOrganizationHomepage := "https://gravis.dmi.unibas.ch",
+    micrositeBaseUrl := "",
     micrositeDocumentationUrl := "http://unibas-gravis.github.io/scalismo/latest/api/index.html",
     micrositeDocumentationLabelDescription := "API Documentation",
 

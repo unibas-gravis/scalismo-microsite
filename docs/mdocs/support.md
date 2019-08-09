@@ -9,7 +9,8 @@ For technical questions regarding Scalismo, please refer to the [Scalismo google
 
 Commercial support and consulting regarding statistical shape modellign and scalismo is available via [Shapemeans](https://www.shapemeans.com), which is a 
 spin-off company of the University of Basel. 
-![shapemeans](images/shapemeans.png)
+
+<center><a href="https://www.shapemeans.com"><img src="images/shapemeans.png" alt="shapemeans" width="200"/></a></center>
 
 
 

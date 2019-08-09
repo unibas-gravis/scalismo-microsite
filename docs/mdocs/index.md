@@ -24,13 +24,13 @@ We aim to achieve these properties by leveraging two core technologies:
 
 To best way to get started with Scalismo is by checking out the Scalismo tutorials. 
 
-* [Scalismo tutorials](tutorials.md).
+* [Scalismo tutorials](./tutorials.html).
 
 The tutorials are complemented by an introductory lectures on the theoretical concepts, which you can find as part of our online course.
 
 * [Online course on shape modelling (using scalismo)](http://shapemodelling.cs.unibas.ch)
 
-Further resources, including details on the mathematical methods and concepts behind scalismo, as well as tutorials on doing face image analysis using [Scalismo-faces](https://github.com/unibas-gravis/scalimos-faces) are 
+Further resources, including details on the mathematical methods and concepts behind scalismo, as well as tutorials on doing face image analysis using [Scalismo-faces](https://github.com/unibas-gravis/scalismo-faces) are 
 collected on the following website: 
     
 * [Probabilistic Morphable Models](https://gravis.dmi.unibas.ch/PMM/)
