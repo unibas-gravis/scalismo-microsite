@@ -284,8 +284,8 @@ def doRegistration(
     }
 ```
 
-Finally, we define the parameters and run the registration. Note that when we decrease the
-regularization weight, we typically need to sample less points from the surface.
+Finally, we define the parameters and run the registration. Note that for large regularization weights, we sample fewer points on the surface to save some computation time. 
+This is justified as, a strongly regularized model will not be able to adapt to fine details and hence it is not necessary to have a very accurate sampling of the surface.
 
 ```scala mdoc:silent
 val registrationParameters = Seq(
