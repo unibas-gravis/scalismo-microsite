@@ -54,7 +54,7 @@ We start by loading and visualizing the reference mesh, which we will later use 
 domain for our Gaussian Process model.
 
 ```scala mdoc:silent
-val referenceMesh = MeshIO.readMesh(new java.io.File("datasets/quickstart/facemesh.stl")).get
+val referenceMesh = MeshIO.readMesh(new java.io.File("datasets/quickstart/facemesh.ply")).get
 
 val modelGroup = ui.createGroup("model")
 val refMeshView = ui.show(modelGroup, referenceMesh, "referenceMesh")
@@ -114,7 +114,7 @@ We start by loading the target mesh and displaying it.
 
 ```scala mdoc:silent
 val targetGroup = ui.createGroup("target")
-val targetMesh = MeshIO.readMesh(new java.io.File("datasets/quickstart/face-2.stl")).get
+val targetMesh = MeshIO.readMesh(new java.io.File("datasets/quickstart/face-2.ply")).get
 val targetMeshView = ui.show(targetGroup, targetMesh, "targetMesh")
 ```
 

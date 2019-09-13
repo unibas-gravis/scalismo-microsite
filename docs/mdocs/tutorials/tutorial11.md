@@ -46,7 +46,7 @@ Let's load and visualize a target mesh; I.e. a mesh, which we want to fit with o
 a statistical shape model.
 
 ```scala mdoc:silent
-val targetMesh = MeshIO.readMesh(new java.io.File("datasets/target.stl")).get
+val targetMesh = MeshIO.readMesh(new java.io.File("datasets/target.ply")).get
 val model = StatisticalModelIO.readStatisticalMeshModel(new java.io.File("datasets/bfm.h5")).get
 
 val targetGroup = ui.createGroup("targetGroup")

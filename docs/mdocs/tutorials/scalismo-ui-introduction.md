@@ -52,7 +52,7 @@ Before we can start visualizing objects, we need to create a group. A group is a
 We start by loading a mesh using Scalismo:
 
 ```scala mdoc:silent
-val mesh = MeshIO.readMesh(new java.io.File("./datasets/Paola.stl")).get
+val mesh = MeshIO.readMesh(new java.io.File("./datasets/Paola.ply")).get
 ```
 
 To visualize any scalismo object, we use the show method. As a first argument

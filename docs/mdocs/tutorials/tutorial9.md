@@ -34,7 +34,7 @@ val ui = ScalismoUI()
 We also load a dataset that we want to reconstruct. In this case, it is a face without nose:
 
 ```scala mdoc:silent
-val noseless = MeshIO.readMesh(new java.io.File("datasets/noseless.stl")).get
+val noseless = MeshIO.readMesh(new java.io.File("datasets/noseless.ply")).get
 
 val targetGroup = ui.createGroup("target")
 ui.show(targetGroup, noseless,"noseless")

@@ -45,11 +45,11 @@ val ui = ScalismoUI()
 We start by loading and visualizing two meshes
 
 ```scala mdoc:silent
-val mesh1 = MeshIO.readMesh(new java.io.File("datasets/Paola.stl")).get
+val mesh1 = MeshIO.readMesh(new java.io.File("datasets/Paola.ply")).get
 val group1 = ui.createGroup("Dataset 1")
 val mesh1View = ui.show(group1, mesh1, "mesh1")
 
-val mesh2 = MeshIO.readMesh(new java.io.File("datasets/323.stl")).get
+val mesh2 = MeshIO.readMesh(new java.io.File("datasets/323.ply")).get
 val group2 = ui.createGroup("Dataset 2")
 val mesh2View = ui.show(group2, mesh2, "mesh2")
 mesh2View.color = java.awt.Color.RED

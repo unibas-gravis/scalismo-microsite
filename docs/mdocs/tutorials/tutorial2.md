@@ -39,7 +39,7 @@ Let's start by loading and showing Paola's mesh again:
 ```scala mdoc:silent
 val ui = ScalismoUI()
 val paolaGroup = ui.createGroup("paola")
-val mesh : TriangleMesh[_3D] = MeshIO.readMesh(new java.io.File("datasets/Paola.stl")).get
+val mesh : TriangleMesh[_3D] = MeshIO.readMesh(new java.io.File("datasets/Paola.ply")).get
 val meshView = ui.show(paolaGroup, mesh, "Paola")
 ``` 
 

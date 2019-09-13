@@ -48,7 +48,7 @@ by applying the deformations to a reference mesh. We therefore start by loading 
 it in a separate group.
 
 ```scala mdoc:silent
-val referenceMesh = MeshIO.readMesh(new java.io.File("datasets/lowResPaola.stl")).get
+val referenceMesh = MeshIO.readMesh(new java.io.File("datasets/lowResPaola.ply")).get
 
 val modelGroup = ui.createGroup("gp-model")
 val referenceView = ui.show(modelGroup, referenceMesh, "reference")

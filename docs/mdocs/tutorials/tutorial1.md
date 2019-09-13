@@ -57,7 +57,7 @@ import scalismo.geometry._3D // indicates that we work in 3D space
 
 Meshes can be read from a file using the method ```readMesh``` from the ```MeshIO```:
 ```scala mdoc:silent
-val mesh : TriangleMesh[_3D] = MeshIO.readMesh(new java.io.File("datasets/Paola.stl")).get
+val mesh : TriangleMesh[_3D] = MeshIO.readMesh(new java.io.File("datasets/Paola.ply")).get
 ``` 
 To visualize any object in Scalismo, we can use the ```show``` method of the ```ui``` object. 
 We often want to organize different visualizations of an object in a group. 
