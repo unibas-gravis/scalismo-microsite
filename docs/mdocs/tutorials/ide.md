@@ -141,3 +141,7 @@ Now the IDE should change and display the project. When you start the IDE for th
 To see what is already present in the project hit **[Alt+1]** which should display the project structure tab to the left. If you do not see the project structure, then have a look at the top of the newly opened view. There should be a drop down list where you can select **Project**. You should then be able to navigate through the project folder to `minimal-scalismo-seed/src/main/scala/com/example/` and double-click **ExampleApp**. This will open the code of the application we have already executed before from the console using sbt.
 
 To execute the file from within the IDE right-click the source file and select **Run 'ExampleApp'**. Alternatively you can use the shortcut which is marked after the menu entry. Depending on your setting it might be  **[Ctrl+Shift+F10]**.
+
+### Other Ressources
+
+* How to work with Scalismo using IntelliJ is described in this [blog post](http://empty-set.me/index.php/categories-intro/statistical-shape-modeling/) by Behzad Vafaeian.  
