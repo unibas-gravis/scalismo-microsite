@@ -37,7 +37,7 @@
 
 <p>We also load a dataset that we want to reconstruct. In this case, it is a face without nose:</p>
 
-<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="n">noseless</span> <span class="k">=</span> <span class="nc">MeshIO</span><span class="o">.</span><span class="n">readMesh</span><span class="o">(</span><span class="k">new</span> <span class="n">java</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="nc">File</span><span class="o">(</span><span class="s">"datasets/noseless.stl"</span><span class="o">)).</span><span class="n">get</span>
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="n">noseless</span> <span class="k">=</span> <span class="nc">MeshIO</span><span class="o">.</span><span class="n">readMesh</span><span class="o">(</span><span class="k">new</span> <span class="n">java</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="nc">File</span><span class="o">(</span><span class="s">"datasets/noseless.ply"</span><span class="o">)).</span><span class="n">get</span>
 
 <span class="k">val</span> <span class="n">targetGroup</span> <span class="k">=</span> <span class="n">ui</span><span class="o">.</span><span class="n">createGroup</span><span class="o">(</span><span class="s">"target"</span><span class="o">)</span>
 <span class="n">ui</span><span class="o">.</span><span class="n">show</span><span class="o">(</span><span class="n">targetGroup</span><span class="o">,</span> <span class="n">noseless</span><span class="o">,</span><span class="s">"noseless"</span><span class="o">)</span>

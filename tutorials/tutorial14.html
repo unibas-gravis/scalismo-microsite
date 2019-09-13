@@ -260,13 +260,13 @@ from this samples, really corresponds to the parameters from which we sampled
 our data:</p>
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="n">estimatedMean</span> <span class="k">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">sample</span> <span class="k">=&gt;</span> <span class="n">sample</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">mu</span><span class="o">).</span><span class="n">sum</span>  <span class="o">/</span> <span class="n">samples</span><span class="o">.</span><span class="n">size</span>
-<span class="c1">// estimatedMean: Double = -5.282083808274906
+<span class="c1">// estimatedMean: Double = -6.383892846956265
 </span>  <span class="n">println</span><span class="o">(</span><span class="s">"estimated mean is "</span> <span class="o">+</span> <span class="n">estimatedMean</span><span class="o">)</span>
-<span class="c1">// estimated mean is -5.282083808274906
+<span class="c1">// estimated mean is -6.383892846956265
 </span>  <span class="k">val</span> <span class="n">estimatedSigma</span> <span class="k">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">sample</span> <span class="k">=&gt;</span> <span class="n">sample</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">sigma</span><span class="o">).</span><span class="n">sum</span> <span class="o">/</span> <span class="n">samples</span><span class="o">.</span><span class="n">size</span>
-<span class="c1">// estimatedSigma: Double = 17.53403725895343
+<span class="c1">// estimatedSigma: Double = 18.48035380908874
 </span>  <span class="n">println</span><span class="o">(</span><span class="s">"estimated sigma is "</span> <span class="o">+</span> <span class="n">estimatedSigma</span><span class="o">)</span>
-<span class="c1">// estimated sigma is 17.53403725895343
+<span class="c1">// estimated sigma is 18.48035380908874
 </span></code></pre></div></div>
 
 <p>In the next tutorial, we see an example of how the exact same  mechanism can be used for
@@ -343,7 +343,7 @@ a second argument to the <code class="highlighter-rouge">iterator</code> method:
 <p>We can now check how often the individual samples got accepted.</p>
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">println</span><span class="o">(</span><span class="s">"acceptance ratio is "</span> <span class="o">+</span><span class="n">logger</span><span class="o">.</span><span class="n">acceptanceRatios</span><span class="o">())</span>
-<span class="c1">// acceptance ratio is Map(randomWalkProposal (3.0, 1.0) -&gt; 0.473502665412355, randomWalkProposal (9.0, 3.0) -&gt; 0.13333333333333333)
+<span class="c1">// acceptance ratio is Map(randomWalkProposal (3.0, 1.0) -&gt; 0.4892086330935252, randomWalkProposal (9.0, 3.0) -&gt; 0.13591022443890274)
 </span></code></pre></div></div>
 
 <p>We see that the acceptance ratio of the random walk proposal, which takes the
