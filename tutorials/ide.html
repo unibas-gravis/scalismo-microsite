@@ -4,10 +4,9 @@
 
 <p>Our environment should run on the most common platforms (Linux, Windows and OSX). The minimal need is a <strong>64-bit JDK</strong>.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Additionally we need the build tool **sbt**. This would be enough, but for convenience we propose to install also a **git** client and the **Intellij IDEA**.
-</code></pre></div></div>
+<p>Additionally we need the build tool <em>sbt</em> and a <em>git</em> client. This would be enough, but for convenience we propose to install and the <em>Intellij IDEA</em>.</p>
 
-<h3 id="installation">Installation</h3>
+<h4 id="installation">Installation</h4>
 
 <p>Please install the following tools:</p>
 
@@ -16,13 +15,13 @@
     <tr>
       <th>Tool</th>
       <th>Download Link</th>
-      <th>Test command (will be executed in the next step of the tutorial)</th>
+      <th>Test command</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td>JDK 64-bit</td>
-      <td><a href="https://openjdk.java.net/install/">all OS</a></td>
+      <td><a href="https://adoptopenjdk.net/">all OS</a></td>
       <td><code class="highlighter-rouge">java -version</code></td>
     </tr>
     <tr>
@@ -43,11 +42,7 @@
   </tbody>
 </table>
 
-<h2 id="first-steps-getting-the-seed-project">First Steps: Getting the seed project</h2>
-
-<p>In this step we provide you with a small “Hello World” example project. First, we download the project, then we run it from the command line and set up the IDE for the later usage.</p>
-
-<h3 id="java---do-i-have-the-right-version">JAVA - do i have the right version?</h3>
+<h5 id="java">Java</h5>
 
 <p>To test your java installation you can use the following command:</p>
 
@@ -67,32 +62,24 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.131-b11, mixed mode)
   <p><em>Note:</em> Make sure that your architecture is 64-Bit!</p>
 </blockquote>
 
-<h3 id="git---get-the-project">Git - Get the project</h3>
+<h5 id="git">Git</h5>
 
-<p>Next, to check your installation of git enter the following on a command line.:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>To check your installation of git enter the following on a command line.:
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git <span class="nt">--version</span>
+```bash
+git --version
+```
+
+&gt; *Note:* On windows you should have a program called **Git BASH** after the installation of git.
+
+While the exact version does not matter, the output of the above command should be something as simple as:
+ 
+```bash
+git version 2.7.4
+```
 </code></pre></div></div>
 
-<blockquote>
-  <p><em>Note:</em> On windows you should have a program called <strong>Git BASH</strong> after the installation of git.</p>
-</blockquote>
-
-<p>While the exact version does not matter, the output of the above command should be something as simple as:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git version 2.7.4
-</code></pre></div></div>
-
-<p>To get the project, we need to clone the repository using git.</p>
-
-<p>Alternatively you can download the project also from the seed <a href="https://github.com/unibas-gravis/minimal-scalismo-seed">project’s page</a>. To download the project using git, change in the console to somewhere where you want the new project to be added. The cloning of the project creates a new folder in the directory where you execute the command. You can now get the project with the following command:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/unibas-gravis/minimal-scalismo-seed.git
-</code></pre></div></div>
-
-<p>The IDE we use supports git. So we do not need to know more about the commandline usage of git. However, a good starting point to learn more about the commandline interface is the official <a href="https://git-scm.com/doc">documentation</a>.</p>
-
-<h3 id="sbt---building-from-the-command-line">Sbt - Building from the command line</h3>
+<h5 id="sbt">sbt</h5>
 
 <p>To check whether sbt is installed correctly execute:</p>
 
@@ -101,43 +88,70 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.131-b11, mixed mode)
 
 <p>Looking at the output you should see at the end of the output a line similar to:</p>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>info] 1.0.4
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>info] 1.3.0
 </code></pre></div></div>
 
-<p>Change in the console to the directory <code class="highlighter-rouge">minimal-scalismo-seed</code>. We will now run the project. This will trigger the project to be built by sbt. Note that the initial build will download some dependencies specific to the project. This may take a while. The command to run the project is:</p>
+<h2 id="getting-and-building-the-seed-project">Getting and building the seed project</h2>
+
+<p>In this step we provide you with a small “Hello World” example project.
+First, we download the project, then we run it from the command line and set up the IDE for the later usage.</p>
+
+<p>To get the project, use the follow command</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sbt new unibas-gravis/scalismo-seed.g8
+</code></pre></div></div>
+
+<p>On the following prompt, enter a name for your project. The seed project will now be available in the subdirectory
+the your chosen name. Change to this directory.
+We will now run the project. This will trigger the project to be built by sbt.
+Note that the initial build will download some dependencies specific to the project. This may take a while.
+The command to run the project is:</p>
 
 <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sbt run
 </code></pre></div></div>
 
 <p>A successful run should display a Scalismo UI with a pink mean face.</p>
 
-<p>Sbt is integrated in the IDE, so we will not explain more about the usage. If you want more information go to the official <a href="http://www.scala-sbt.org/0.13/docs/index.html">documentation</a>.</p>
+<p>From now on we will mainly be working from an IDE. As Sbt is integrated in the IDE, we will not explain more about its usage.
+If you want more information go to the official <a href="https://www.scala-sbt.org/1.x/docs/">documentation</a>.</p>
 
-<h3 id="intellij-idea">IntelliJ Idea</h3>
+<h2 id="intellij-idea">IntelliJ Idea</h2>
 
-<p>Now it is time to start the IDE. What we need to make sure is that you enable the scala plugin. Then we will import the project.</p>
+<p>Now it is time to start the IDE. As we will be working with Scala, we will enable the scala plugin before importing the project.
+When you start the IDE for the first time you can configure which parts are enabled and or downloaded.
+We recommend to go with the default settings as long as you have enough disk space.
+Go through the dialog step by step until you encounter the point <em>Featured Plugins</em>.
+Then select to install the <em>Scala Plugin</em>.</p>
 
-<p>When you start the IDE for the first time you can configure which parts are enabled and or downloaded.</p>
+<p>If you have already used the IDE but have not yet installed  the Scala plugin, you can enable it through the
+menu <em>File-&gt;Settings-&gt;Plugins</em></p>
 
-<p>We recommend to go with the default settings as long as you have enough disk space. Go through the dialog step by step until you encounter the point <strong>Featured Plugins</strong>. Then select to install the <strong>Scala Plugin</strong>.</p>
+<p>After the Scala plugin has been installed and you see the welcome screen, choose <em>File-&gt;New-&gt;Project From Existing Sources</em>.
+Then navigate to the folder containing the seed project directory.</p>
 
-<p>If you have already used the IDE but have not yet installed  the Scala plugin, you can enable it through the menu <strong>File</strong>/<strong>Settings</strong>/<strong>Plugins</strong></p>
+<p>In the next dialog select the option: <em>Import project from external model</em> and select <em>sbt</em> as a model.</p>
 
-<p>When the scala plugin is installed and you get displayed the welcome screen, choose <strong>File-&gt;New-&gt;Project From Existing Sources</strong>. Then navigate to the folder containing the seed project directory.</p>
+<p>In the next dialog check that the <em>Project SDK</em> points to the location where you installed the Java SDK.
+If the checkbox <em>auto import</em> is shown, activate it. Then continue by clicking onto the <em>Finish</em> button.</p>
 
-<p>In the next dialog select the option: <strong>Import project from external model</strong> and select <strong>sbt</strong> as a model.</p>
+<p>Now the IDE should change and display the project. When you start the IDE for the first time,
+there is a lot of processing that is done in the background.
+In the bottom right you can spot an indication for the ongoing work.
+Due to the workload it may take a while until the IDE reacts responsive.</p>
 
-<p>In the next dialog check that the <strong>Project SDK</strong> points to the location where you installed the Java SDK. If the checkbox <strong>auto import</strong> is shown, activate it. Then continue by clicking onto the <strong>Finish</strong> button.</p>
+<p>To see what is already present in the project hit <em>[Alt+1]</em> which should display the project structure tab to the left.
+If you do not see the project structure, then have a look at the top of the newly opened view.
+There should be a drop down list where you can select <em>Project</em>.
+You should then be able to navigate through the project folder to
+<code class="highlighter-rouge">src/main/scala/com/example/</code> and double-click <em>ExampleApp</em>.
+This will open the code of the application we have already executed before from the console using sbt.</p>
 
-<p>Now the IDE should change and display the project. When you start the IDE for the first time, there is a lot of processing that is done in the background. In the bottom right you can spot an indication for the ongoing work. Due to the workload it may take a while until the IDE reacts responsive.</p>
-
-<p>To see what is already present in the project hit <strong>[Alt+1]</strong> which should display the project structure tab to the left. If you do not see the project structure, then have a look at the top of the newly opened view. There should be a drop down list where you can select <strong>Project</strong>. You should then be able to navigate through the project folder to <code class="highlighter-rouge">minimal-scalismo-seed/src/main/scala/com/example/</code> and double-click <strong>ExampleApp</strong>. This will open the code of the application we have already executed before from the console using sbt.</p>
-
-<p>To execute the file from within the IDE right-click the source file and select <strong>Run ‘ExampleApp’</strong>. Alternatively you can use the shortcut which is marked after the menu entry. Depending on your setting it might be  <strong>[Ctrl+Shift+F10]</strong>.</p>
+<p>To execute the file from within the IDE right-click the source file and select <em>Run ‘ExampleApp’</em>.</p>
 
 <h3 id="other-ressources">Other Ressources</h3>
 
 <ul>
+  <li>You can find a more detailed overview on how to work with the Scala plugin on the Jetbrains <a href="https://www.jetbrains.com/help/idea/discover-intellij-idea-for-scala.html#">website</a>.</li>
   <li>How to work with Scalismo using IntelliJ is described in this <a href="http://empty-set.me/index.php/categories-intro/statistical-shape-modeling/">blog post</a> by Behzad Vafaeian.</li>
 </ul>
 

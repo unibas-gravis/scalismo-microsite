@@ -104,8 +104,7 @@ and uncertainty.</p>
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="n">correspondences</span> <span class="k">=</span> <span class="n">modelLmIds</span><span class="o">.</span><span class="n">zip</span><span class="o">(</span><span class="n">targetPoints</span><span class="o">).</span><span class="n">map</span><span class="o">(</span><span class="n">modelIdWithTargetPoint</span> <span class="k">=&gt;</span> <span class="o">{</span>
   <span class="k">val</span> <span class="o">(</span><span class="n">modelId</span><span class="o">,</span> <span class="n">targetPoint</span><span class="o">)</span> <span class="k">=</span>  <span class="n">modelIdWithTargetPoint</span>
   <span class="o">(</span><span class="n">modelId</span><span class="o">,</span> <span class="n">targetPoint</span><span class="o">,</span> <span class="n">uncertainty</span><span class="o">)</span>
-<span class="o">})</span>
-  
+<span class="o">})</span>    
 </code></pre></div></div>
 
 <h3 id="the-parameter-class">The parameter class</h3>
@@ -382,11 +381,10 @@ as we expect most changes to be shape changes.</p>
 <span class="k">val</span> <span class="n">rotationUpdateProposal</span> <span class="k">=</span> <span class="nc">RotationUpdateProposal</span><span class="o">(</span><span class="mf">0.01</span><span class="o">)</span>
 <span class="k">val</span> <span class="n">translationUpdateProposal</span> <span class="k">=</span> <span class="nc">TranslationUpdateProposal</span><span class="o">(</span><span class="mf">1.0</span><span class="o">)</span>
 <span class="k">val</span> <span class="n">generator</span> <span class="k">=</span> <span class="nc">MixtureProposal</span><span class="o">.</span><span class="n">fromProposalsWithTransition</span><span class="o">(</span>
-                                   <span class="o">(</span><span class="mf">0.6</span><span class="o">,</span> <span class="n">shapeUpdateProposal</span><span class="o">),</span>
-                                   <span class="o">(</span><span class="mf">0.2</span><span class="o">,</span> <span class="n">rotationUpdateProposal</span><span class="o">),</span>
-                                   <span class="o">(</span><span class="mf">0.2</span><span class="o">,</span> <span class="n">translationUpdateProposal</span><span class="o">)</span>
-                               <span class="o">)</span>
-  
+                                    <span class="o">(</span><span class="mf">0.6</span><span class="o">,</span> <span class="n">shapeUpdateProposal</span><span class="o">),</span>
+                                    <span class="o">(</span><span class="mf">0.2</span><span class="o">,</span> <span class="n">rotationUpdateProposal</span><span class="o">),</span>
+                                    <span class="o">(</span><span class="mf">0.2</span><span class="o">,</span> <span class="n">translationUpdateProposal</span><span class="o">)</span>
+                                <span class="o">)</span>   
 </code></pre></div></div>
 
 <h4 id="building-the-markov-chain">Building the Markov Chain</h4>

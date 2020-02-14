@@ -68,7 +68,6 @@ uses this ratio as a basis for rejecting or accepting the new sample.</p>
 <span class="k">import</span> <span class="nn">scalismo.sampling.loggers.AcceptRejectLogger</span>
 <span class="k">import</span> <span class="nn">scalismo.sampling.proposals.MixtureProposal</span>
 <span class="k">import</span> <span class="nn">scalismo.sampling.</span><span class="o">{</span><span class="nc">DistributionEvaluator</span><span class="o">,</span> <span class="nc">ProposalGenerator</span><span class="o">,</span> <span class="nc">TransitionProbability</span><span class="o">}</span>
-
 <span class="n">scalismo</span><span class="o">.</span><span class="n">initialize</span><span class="o">()</span>
 <span class="k">implicit</span> <span class="k">val</span> <span class="n">rng</span> <span class="k">=</span> <span class="n">scalismo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="nc">Random</span><span class="o">(</span><span class="mi">42</span><span class="o">)</span>
 </code></pre></div></div>
@@ -260,13 +259,13 @@ from this samples, really corresponds to the parameters from which we sampled
 our data:</p>
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="n">estimatedMean</span> <span class="k">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">sample</span> <span class="k">=&gt;</span> <span class="n">sample</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">mu</span><span class="o">).</span><span class="n">sum</span>  <span class="o">/</span> <span class="n">samples</span><span class="o">.</span><span class="n">size</span>
-<span class="c1">// estimatedMean: Double = -2.5358060807850706
+<span class="c1">// estimatedMean: Double = -2.8130286661276607
 </span>  <span class="n">println</span><span class="o">(</span><span class="s">"estimated mean is "</span> <span class="o">+</span> <span class="n">estimatedMean</span><span class="o">)</span>
-<span class="c1">// estimated mean is -2.5358060807850706
+<span class="c1">// estimated mean is -2.8130286661276607
 </span>  <span class="k">val</span> <span class="n">estimatedSigma</span> <span class="k">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">sample</span> <span class="k">=&gt;</span> <span class="n">sample</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">sigma</span><span class="o">).</span><span class="n">sum</span> <span class="o">/</span> <span class="n">samples</span><span class="o">.</span><span class="n">size</span>
-<span class="c1">// estimatedSigma: Double = 16.973783049443472
+<span class="c1">// estimatedSigma: Double = 18.373183697390594
 </span>  <span class="n">println</span><span class="o">(</span><span class="s">"estimated sigma is "</span> <span class="o">+</span> <span class="n">estimatedSigma</span><span class="o">)</span>
-<span class="c1">// estimated sigma is 16.973783049443472
+<span class="c1">// estimated sigma is 18.373183697390594
 </span></code></pre></div></div>
 
 <p>In the next tutorial, we see an example of how the exact same  mechanism can be used for
@@ -343,7 +342,7 @@ a second argument to the <code class="highlighter-rouge">iterator</code> method:
 <p>We can now check how often the individual samples got accepted.</p>
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">println</span><span class="o">(</span><span class="s">"acceptance ratio is "</span> <span class="o">+</span><span class="n">logger</span><span class="o">.</span><span class="n">acceptanceRatios</span><span class="o">())</span>
-<span class="c1">// acceptance ratio is Map(randomWalkProposal (3.0, 1.0) -&gt; 0.46153846153846156, randomWalkProposal (9.0, 3.0) -&gt; 0.1414752116082225)
+<span class="c1">// acceptance ratio is Map(randomWalkProposal (3.0, 1.0) -&gt; 0.4833280406478247, randomWalkProposal (9.0, 3.0) -&gt; 0.13411764705882354)
 </span></code></pre></div></div>
 
 <p>We see that the acceptance ratio of the random walk proposal, which takes the

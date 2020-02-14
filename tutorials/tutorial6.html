@@ -37,7 +37,7 @@ some helpful context for this tutorial:</p>
 <span class="k">import</span> <span class="nn">scalismo.statisticalmodel._</span>
 <span class="k">import</span> <span class="nn">scalismo.registration._</span>
 <span class="k">import</span> <span class="nn">scalismo.statisticalmodel.dataset._</span>
-
+<span class="k">import</span> <span class="nn">scalismo.numerics.PivotedCholesky.RelativeTolerance</span>
 <span class="n">scalismo</span><span class="o">.</span><span class="n">initialize</span><span class="o">()</span>
 <span class="k">implicit</span> <span class="k">val</span> <span class="n">rng</span> <span class="k">=</span> <span class="n">scalismo</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="nc">Random</span><span class="o">(</span><span class="mi">42</span><span class="o">)</span>
 
@@ -123,7 +123,7 @@ all the points of the reference mesh.</p>
 
 <div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="n">interpolator</span> <span class="k">=</span> <span class="nc">NearestNeighborInterpolator</span><span class="o">[</span><span class="k">_</span><span class="err">3</span><span class="kt">D</span>, <span class="kt">EuclideanVector</span><span class="o">[</span><span class="k">_</span><span class="err">3</span><span class="kt">D</span><span class="o">]]()</span>
 <span class="k">val</span> <span class="n">continuousFields</span> <span class="k">=</span> <span class="n">defFields</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">f</span> <span class="k">=&gt;</span> <span class="n">f</span><span class="o">.</span><span class="n">interpolate</span><span class="o">(</span><span class="n">interpolator</span><span class="o">)</span> <span class="o">)</span>
-<span class="k">val</span> <span class="n">gp</span> <span class="k">=</span> <span class="nc">DiscreteLowRankGaussianProcess</span><span class="o">.</span><span class="n">createUsingPCA</span><span class="o">(</span><span class="n">reference</span><span class="o">.</span><span class="n">pointSet</span><span class="o">,</span> <span class="n">continuousFields</span><span class="o">)</span>
+<span class="k">val</span> <span class="n">gp</span> <span class="k">=</span> <span class="nc">DiscreteLowRankGaussianProcess</span><span class="o">.</span><span class="n">createUsingPCA</span><span class="o">(</span><span class="n">reference</span><span class="o">.</span><span class="n">pointSet</span><span class="o">,</span> <span class="n">continuousFields</span><span class="o">,</span> <span class="nc">RelativeTolerance</span><span class="o">(</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">8</span><span class="o">))</span>
 </code></pre></div></div>
 
 <p><em>Exercise: display the mean deformation field of the returned Gaussian Process.</em></p>
