@@ -79,7 +79,7 @@ val noseTipDeformationField = DiscreteField[_3D, UnstructuredPointsDomain[_3D], 
 
 val observationGroup = ui.createGroup("observation")
 ui.show(observationGroup, noseTipDeformationField, "noseTip")
- ```
+```
 
 In the next step we set up the regression. The Gaussian process model assumes that the deformation 
 is observed only up to some uncertainty, 

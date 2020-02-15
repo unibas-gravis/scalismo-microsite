@@ -94,7 +94,7 @@ noise, which we model as a normal distribution with $$3 mm$$ standard deviation 
       DenseVector.zeros[Double](3),
       DenseMatrix.eye[Double](3) * landmarkNoiseVariance
     )
- ```
+```
 
 We summarize the correspondences as a triple, consisting of model id, target position
 and uncertainty. 
@@ -103,8 +103,7 @@ and uncertainty.
   val correspondences = modelLmIds.zip(targetPoints).map(modelIdWithTargetPoint => {
     val (modelId, targetPoint) =  modelIdWithTargetPoint
     (modelId, targetPoint, uncertainty)
-  })
-    
+  })    
 ```
 
 ### The parameter class
@@ -270,7 +269,7 @@ an evaluator is used the second time with the same parameters, the ```logValue``
 not recomputed, but simply taken from cache. Using the following utility class, 
 we can obtain for any evaluator a new evaluator, which performs such caching:    
 
-``` scala mdoc:silent
+```scala mdoc:silent
  case class CachedEvaluator[A](evaluator: DistributionEvaluator[A]) extends DistributionEvaluator[A] {
     val memoizedLogValue = Memoize(evaluator.logValue, 10)
 
@@ -382,12 +381,12 @@ Finally, we define the update proposal for the translation:
      }
    }
 
-  ```
+```
   
 The final proposal is a mixture of the three proposals we defined above. 
 We choose to update the shape more often than the translation and rotation parameters, 
 as we expect most changes to be shape changes. 
- ```scala mdoc:silent
+```scala mdoc:silent
 val shapeUpdateProposal = ShapeUpdateProposal(model.rank, 0.1)
 val rotationUpdateProposal = RotationUpdateProposal(0.01)
 val translationUpdateProposal = TranslationUpdateProposal(1.0)
@@ -395,9 +394,8 @@ val generator = MixtureProposal.fromProposalsWithTransition(
                                     (0.6, shapeUpdateProposal),
                                     (0.2, rotationUpdateProposal),
                                     (0.2, translationUpdateProposal)
-                                )
-   
- ```
+                                )   
+```
  
  
 #### Building the Markov Chain
@@ -481,11 +479,11 @@ by augmenting the iterator with visualization code:
       }
       sample
     }   
-  ```
+```
   
 Finally, we draw the samples using the chain by consuming the iterator. We drop the first 1000 iterations, as the 
 chain needs some burn-in time to converge to a equilibrium solution:  
-```scala mdoc:silent 
+```scala mdoc:silent
   val samples = samplingIterator.drop(1000).take(10000).toIndexedSeq
 ```
   
@@ -504,7 +502,7 @@ For example, we can select the best fit from these samples and visualize it
   val bestFit = model.instance(bestSample.parameters.modelCoefficients).transform(bestSample.poseTransformation)
   val resultGroup = ui.createGroup("result")
   ui.show(resultGroup, bestFit, "best fit")
-```  
+```
   
 The samples allow us to infer much more about the distribution. For example, we can estimate the expected position of 
 any point in the model and the variance from the samples:

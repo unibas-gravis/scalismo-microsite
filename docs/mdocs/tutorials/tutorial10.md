@@ -160,6 +160,6 @@ As you can see here, the quality of the candidate correspondences did indeed res
 very sensitive to the initial position, and might easily get stuck in a local minimum.
 
 
-```scala mdoc:invisible 
+```scala mdoc:invisible
 ui.close
 ```

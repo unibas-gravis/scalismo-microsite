@@ -62,7 +62,7 @@ uses this ratio as a basis for rejecting or accepting the new sample.
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system. 
 
 
- ```scala mdoc:silent
+```scala mdoc:silent
  import scalismo.sampling.algorithms.MetropolisHastings
  import scalismo.sampling.evaluators.ProductEvaluator
  import scalismo.sampling.loggers.AcceptRejectLogger
@@ -71,7 +71,7 @@ As in the previous tutorials, we start by importing some commonly used objects a
  
  scalismo.initialize()
  implicit val rng = scalismo.utils.Random(42)
- ```
+```
 To test our method, we generate data from a normal distribution $$N(-5, 17)$$. 
 
 ```scala mdoc:silent
@@ -154,7 +154,7 @@ object PriorEvaluator extends DistributionEvaluator[Sample] {
 
 The target density (i.e. the posterior distribution) can be computed by 
 taking the product of the prior and the likelihood. 
-```scala mdoc:silent 
+```scala mdoc:silent
   val posteriorEvaluator = ProductEvaluator(PriorEvaluator, LikelihoodEvaluator(data))
 ```
 Note that the posteriorEvaluator represents the unnormalized posterior, as we did 
@@ -221,14 +221,12 @@ landscape, and sometimes smaller steps, to explore a local environment. We can c
 ```MixtureProposal```, which chooses the individual proposals with a given 
 probability. Here We choose to take the large step 20% of the time, and the smaller
 steps 80% of the time:
-
 ```scala mdoc:silent
 val generator = MixtureProposal.fromProposalsWithTransition[Sample](
     (0.8, smallStepProposal), 
     (0.2, largeStepProposal)
     )
 ```
-    
 
 #### Building the Markov Chain
 
@@ -330,7 +328,7 @@ indicator to diagnose if all proposal generators function as expected.
 ```
 
 To use the logger, we simply rerun the chain, but pass the logger now as
-a second argument to the ```iterator``` method:
+    a second argument to the ```iterator``` method:
 ```scala mdoc:silent
   val logger = new Logger()
   val mhIteratorWithLogging = chain.iterator(initialSample, logger)

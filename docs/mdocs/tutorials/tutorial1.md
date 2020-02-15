@@ -123,7 +123,7 @@ import scalismo.geometry.{EuclideanVector}
 ```
 
 We define points by specifying their coordinates:
-``` scala mdoc:silent
+```scala mdoc:silent
 val p1 : Point[_3D] = Point(4.0, 5.0, 6.0)
 val p2 : Point[_3D] = Point(1.0, 2.0, 3.0)
 ```
@@ -160,7 +160,7 @@ In a first step, we treat all the points as displacement vectors (the displaceme
 val vectors = pointList.map{p : Point[_3D] => p.toVector}  // use map to turn points into vectors
 ```
 The average displacement can be easily computed by averaging all the vectors. 
-```scala mdoc:silent 
+```scala mdoc:silent
 val vectorSum = vectors.reduce{ (v1, v2) => v1 + v2} // sum up all vectors in the collection
 val centerV: EuclideanVector[_3D] = vectorSum * (1.0 / pointList.length ) // divide the sum by the number of points  
 ```

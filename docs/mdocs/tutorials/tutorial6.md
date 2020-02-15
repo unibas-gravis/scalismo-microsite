@@ -32,7 +32,7 @@ import scalismo.io.{StatisticalModelIO, MeshIO}
 import scalismo.statisticalmodel._
 import scalismo.registration._
 import scalismo.statisticalmodel.dataset._
-
+import scalismo.numerics.PivotedCholesky.RelativeTolerance
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 
@@ -104,7 +104,7 @@ Now that we have a set of meshes, which are in correspondence and aligned
 to our reference, we can turn the dataset into a set of deformation fields, 
 from which we then build the model:
 
-```scala mdoc:silent 
+```scala mdoc:silent
 val defFields = alignedMeshes.map{ m => 
     val deformationVectors = reference.pointSet.pointIds.map{ id : PointId =>  
     m.pointSet.point(id) - reference.pointSet.point(id)
@@ -119,13 +119,11 @@ done by calling the method ```createUsingPCA``` of the
 ```DiscreteLowRankGaussianProcess``` class. 
 Note that the deformation fields need to be interpolated, such that we are sure that they are defined on
 all the points of the reference mesh. 
-
 ```scala mdoc:silent
 val interpolator = NearestNeighborInterpolator[_3D, EuclideanVector[_3D]]()
 val continuousFields = defFields.map(f => f.interpolate(interpolator) )
-val gp = DiscreteLowRankGaussianProcess.createUsingPCA(reference.pointSet, continuousFields)
+val gp = DiscreteLowRankGaussianProcess.createUsingPCA(reference.pointSet, continuousFields, RelativeTolerance(1e-8))
 ```
-
 *Exercise: display the mean deformation field of the returned Gaussian Process.*
 
 *Exercise: sample and display a few deformation fields from this GP.*

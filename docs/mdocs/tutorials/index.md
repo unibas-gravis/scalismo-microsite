@@ -20,7 +20,7 @@ your ```build.sbt```.
 resolvers += Resolver.bintrayRepo("unibas-gravis", "maven")
 
 libraryDependencies ++=
-  Seq("ch.unibas.cs.gravis" %% "scalismo-ui" % "0.13.1")
+  Seq("ch.unibas.cs.gravis" %% "scalismo-ui" % "0.14-RC1")
 ```
 
 You will also need to [download](https://drive.switch.ch/index.php/s/zOJDpqh2ZGxzJJH) the datasets used in the tutorials and unzip them into your project folder. 

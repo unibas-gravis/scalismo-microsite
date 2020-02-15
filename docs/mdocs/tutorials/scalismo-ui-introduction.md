@@ -157,7 +157,7 @@ the transformation, we can change their parameters. To visualize, for example,  
 ```scala mdoc:silent
     val randCoeffs = DenseVector.rand[Double](ssm.rank, Gaussian(0, 1))
     ssmView.shapeModelTransformationView.shapeTransformationView.coefficients = randCoeffs
-  ```
+```
 This will immediately update the shape transformation to the transformation that
  is defined by these coefficients and the visualized mesh is deformed accordingly.  
 
