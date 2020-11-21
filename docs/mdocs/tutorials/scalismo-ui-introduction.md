@@ -1,13 +1,10 @@
 ---
-layout: docs
-title: Visualizing with Scalismo-ui
-section: "tutorials"
+id: scalismo-ui-introduction
+title: Introduction to Scalismo-ui
 ---
 
-# Introduction to Scalismo-ui
-
-The goal of this tutorial is to give a practical introduction to visualizing with 
-*Scalismo-ui*. 
+The goal of this tutorial is to give a practical introduction to visualizing with
+*Scalismo-ui*.
 
 To get it out of the way, we import the following:
 ```scala mdoc:silent
@@ -159,7 +156,7 @@ the transformation, we can change their parameters. To visualize, for example,  
     ssmView.shapeModelTransformationView.shapeTransformationView.coefficients = randCoeffs
 ```
 This will immediately update the shape transformation to the transformation that
- is defined by these coefficients and the visualized mesh is deformed accordingly.  
+ is defined by these coefficients and the visualized mesh is deformed accordingly.
 
 
 

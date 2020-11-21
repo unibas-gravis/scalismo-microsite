@@ -1,41 +1,53 @@
 ---
-layout: home
-title:  "Home"
-section: "section_home"
-position: 1
+id: index
+title: Scalismo tutorials
+slug: /
 ---
+The following tutorials explain all the basic concepts behind Scalismo, which are needed for developing complete shape modelling applications.
+The intention behind these tutorials is not only to show how to use the software, but also to help understanding the theoretical concepts underlying the software.
+Originally, these tutorials were designed as part of the Open Online Course [Statistical Shape Modelling - Computing the Human Anatomy](https://www.futurelearn.com/courses/statistical-shape-modelling).
+Each tutorial contains links to videos and articles from the online course, which will
+provide some theoretical background.
+
+### Preparation
+
+To run the code in the tutorials, you will need to setup a Scala project,
+which depends on the latest scalismo version.
+
+If you are new to Scala and are have never worked with Scala in an IDE,
+follow the instructions in the guide [Using Scalismo in an IDE](ide) to
+set up a project and programming environment. To use Scala in an existing project, simply add the following lines to
+your ```build.sbt```.
+
+```scala
+resolvers += Resolver.bintrayRepo("unibas-gravis", "maven")
+
+libraryDependencies ++=
+  Seq("ch.unibas.cs.gravis" %% "scalismo-ui" % "0.14-RC1")
+```
+
+You will also need to [download](https://drive.switch.ch/index.php/s/zOJDpqh2ZGxzJJH) the datasets used in the tutorials and unzip them into your project folder.
+
+### Tutorials
+
+* [Tutorial 1](tutorials/tutorial1): Hello Scalismo
+* [Tutorial 2](tutorials/tutorial2): Rigid alignment
+* [Tutorial 3](tutorials/tutorial3): From meshes to deformation fields
+* [Tutorial 4](tutorials/tutorial4): Gaussian processes and Point Distribution Models
+* [Tutorial 5](tutorials/tutorial5): Gaussian processes, sampling and marginalization
+* [Tutorial 6](tutorials/tutorial6): Building a shape model from data
+* [Tutorial 7](tutorials/tutorial7): Shape modelling with Gaussian processes and kernels
+* [Tutorial 8](tutorials/tutorial8): Posterior Shape Models
+* [Tutorial 9](tutorials/tutorial9): Shape completion using Gaussian process regression
+* [Tutorial 10](tutorials/tutorial10): Iterative Closest Points for rigid alignment
+* [Tutorial 11](tutorials/tutorial11): Model fitting with Iterative Closest Points
+* [Tutorial 12](tutorials/tutorial12): Parametric, non-rigid registration
+* [Tutorial 13](tutorials/tutorial13): Active Shape Models
+* [Tutorial 14](tutorials/tutorial14): Model fitting using MCMC - The basic framework
+* [Tutorial 15](tutorials/tutorial15): Model fitting using MCMC - Fitting a shape model
 
 
-Scalismo is a library for statistical shape modeling and model-based image analysis in Scala, developed by the
-[Graphics and Vision Research Group](http://gravis.cs.unibas.ch) at the [University of Basel](http://www.unibas.ch). It is based on the  the concept of [Probabilistic Morphable Models](https://gravis.dmi.unibas.ch/PMM/). 
+### Other guides
 
-The vision of the project is to provide an environment for modelling and image analysis which 
+* [Visualizing with *Scalismo-ui*](scalismo-ui-introduction)
 
-* makes it easy and fun to try out ideas and build research prototypes
-* is powerful enough to build full-scale industrial applications
-* makes it feasible to deploy it in complex, distributed imaging pipelines. 
-
-We aim to achieve these properties by leveraging two core technologies:
-
-* A simple but versatile [mathematical approach](http://ieeexplore.ieee.org/document/8010438/) to shape modeling and registration, based on the theory of Gaussian processes.
-* The Scala and Java ecosystem for reducing the software complexity.
-
-## Documentation and getting started
-
-To best way to get started with Scalismo is by checking out the Scalismo tutorials. 
-
-* [Scalismo tutorials](./tutorials.html).
-
-The tutorials are complemented by an introductory lectures on the theoretical concepts, which you can find as part of our online course.
-
-* [Online course on shape modelling (using scalismo)](http://shapemodelling.cs.unibas.ch)
-
-Further resources, including details on the mathematical methods and concepts behind scalismo, as well as tutorials on doing face image analysis using [Scalismo-faces](https://github.com/unibas-gravis/scalismo-faces) are 
-collected on the following website: 
-    
-* [Probabilistic Morphable Models](https://gravis.dmi.unibas.ch/PMM/)
-
-
-## Copyright and License
-All code is available to you under the Apache license, version 2, available at http://www.apache.org/licenses/LICENSE-2.0. 
- 

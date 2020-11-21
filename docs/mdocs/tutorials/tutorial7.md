@@ -1,16 +1,11 @@
 ---
-layout: docs
-title: Rigid alignment
-section: "tutorials"
+id: tutorial7
+title: Shape modelling with Gaussian processes and kernels
 ---
 
-{% include head.html %}
-
-# Shape modelling with Gaussian processes and kernels
-
-In this tutorial we learn how to define our own Gaussian processes using analytically 
-defined kernels. Further, we experiment with different kernels that are useful in 
-shape modelling. 
+In this tutorial we learn how to define our own Gaussian processes using analytically
+defined kernels. Further, we experiment with different kernels that are useful in
+shape modelling.
 
 ##### Related resources
 
@@ -19,11 +14,11 @@ some helpful context for this tutorial:
 
 - Covariance functions [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250350)
 - Constructing kernels for shape modelling [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250351)
-- Enlarging the flexibility of statistical shape models [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250357)  
+- Enlarging the flexibility of statistical shape models [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250357)
 
 ##### Preparation
 
-As in the previous tutorials, we start by importing some commonly used objects and initializing the system. 
+As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
 ```scala mdoc:silent
 import scalismo.geometry._
@@ -43,7 +38,7 @@ val ui = ScalismoUI()
 ```
 
 
-In the following we will always visualize the effect of different Gaussian process models, 
+In the following we will always visualize the effect of different Gaussian process models,
 by applying the deformations to a reference mesh. We therefore start by loading the mesh and visualizing
 it in a separate group.
 
@@ -54,34 +49,34 @@ val modelGroup = ui.createGroup("gp-model")
 val referenceView = ui.show(modelGroup, referenceMesh, "reference")
 ```
 
-## Modelling deformations using Gaussian processes: 
+## Modelling deformations using Gaussian processes:
 
-A Gaussian Process is defined by two components: the **mean function** and the **covariance function**. 
+A Gaussian Process is defined by two components: the **mean function** and the **covariance function**.
 
-##### The mean: 
+##### The mean:
 
-As we are modelling deformation fields, the mean of the Gaussian process will, of course, itself be a deformation field. 
+As we are modelling deformation fields, the mean of the Gaussian process will, of course, itself be a deformation field.
 In terms of shape models, we can think of the mean function as the deformation field that deforms our reference mesh into the mean shape.
 
-If the reference shape that we choose corresponds approximately to an average shape, and we do not have any further knowledge 
-about our shape space, it is entirely reasonable to use a zero mean; I.e. a deformation field which applies to 
-every point a zero deformation. 
+If the reference shape that we choose corresponds approximately to an average shape, and we do not have any further knowledge
+about our shape space, it is entirely reasonable to use a zero mean; I.e. a deformation field which applies to
+every point a zero deformation.
 
 ```scala mdoc:silent
 val zeroMean = Field(RealSpace[_3D], (pt:Point[_3D]) => EuclideanVector(0,0,0))
 ```
 
-##### The covariance function: 
+##### The covariance function:
 
-The covariance function, which is also referred to as a *kernel*, 
-defines the properties that characterize likely deformations in our model. 
-Formally, it is a symmetric, positive semi-definite function, 
-$$k: X \times X \to R^{ d \times d}$$, which defines the covariance between the 
-values at any pair of points $$x, x'$$ of the domain. Since we are modelling deformation 
+The covariance function, which is also referred to as a *kernel*,
+defines the properties that characterize likely deformations in our model.
+Formally, it is a symmetric, positive semi-definite function,
+$$k: X \times X \to R^{ d \times d}$$, which defines the covariance between the
+values at any pair of points $$x, x'$$ of the domain. Since we are modelling deformation
 fields (I.e. vector-valued functions), the covariance function is matrix-valued.
 
 To define a kernel in Scalismo, we need to implement the following methods of the abstract class ```MatrixValuedPDKernel```:
-```scala 
+```scala
 abstract class MatrixValuedPDKernel[_3D]() {
 
     def outputDim: Int;
@@ -90,12 +85,12 @@ abstract class MatrixValuedPDKernel[_3D]() {
   }
 ```
 
-The field ```outputDim``` determines the dimensionality of the values we model. In our case, we model 3D vectors, and hence ```outputDim```should be 3. 
+The field ```outputDim``` determines the dimensionality of the values we model. In our case, we model 3D vectors, and hence ```outputDim```should be 3.
 The ```domain``` indicates the set of points on which our kernel is defined. Most often, we set this to the entire Euclidean space ```RealSpace3D```.
-Finally ```k``` denotes the covariance function.  
+Finally ```k``` denotes the covariance function.
 
 The most often used kernel is the Gaussian kernel. Recall that the scalar-valued Gaussian kernel, is defined by the following formula:
-$$ 
+$$
 k_g(x,x') = \exp^{-\frac{\left\lVert x-x'\right\rVert^2}{\sigma^2} }.
 $$
 A corresponding matrix-valued kernel can be obtained by multiplying the value with an identity matrix (which implies, that we treat each space dimension as independent). In Scalismo, this is defined as follows:
@@ -104,14 +99,14 @@ case class MatrixValuedGaussianKernel3D(sigma2 : Double) extends MatrixValuedPDK
 
     override def outputDim: Int = 3
     override def domain: Domain[_3D] = RealSpace[_3D];
-    
+
     override def k(x: Point[_3D], y: Point[_3D]): DenseMatrix[Double] = {
        DenseMatrix.eye[Double](outputDim) * Math.exp(- (x - y).norm2 / sigma2)
   }
-} 
+}
 ```
 
-This constructions allows us to define any kernel. For the most commonly used ones, such as the Gaussian kernel, there is, however, 
+This constructions allows us to define any kernel. For the most commonly used ones, such as the Gaussian kernel, there is, however,
 an easier way in Scalismo. First, the scalar-valued Gaussian kernel is already implemented in Scalismo:
 
 ```scala mdoc:silent
@@ -130,12 +125,12 @@ DiagonalKernel(scalarValuedGaussianKernel, 3)
 
 ##### Building the GP :
 
-Now that we have our mean and covariance functions, we can build a Gaussian process as follows: 
+Now that we have our mean and covariance functions, we can build a Gaussian process as follows:
 ```scala mdoc:silent
 val gp = GaussianProcess(zeroMean, matrixValuedGaussianKernel)
 ```
 
-We can now sample deformations from our Gaussian process **at any desired set of points**. Below we choose the points to be those of the reference mesh: 
+We can now sample deformations from our Gaussian process **at any desired set of points**. Below we choose the points to be those of the reference mesh:
 
 ```scala mdoc:silent
 val sampleGroup = ui.createGroup("samples")
@@ -143,7 +138,7 @@ val sample = gp.sampleAtPoints(referenceMesh.pointSet)
 ui.show(sampleGroup, sample, "gaussianKernelGP_sample")
 ```
 
-The result is an instance from the Gaussian Process evaluated at the points 
+The result is an instance from the Gaussian Process evaluated at the points
 we indicated;  in this case on the points of the reference mesh.
 
 We can visualize its effect by interpolating the deformation field, which we then use to deform the reference mesh:
@@ -155,23 +150,23 @@ ui.show(sampleGroup, deformedMesh, "deformed mesh")
 
 #### Low-rank approximation
 Whenever we create a sample using the ```sampleAtPoints``` method of the Gaussian process, internally a matrix of dimensionality $$nd \times nd$$,where $$n$$ denotes the number of points and $$d$$ the dimensionality of the output space, is created. Hence if we want to sample
-from many points we quickly run out of memory. 
+from many points we quickly run out of memory.
 
-We can get around this problem by computing a low-rank approximation of the Gaussian process. 
-To obtain such a representation in Scalismo, we can use the method 
+We can get around this problem by computing a low-rank approximation of the Gaussian process.
+To obtain such a representation in Scalismo, we can use the method
 ````approximateGPCholesky``` of the *LowRankGaussianProcess* object.
 ```scala mdoc:silent
 val lowRankGP = LowRankGaussianProcess.approximateGPCholesky(
     referenceMesh.pointSet,
-    gp, 
+    gp,
     relativeTolerance = 0.01,
     interpolator = NearestNeighborInterpolator()
     )
 ```
-This call computes a finite-rank approximation of the Gaussian Process using a 
+This call computes a finite-rank approximation of the Gaussian Process using a
 Pivoted Cholesky approximation. The procedure automatically chooses the rank (I.e. the
 number of basis functions of the Gaussian process), such that the given relative error
-is achieved. (The error is measures in terms of the variance of the Gaussian 
+is achieved. (The error is measures in terms of the variance of the Gaussian
 process, approximated on the points of the reference Mesh).
 Using this low rank Gaussian process, we can now directly sample continuous deformation fields:
 
@@ -194,21 +189,21 @@ val ssmView = ui.show(modelGroup, ssm, "group")
 
 ### Building more interesting kernels
 
-In the following we show a few more examples of kernels, which are interesting for shape modelling. 
+In the following we show a few more examples of kernels, which are interesting for shape modelling.
 
 
-#### Kernels from Statistical Shape Models 
+#### Kernels from Statistical Shape Models
 
-As discussed previously, a Statistical Shape Model (SSM) in Scalismo is a discrete Gaussian process. 
-We have seen how to interpolate it to obtain a continuously defined Gaussian Process. As any 
+As discussed previously, a Statistical Shape Model (SSM) in Scalismo is a discrete Gaussian process.
+We have seen how to interpolate it to obtain a continuously defined Gaussian Process. As any
 Gaussian process is  completely defined by its mean and covariance function, it follows that this is
-also true for the GP in our statistical shape model. 
+also true for the GP in our statistical shape model.
 
-This allows us to use this *sample covariance kernel* in combination with other kernels. 
-For example, we often want to slightly enlarge the flexibility of our statistical models. 
-In the following, we show how this can be achieved. 
+This allows us to use this *sample covariance kernel* in combination with other kernels.
+For example, we often want to slightly enlarge the flexibility of our statistical models.
+In the following, we show how this can be achieved.
 
-In a first step, we get the Gaussian process from the model an interpolate it. 
+In a first step, we get the Gaussian process from the model an interpolate it.
 
 ```scala mdoc:silent
 val pcaModel = StatisticalModelIO.readStatisticalMeshModel(new java.io.File("datasets/lowresModel.h5")).get
@@ -220,13 +215,13 @@ We can then access its covariance function, which is a kernel:
 val covSSM : MatrixValuedPDKernel[_3D] = gpSSM.cov
 ```
 
-In the next step, we model the additional variance using a Gaussian kernel and add it to the 
-*sample covariance kernel*. 
+In the next step, we model the additional variance using a Gaussian kernel and add it to the
+*sample covariance kernel*.
 ```scala mdoc:silent
 val augmentedCov = covSSM + DiagonalKernel(GaussianKernel[_3D](100.0), 3)
 ```
 
-Finally, we build the Gaussian process with the new kernel. 
+Finally, we build the Gaussian process with the new kernel.
 ```scala mdoc:silent
 val augmentedGP = GaussianProcess(gpSSM.mean, augmentedCov)
 ```
@@ -235,27 +230,27 @@ From here on, we follow the steps outlined above to obtain the *augmented* SSM.
 ```scala mdoc:silent
 val lowRankAugmentedGP = LowRankGaussianProcess.approximateGPCholesky(
     referenceMesh.pointSet,
-    augmentedGP,  
+    augmentedGP,
     relativeTolerance = 0.01,
-    interpolator = NearestNeighborInterpolator(), 
+    interpolator = NearestNeighborInterpolator(),
     )
 val augmentedSSM = StatisticalMeshModel(pcaModel.referenceMesh, lowRankAugmentedGP)
 ```
 
 #### Changepoint kernel:
 
-Another very useful kernel is the *changepoint kernel*. 
-A changepoint kernel is a combination of different kernels, where each kernel is active only in 
-a certain region of the space. 
+Another very useful kernel is the *changepoint kernel*.
+A changepoint kernel is a combination of different kernels, where each kernel is active only in
+a certain region of the space.
 
-Here we show how we can define a kernel, which has different behavior in two different regions. 
+Here we show how we can define a kernel, which has different behavior in two different regions.
 ```scala mdoc:silent
-case class ChangePointKernel(kernel1 : MatrixValuedPDKernel[_3D], kernel2 : MatrixValuedPDKernel[_3D]) 
+case class ChangePointKernel(kernel1 : MatrixValuedPDKernel[_3D], kernel2 : MatrixValuedPDKernel[_3D])
     extends MatrixValuedPDKernel[_3D]() {
 
   override def domain = RealSpace[_3D]
   val outputDim = 3
-    
+
   def s(p: Point[_3D]) =  1.0 / (1.0 + math.exp(-p(0)))
   def k(x: Point[_3D], y: Point[_3D]) = {
       val sx = s(x)
@@ -294,19 +289,19 @@ where *x<sub>m</sub>* is the symmetric point to *x* around the YZ plane.
 
 The resulting kernel will preserve the same smoothness properties of the deformation fields while adding the symmetry around the YZ plane.
 
-Let's turn it into code: 
+Let's turn it into code:
 
 ```scala mdoc:silent
 case class xMirroredKernel(kernel : PDKernel[_3D]) extends PDKernel[_3D] {
   override def domain = kernel.domain
   override def k(x: Point[_3D], y: Point[_3D]) = kernel(Point(x(0) * -1.0 ,x(1), x(2)), y)
-  
+
 }
 
 def symmetrizeKernel(kernel : PDKernel[_3D]) : MatrixValuedPDKernel[_3D] = {
    val xmirrored = xMirroredKernel(kernel)
-   val k1 = DiagonalKernel(kernel, 3) 
-   val k2 = DiagonalKernel(xmirrored * -1f, xmirrored, xmirrored)  
+   val k1 = DiagonalKernel(kernel, 3)
+   val k2 = DiagonalKernel(xmirrored * -1f, xmirrored, xmirrored)
    k1 + k2
 }
 

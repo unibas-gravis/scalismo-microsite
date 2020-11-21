@@ -1,16 +1,11 @@
 ---
-layout: docs
-title: Rigid alignment
-section: "tutorials"
+id: tutorial8
+title: Posterior Shape Models
 ---
 
-{% include head.html %}
-
-# Posterior Shape Models
-
 In this tutorial we will use Gaussian processes for regression tasks and experiment with the concept of posterior shape models.
-This will form the basics for the next tutorial, where we will see how these tools can be applied to construct a 
-reconstruction of partial shapes. 
+This will form the basics for the next tutorial, where we will see how these tools can be applied to construct a
+reconstruction of partial shapes.
 
 ##### Related resources
 
@@ -19,11 +14,11 @@ some helpful context for this tutorial:
 
 - The regression problem [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250360)
 - Gaussian process regression [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250361)
-- Posterior models for different kernels [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250362)  
+- Posterior models for different kernels [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250362)
 
 ##### Preparation
 
-As in the previous tutorials, we start by importing some commonly used objects and initializing the system. 
+As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
 ```scala mdoc:silent
 import scalismo.geometry._
@@ -54,12 +49,12 @@ val ssmView = ui.show(modelGroup, model, "model")
 
 ## Fitting observed data using Gaussian process regression
 
-The reason we build statistical models is that we want to use them 
+The reason we build statistical models is that we want to use them
 for explaining data. More precisely, given some observed data, we fit the model
-to the data and get as a result a distribution over the model parameters. 
-In our case, the model is a Gaussian process model of shape deformations, and the data are observed shape deformations; I.e. deformation vectors from the reference surface. 
+to the data and get as a result a distribution over the model parameters.
+In our case, the model is a Gaussian process model of shape deformations, and the data are observed shape deformations; I.e. deformation vectors from the reference surface.
 
-To illustrate this process, we simulate some data. We generate  
+To illustrate this process, we simulate some data. We generate
 a deformation vector at the tip of the nose, which corresponds ot a really long
 nose:
 
@@ -70,7 +65,7 @@ val noseTipMean = model.mean.pointSet.point(idNoseTip)
 val noseTipDeformation = (noseTipMean - noseTipReference) * 2.0
 ```
 
-To visualize this deformation, we need to define a ```DiscreteField```, which can then be passed to the show 
+To visualize this deformation, we need to define a ```DiscreteField```, which can then be passed to the show
 method of our ```ui``` object.
 ```scala mdoc:silent
 val noseTipDomain = UnstructuredPointsDomain(IndexedSeq(noseTipReference))
@@ -81,9 +76,9 @@ val observationGroup = ui.createGroup("observation")
 ui.show(observationGroup, noseTipDeformationField, "noseTip")
 ```
 
-In the next step we set up the regression. The Gaussian process model assumes that the deformation 
-is observed only up to some uncertainty, 
-which can be modelled using a normal distribution.  
+In the next step we set up the regression. The Gaussian process model assumes that the deformation
+is observed only up to some uncertainty,
+which can be modelled using a normal distribution.
 ```scala mdoc:silent
 val noise = MultivariateNormalDistribution(DenseVector.zeros[Double](3), DenseMatrix.eye[Double](3))
 ```
@@ -100,8 +95,8 @@ val gp : LowRankGaussianProcess[_3D, EuclideanVector[_3D]] = model.gp.interpolat
 val posteriorGP : LowRankGaussianProcess[_3D, EuclideanVector[_3D]] = LowRankGaussianProcess.regression(gp, regressionData)
 ```
 
-Note that the result of the regression is again a Gaussian process, over the same domain as the original process. We call this the *posterior process*. 
-This construction is very important in Scalismo. Therefore, we have a convenience method defined directly on the Gaussian process object. We could write the same in 
+Note that the result of the regression is again a Gaussian process, over the same domain as the original process. We call this the *posterior process*.
+This construction is very important in Scalismo. Therefore, we have a convenience method defined directly on the Gaussian process object. We could write the same in
 the more succinctly:
 
 ```scala mdoc:silent
@@ -111,7 +106,7 @@ gp.posterior(regressionData)
 Independently of how you call the method, the returned type is a continuous (low rank) Gaussian Process from which we can now sample deformations at any set of points:
 
 ```scala mdoc:silent
-val posteriorSample : DiscreteField[_3D, UnstructuredPointsDomain[_3D], EuclideanVector[_3D]] 
+val posteriorSample : DiscreteField[_3D, UnstructuredPointsDomain[_3D], EuclideanVector[_3D]]
     = posteriorGP.sampleAtPoints(model.referenceMesh.pointSet)
 val posteriorSampleGroup = ui.createGroup("posteriorSamples")
 for (i <- 0 until 10) {
@@ -131,7 +126,7 @@ val discreteTrainingData = IndexedSeq((PointId(8156), pointOnLargeNose, littleNo
 val meshModelPosterior : StatisticalMeshModel = model.posterior(discreteTrainingData)
 ```
 
-Notice in this case, since we are working with a discrete Gaussian process, the observed data is specified in terms of the *point identifier* of the nose tip point instead of its 3D coordinates. 
+Notice in this case, since we are working with a discrete Gaussian process, the observed data is specified in terms of the *point identifier* of the nose tip point instead of its 3D coordinates.
 
 Let's visualize the obtained posterior model:
 
@@ -145,19 +140,19 @@ ui.show(posteriorModelGroup, meshModelPosterior, "NoseyModel")
 
 Here again we obtain much more than just a single face instance fitting the input data: we get a full normal distribution of shapes fitting the observation. The **most probable** shape, and hence our best fit, is the **mean** of the posterior.
 
-We notice by sampling from the posterior model that we tend to get faces with rather large noses. This is since we chose our observation to be twice the length of the 
+We notice by sampling from the posterior model that we tend to get faces with rather large noses. This is since we chose our observation to be twice the length of the
 average (mean) deformation at the tip of the nose.
 
 
 #### Landmark uncertainty:
 
-When we are specifying the training data for the posterior GP computation, 
-we model the uncertainty of the input data. The variance of this 
-noise model has a large influence on the resulting posterior distribution. 
-We should choose it always such that it corresponds as closely as possible to 
+When we are specifying the training data for the posterior GP computation,
+we model the uncertainty of the input data. The variance of this
+noise model has a large influence on the resulting posterior distribution.
+We should choose it always such that it corresponds as closely as possible to
 the real uncertainty of our observation.
- 
-To see how this variance influences the posterior, we perform the posterior computation again with, 
+
+To see how this variance influences the posterior, we perform the posterior computation again with,
 this time, a 5 times bigger noise variance.
 
 
@@ -168,9 +163,9 @@ val discretePosteriorLargeNoise = model.posterior(discreteTrainingDataLargeNoise
 val posteriorGroupLargeNoise = ui.createGroup("posteriorLargeNoise")
 ui.show(posteriorGroupLargeNoise, discretePosteriorLargeNoise, "NoisyNoseyModel")
 ```
-We observe, that there is now much more variance left in this posterior process, 
-which is a consequence of the larger uncertainty that was associated with the 
-observed data. 
+We observe, that there is now much more variance left in this posterior process,
+which is a consequence of the larger uncertainty that was associated with the
+observed data.
 
 
 ```scala mdoc:invisible

@@ -1,16 +1,10 @@
 ---
-layout: docs
-title: Rigid alignment
-section: "tutorials"
+id: tutorial5
+title: Gaussian processes, sampling and marginalization
 ---
 
-{% include head.html %}
-
-# Gaussian processes, sampling and marginalization
-
-
 In this tutorial we will experiment with sampling and marginalization of
-Gaussian processes. Furthermore, we will learn how to compare the 
+Gaussian processes. Furthermore, we will learn how to compare the
 likelihood of instances of our model.
 
 
@@ -23,9 +17,9 @@ some helpful context for this tutorial:
 - Sampling from a shape model [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250340)
 
 
-##### Preparation 
+##### Preparation
 
-As in the previous tutorials, we start by importing some commonly used objects and initializing the system. 
+As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
 ```scala mdoc:silent
 import scalismo.geometry._
@@ -45,11 +39,11 @@ val ui = ScalismoUI()
 
 #### Discrete and Continuous Gaussian processes
 
-We have seen in the last tutorial that a Point Distribution Model (PDM) 
-is represented in Scalismo as a (discrete) Gaussian process over deformation fields, 
-defined on a reference mesh. 
+We have seen in the last tutorial that a Point Distribution Model (PDM)
+is represented in Scalismo as a (discrete) Gaussian process over deformation fields,
+defined on a reference mesh.
 
-To continue our exploration of Gaussian processes, we therefore start 
+To continue our exploration of Gaussian processes, we therefore start
 by loading (and visualizing) an existing PDM and retrieve its underlying
 Gaussian process
 
@@ -65,30 +59,30 @@ We can retrieve random samples from the Gaussian process by calling ```sample```
 on the ```gp``` object:
 
 ```scala mdoc:silent
-val sampleDF : DiscreteField[_3D,UnstructuredPointsDomain[_3D], EuclideanVector[_3D]] 
+val sampleDF : DiscreteField[_3D,UnstructuredPointsDomain[_3D], EuclideanVector[_3D]]
     = model.gp.sample
 
-val sampleGroup = ui.createGroup("sample")  
+val sampleGroup = ui.createGroup("sample")
 ui.show(sampleGroup, sampleDF, "discreteSample")
 ```
 
-Note that the sampled vector field is **discrete**; I.e. is 
-defined over a **discrete set of points**. 
-This is due to the fact that our Gaussian Process is stored in a file 
+Note that the sampled vector field is **discrete**; I.e. is
+defined over a **discrete set of points**.
+This is due to the fact that our Gaussian Process is stored in a file
 and was therefore discretized over the points of the reference mesh.
 
-As seen in the previous tutorial, we could interpolate the 
-sample ```sampleDf``` to obtain a continuous version of the deformation field. 
-A more convenient approach is, however, to interpolate the 
-Gaussian process directly: 
- 
+As seen in the previous tutorial, we could interpolate the
+sample ```sampleDf``` to obtain a continuous version of the deformation field.
+A more convenient approach is, however, to interpolate the
+Gaussian process directly:
+
 ```scala mdoc:silent
 val interpolator = NearestNeighborInterpolator[_3D, EuclideanVector[_3D]]()
 val contGP = model.gp.interpolate(interpolator)
 ```
 
-When we sample now from the continuous GP, we obtain a vector-valued function, 
-which is defined on the entire 3D Space: 
+When we sample now from the continuous GP, we obtain a vector-valued function,
+which is defined on the entire 3D Space:
 
 ```scala mdoc:silent
 val contSample: Field[_3D, EuclideanVector[_3D]] = contGP.sample
@@ -98,12 +92,12 @@ val contSample: Field[_3D, EuclideanVector[_3D]] = contGP.sample
 
 ## From continuous to discrete: marginalization
 In practice, we will never work with a continuous Gaussian process directly.
-We are always interested in the distribution on a finite set of points.   
+We are always interested in the distribution on a finite set of points.
 The real advantage of having a continuous Gaussian process is, that we can
 get samples at *any* finite set of points and thereby choosing the discretization
-according to the needs of our application. 
+according to the needs of our application.
 
-To illustrate this, we could, for example obtain a sample, 
+To illustrate this, we could, for example obtain a sample,
 which is defined on all the points of the original reference mesh.
 
 ```scala mdoc:silent
@@ -111,22 +105,22 @@ val fullSample = contGP.sampleAtPoints(model.referenceMesh.pointSet)
 val fullSampleView = ui.show(sampleGroup, fullSample, "fullSample")
 ```
 
-We can also obtain samples which are defined only at a single point: 
+We can also obtain samples which are defined only at a single point:
 
 ```scala mdoc:silent
 fullSampleView.remove()
-val singlePointDomain : DiscreteDomain[_3D] = 
+val singlePointDomain : DiscreteDomain[_3D] =
     UnstructuredPointsDomain(IndexedSeq(model.referenceMesh.pointSet.point(PointId(8156))))
-val singlePointSample = contGP.sampleAtPoints(singlePointDomain) 
+val singlePointSample = contGP.sampleAtPoints(singlePointDomain)
 ui.show(sampleGroup, singlePointSample, "singlePointSample")
 ```
 (This should show a vector at the tip of the nose, which, could also be behind the face)
 
 The marginalization property of a Gaussian process makes it possible not only
 to obtain samples at an arbitrary set of points, but also the
-distribution at these points. We can 
-obtain this distribution, by calling the method ```marginal``` 
-on the Gaussian process instance: 
+distribution at these points. We can
+obtain this distribution, by calling the method ```marginal```
+on the Gaussian process instance:
 
 ```scala mdoc:silent
 val referencePointSet = model.referenceMesh.pointSet
@@ -136,55 +130,55 @@ val dom = UnstructuredPointsDomain(IndexedSeq(rightEyePt,leftEyePt))
 val marginal : DiscreteGaussianProcess[_3D, UnstructuredPointsDomain[_3D], EuclideanVector[_3D]] = contGP.marginal(dom)
 ```
 
-The result of marginalization is again a discrete Gaussian process. 
-Sampling from this new Gaussian process yields a discrete deformation field, which 
+The result of marginalization is again a discrete Gaussian process.
+Sampling from this new Gaussian process yields a discrete deformation field, which
 is defined only at the two points over which we marginalized:
 ```scala mdoc:silent
-val sample : DiscreteField[_3D, UnstructuredPointsDomain[_3D], EuclideanVector[_3D]] = marginal.sample 
-ui.show(sampleGroup, sample, "marginal_sample") 
+val sample : DiscreteField[_3D, UnstructuredPointsDomain[_3D], EuclideanVector[_3D]] = marginal.sample
+ui.show(sampleGroup, sample, "marginal_sample")
 ```
 
 
-It seems that we are back where we started. But note that we have 
+It seems that we are back where we started. But note that we have
 now choosen a completly different set of points
-on which the Gaussian process is defined. 
-This is important, as we can choose for any application that 
+on which the Gaussian process is defined.
+This is important, as we can choose for any application that
 discretization of the Gaussian process, which is most useful.
-  
+
 
 ## Marginal of a statistical mesh model
 
-Given that a *StatisticalMeshModel* is in reality just a wrapper 
-around a GP, it naturally allows for marginalization as well: 
+Given that a *StatisticalMeshModel* is in reality just a wrapper
+around a GP, it naturally allows for marginalization as well:
 
 ```scala mdoc:silent
 val noseTipModel : StatisticalMeshModel = model.marginal(IndexedSeq(PointId(8156)))
 ```
 
-Notice in this case, how the passed argument to the marginal function 
-is an indexed sequence of point **identifiers** instead of a discrete domain.  
-This is due to the fact that we are marginalizing a discrete Gaussian process. 
-Since the domain of the GP is already discrete, marginalization in this 
-case is done by selecting a subset of the discrete domain. 
+Notice in this case, how the passed argument to the marginal function
+is an indexed sequence of point **identifiers** instead of a discrete domain.
+This is due to the fact that we are marginalizing a discrete Gaussian process.
+Since the domain of the GP is already discrete, marginalization in this
+case is done by selecting a subset of the discrete domain.
 Hence the use of point identifiers instead of 3D coordinates.
 
-Not surprisingly, we can again sample from this nose tip model: 
+Not surprisingly, we can again sample from this nose tip model:
 
 ```scala mdoc
 val tipSample : TriangleMesh[_3D] = noseTipModel.sample
 println("nb mesh points " + tipSample.pointSet.numberOfPoints)
 ```
 
-Given that the marginal model is a *StatisticalMeshModel*, sampling from it 
-returns a ```TriangleMesh```. When inspecting the points of the 
-returned sample, we see that it contains only one point, the nose tip. 
+Given that the marginal model is a *StatisticalMeshModel*, sampling from it
+returns a ```TriangleMesh```. When inspecting the points of the
+returned sample, we see that it contains only one point, the nose tip.
 
 #### Nose marginal
 
-Let's suppose that we have a full model of the face, but are only 
-interested in the shape variations around the nose. 
+Let's suppose that we have a full model of the face, but are only
+interested in the shape variations around the nose.
 Marginalization let's us achieve this easily.
-To do so, we extract all points which lie within a specified distance 
+To do so, we extract all points which lie within a specified distance
 around the middle of the nose:
 
 ```scala mdoc:silent
@@ -193,8 +187,8 @@ val nosePtIDs : Iterator[PointId] = referencePointSet.pointsWithId
   .filter( ptAndId => {  // yields tuples with point and ids
    val (pt, id) = ptAndId
    (pt - middleNose).norm > 40
-   })   
-  .map(ptAndId => ptAndId._2) // extract the id's   
+   })
+  .map(ptAndId => ptAndId._2) // extract the id's
 ```
 We can now use the point ids to marginalize our shape model:
 
@@ -204,10 +198,10 @@ val noseGroup = ui.createGroup("noseModel")
 ui.show(noseGroup, noseModel, "noseModel")
 ```
 
-## Probability of shapes and deformations: 
+## Probability of shapes and deformations:
 
-It is often interesting to assess how probable a model instance is. 
-This can be done in Scalismo by means of the method ```pdf ``` 
+It is often interesting to assess how probable a model instance is.
+This can be done in Scalismo by means of the method ```pdf ```
 (which stands for probability density function) of the class ```GaussianProcess```
 and ```StatisticalMeshModel``` respectively.
 

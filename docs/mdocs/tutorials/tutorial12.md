@@ -1,22 +1,17 @@
 ---
-layout: docs
-title: Rigid alignment
-section: "tutorials"
+id: tutorial12
+title: Parametric, non-rigid registration
 ---
 
-{% include head.html %}
-
-# Parametric, non-rigid registration:
-
-We have seen how non-rigid ICP can be used to establish correspondences. 
-In this tutorial we discuss a different approach to model-fitting and non-rigid registration. 
+We have seen how non-rigid ICP can be used to establish correspondences.
+In this tutorial we discuss a different approach to model-fitting and non-rigid registration.
 We are formulating the registration problem as an optimization problem, which we optimize
-using gradient-based optimization. 
+using gradient-based optimization.
 
 This registration is more general than ICP, in the sense that it can not only
 be used for surface-to-surface registration, but also for image-to-image-registration.
-In this tutorial we show the complete work-flow involved in a typical registration task, 
-from building the Gaussian process model to performing the actual optimization. 
+In this tutorial we show the complete work-flow involved in a typical registration task,
+from building the Gaussian process model to performing the actual optimization.
 
 ##### Related resources
 
@@ -63,7 +58,7 @@ refMeshView.color = java.awt.Color.RED
 
 ## Building a Gaussian process shape model
 
-We assume that our reference surface represents an approximately average face. 
+We assume that our reference surface represents an approximately average face.
 This justifies the use of a zero-mean Gaussian process. As a covariance function we use a Gaussian kernel and choose to treat the x,y,z component
 of the vector field to be uncorrelated (indicated by the use of the ```DiagonalKernel```).
 
@@ -79,37 +74,37 @@ Gaussian process:
 ```scala mdoc:silent
 val lowRankGP = LowRankGaussianProcess.approximateGPCholesky(
     referenceMesh.pointSet,
-    gp, 
+    gp,
     relativeTolerance = 0.05,
     interpolator = NearestNeighborInterpolator()
     )
 ```
 
-To visualize the effect of this Gaussian process, we add it to the 
-model group as a transformation. 
+To visualize the effect of this Gaussian process, we add it to the
+model group as a transformation.
 ```scala mdoc:silent
 val gpView = ui.addTransformation(modelGroup, lowRankGP, "gp")
 ```
 
-This has the effect, that the transformations represented by this GP, 
-are applied to all the geometric objects, which are present in the group. 
+This has the effect, that the transformations represented by this GP,
+are applied to all the geometric objects, which are present in the group.
 In this case, it is the mean of the Gaussian process, which is applied to
-the reference mesh we loaded previously. By changing the parameters in the 
-ui, we can visualize different transformations, as we did previously 
-for statistical shape models. 
+the reference mesh we loaded previously. By changing the parameters in the
+ui, we can visualize different transformations, as we did previously
+for statistical shape models.
 
 *Note: Adding the reference mesh to the scene, followed by a Gaussian process transformation
-is indeed what happend internally, we visualized Statistical Shape Models in the 
-previous tutorials* 
+is indeed what happend internally, we visualized Statistical Shape Models in the
+previous tutorials*
 
-Having visualized the Gaussian process, we can now draw random samples, 
-to assess whether out choice of parameters of the Gaussian process leads to 
+Having visualized the Gaussian process, we can now draw random samples,
+to assess whether out choice of parameters of the Gaussian process leads to
 reasonable deformations. If not, we adjust the parameters until we are happy
 with the deformations that are modelled.
 
 ## Registration
 
-In the next step we perform the registration to a target mesh. 
+In the next step we perform the registration to a target mesh.
 We start by loading the target mesh and displaying it.
 
 ```scala mdoc:silent
@@ -284,7 +279,7 @@ def doRegistration(
     }
 ```
 
-Finally, we define the parameters and run the registration. Note that for large regularization weights, we sample fewer points on the surface to save some computation time. 
+Finally, we define the parameters and run the registration. Note that for large regularization weights, we sample fewer points on the surface to save some computation time.
 This is justified as, a strongly regularized model will not be able to adapt to fine details and hence it is not necessary to have a very accurate sampling of the surface.
 
 ```scala mdoc:silent
