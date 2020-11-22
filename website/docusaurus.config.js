@@ -10,7 +10,9 @@ module.exports = {
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.png',
   organizationName: 'unibas-gravis', // Usually your GitHub org/user name.
-  projectName: 'Scalismo', // Usually your repo name.
+  projectName: 'scalismo-microsite', // Usually your repo name.
+  url: 'https://scalismo.org',
+  baseUrl: '/',
   stylesheets: [
     {
       href: 'https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css',
