@@ -1,0 +1,82 @@
+{
+  "version-0.90/docs": [
+    {
+      "collapsed": true,
+      "type": "category",
+      "label": "Tutorials",
+      "items": [
+        {
+          "type": "doc",
+          "id": "version-0.90/tutorials/tutorial1"
+        },
+        {
+          "type": "doc",
+          "id": "version-0.90/tutorials/tutorial2"
+        },
+        {
+          "type": "doc",
+          "id": "version-0.90/tutorials/tutorial3"
+        },
+        {
+          "type": "doc",
+          "id": "version-0.90/tutorials/tutorial4"
+        },
+        {
+          "type": "doc",
+          "id": "version-0.90/tutorials/tutorial5"
+        },
+        {
+          "type": "doc",
+          "id": "version-0.90/tutorials/tutorial6"
+        },
+        {
+          "type": "doc",
+          "id": "version-0.90/tutorials/tutorial7"
+        },
+        {
+          "type": "doc",
+          "id": "version-0.90/tutorials/tutorial8"
+        },
+        {
+          "type": "doc",
+          "id": "version-0.90/tutorials/tutorial9"
+        },
+        {
+          "type": "doc",
+          "id": "version-0.90/tutorials/tutorial10"
+        },
+        {
+          "type": "doc",
+          "id": "version-0.90/tutorials/tutorial11"
+        },
+        {
+          "type": "doc",
+          "id": "version-0.90/tutorials/tutorial12"
+        },
+        {
+          "type": "doc",
+          "id": "version-0.90/tutorials/tutorial13"
+        },
+        {
+          "type": "doc",
+          "id": "version-0.90/tutorials/tutorial14"
+        },
+        {
+          "type": "doc",
+          "id": "version-0.90/tutorials/tutorial15"
+        }
+      ]
+    },
+    {
+      "collapsed": true,
+      "type": "category",
+      "label": "Others",
+      "items": [
+        {
+          "type": "doc",
+          "id": "version-0.90/tutorials/scalismo-ui-introduction"
+        }
+      ]
+    }
+  ]
+}
