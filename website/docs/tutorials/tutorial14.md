@@ -238,6 +238,7 @@ val generator = MixtureProposal.fromProposalsWithTransition[Sample](
     )
 ```
 
+
 #### Building the Markov Chain
 
 Now that we have all the components set up, we can assemble the Markov Chain.
@@ -270,13 +271,13 @@ our data:
 
 ```scala
 val estimatedMean = samples.map(sample => sample.parameters.mu).sum  / samples.size
-// estimatedMean: Double = -4.412402232734195
+// estimatedMean: Double = -5.764070430280445
   println("estimated mean is " + estimatedMean)
-// estimated mean is -4.412402232734195
+// estimated mean is -5.764070430280445
   val estimatedSigma = samples.map(sample => sample.parameters.sigma).sum / samples.size
-// estimatedSigma: Double = 16.457812850498648
+// estimatedSigma: Double = 18.633380981865635
   println("estimated sigma is " + estimatedSigma)
-// estimated sigma is 16.457812850498648
+// estimated sigma is 18.633380981865635
 ```
 
 In the next tutorial, we see an example of how the exact same  mechanism can be used for
@@ -360,7 +361,7 @@ We can now check how often the individual samples got accepted.
 
 ```scala
 println("acceptance ratio is " +logger.acceptanceRatios())
-// acceptance ratio is Map(randomWalkProposal (3.0, 1.0) -> 0.4495383635784782, randomWalkProposal (9.0, 3.0) -> 0.11888111888111888)
+// acceptance ratio is Map(randomWalkProposal (3.0, 1.0) -> 0.5050441361916772, randomWalkProposal (9.0, 3.0) -> 0.13180169286577992)
 ```
 
 We see that the acceptance ratio of the random walk proposal, which takes the

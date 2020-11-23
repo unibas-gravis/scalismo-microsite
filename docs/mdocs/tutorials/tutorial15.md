@@ -3,7 +3,6 @@ id: tutorial15
 title: Model fitting using MCMC - Fitting a shape model
 ---
 
-
 In this tutorial we show how the MCMC framework, which was introduced in the previous
 tutorial, can be used for shape model fitting.
 
@@ -25,25 +24,34 @@ As in the previous tutorials, we start by importing some commonly used objects a
 initializing the system.
 
 ```scala mdoc:silent
-import breeze.linalg.{DenseMatrix, DenseVector}
-import scalismo.common.PointId
+import scalismo.common.{PointId, UnstructuredPointsDomain}
 import scalismo.geometry._
 import scalismo.io.{LandmarkIO, MeshIO, StatisticalModelIO}
 import scalismo.mesh.TriangleMesh
-import scalismo.registration.{RigidTransformation, RigidTransformationSpace, RotationTransform, TranslationTransform}
 import scalismo.sampling.algorithms.MetropolisHastings
 import scalismo.sampling.evaluators.ProductEvaluator
 import scalismo.sampling.proposals.MixtureProposal
 import scalismo.sampling.loggers.AcceptRejectLogger
 import scalismo.sampling.{DistributionEvaluator, ProposalGenerator, TransitionProbability}
-import scalismo.statisticalmodel.{MultivariateNormalDistribution, StatisticalMeshModel}
-import scalismo.ui.api.ScalismoUI
+import scalismo.statisticalmodel.{MultivariateNormalDistribution, PointDistributionModel, PointDistributionModel3D}
+import scalismo.transformations.{
+  RigidTransformation,
+  Rotation3D,
+  Translation3D,
+  TranslationAfterRotation,
+  TranslationAfterRotation3D
+}
+
 import scalismo.utils.Memoize
+
+import scalismo.ui.api.ScalismoUI
+import breeze.linalg.{DenseMatrix, DenseVector}
 
 implicit val rng = scalismo.utils.Random(42)
 scalismo.initialize()
 
 val ui = ScalismoUI()
+
 ```
 
 ### Loading and visualizing the data
@@ -52,52 +60,54 @@ In a first step, we load and visualize all the data that we need.
 First, we load the statistical model:
 
 ```scala mdoc:silent
-  val model = StatisticalModelIO.readStatisticalMeshModel(new java.io.File("datasets/bfm.h5")).get
+val model = StatisticalModelIO.readStatisticalTriangleMeshModel3D(new java.io.File("datasets/bfm.h5")).get
 
-  val modelGroup = ui.createGroup("model")
-  val modelView = ui.show(modelGroup, model, "model")
-  modelView.meshView.opacity = 0.5
+val modelGroup = ui.createGroup("model")
+val modelView = ui.show(modelGroup, model, "model")
+modelView.referenceView.opacity = 0.5
 ```
 
 In this example, we will fit the model such that a set of model landmarks, coincide
 with a set of landmark points defined on a target face. We load and visualize the corresponding landmark data:
 
 ```scala mdoc:silent
-  val modelLms = LandmarkIO.readLandmarksJson[_3D](new java.io.File("datasets/modelLM_mcmc.json")).get
-  val modelLmViews = ui.show(modelGroup, modelLms, "modelLandmarks")
-  modelLmViews.foreach(lmView => lmView.color = java.awt.Color.BLUE)
+val modelLms = LandmarkIO.readLandmarksJson[_3D](new java.io.File("datasets/modelLM_mcmc.json")).get
+val modelLmViews = ui.show(modelGroup, modelLms, "modelLandmarks")
+modelLmViews.foreach(lmView => lmView.color = java.awt.Color.BLUE)
 
-  val targetGroup = ui.createGroup("target")
+val targetGroup = ui.createGroup("target")
 
-  val targetLms = LandmarkIO.readLandmarksJson[_3D](new java.io.File("datasets/targetLM_mcmc.json")).get
-  val targetLmViews = ui.show(targetGroup, targetLms, "targetLandmarks")
-  modelLmViews.foreach(lmView => lmView.color = java.awt.Color.RED)
+val targetLms = LandmarkIO.readLandmarksJson3D(new java.io.File("datasets/targetLM_mcmc.json")).get
+val targetLmViews = ui.show(targetGroup, targetLms, "targetLandmarks")
+modelLmViews.foreach(lmView => lmView.color = java.awt.Color.RED)
 ```
 
 In the following, we will refer to the points on the model using their point id, while the target
 position is represented as physical points. The reason why we use the point id for the model is that the model instances,
 and therefore the points, which are represented by the point id, are changing as we fit the model.
 ```scala mdoc:silent
-  val modelLmIds =  modelLms.map(l => model.mean.pointSet.pointId(l.point).get)
-  val targetPoints = targetLms.map(l => l.point)
+val modelLmIds = modelLms.map(l => model.mean.pointSet.pointId(l.point).get)
+val targetPoints = targetLms.map(l => l.point)
 ```
 
 We assume that the target points we observe are subject to
 noise, which we model as a normal distribution with $$3 mm$$ standard deviation (hence $$9 mm$$ variance):
 ```scala mdoc:silent
-    val landmarkNoiseVariance = 9.0
-    val uncertainty = MultivariateNormalDistribution(
-      DenseVector.zeros[Double](3),
-      DenseMatrix.eye[Double](3) * landmarkNoiseVariance
-    )
+val landmarkNoiseVariance = 9.0
+val uncertainty = MultivariateNormalDistribution(
+  DenseVector.zeros[Double](3),
+  DenseMatrix.eye[Double](3) * landmarkNoiseVariance
+)
 ```
 
 We summarize the correspondences as a triple, consisting of model id, target position
 and uncertainty.
 
 ```scala mdoc:silent
-  val correspondences = modelLmIds.zip(targetPoints).map(modelIdWithTargetPoint => {
-    val (modelId, targetPoint) =  modelIdWithTargetPoint
+val correspondences = modelLmIds
+  .zip(targetPoints)
+  .map(modelIdWithTargetPoint => {
+    val (modelId, targetPoint) = modelIdWithTargetPoint
     (modelId, targetPoint, uncertainty)
   })
 ```
@@ -111,8 +121,8 @@ represented as Euler angles as well a shape model coefficients $$\alpha = (\alph
 
 ```scala mdoc:silent
 case class Parameters(translationParameters: EuclideanVector[_3D],
-                     rotationParameters: (Double, Double, Double),
-                     modelCoefficients: DenseVector[Double])
+                      rotationParameters: (Double, Double, Double),
+                      modelCoefficients: DenseVector[Double])
 ```
 
 As in the previous tutorial, we wrap this into a class representing the sample, which can keep track by whom
@@ -122,21 +132,18 @@ is not completely determined by the translation and rotation parameters, we need
 store also the center of rotation.
 
 ```scala mdoc:silent
-
-  case class Sample(generatedBy : String, parameters : Parameters, rotationCenter: Point[_3D]) {
-    def poseTransformation : RigidTransformation[_3D] = {
-
-      val translation = TranslationTransform(parameters.translationParameters)
-      val rotation = RotationTransform(
-        parameters.rotationParameters._1,
-        parameters.rotationParameters._2,
-        parameters.rotationParameters._3,
-        rotationCenter
-      )
-      RigidTransformation(translation, rotation)
-    }
+case class Sample(generatedBy: String, parameters: Parameters, rotationCenter: Point[_3D]) {
+  def poseTransformation: TranslationAfterRotation[_3D] = {
+    val translation = Translation3D(parameters.translationParameters)
+    val rotation = Rotation3D(
+      parameters.rotationParameters._1,
+      parameters.rotationParameters._2,
+      parameters.rotationParameters._3,
+      rotationCenter
+    )
+    TranslationAfterRotation3D(translation, rotation)
   }
-
+}
 ```
 
 
@@ -152,22 +159,21 @@ As a prior over the shape parameters is given by the shape model. For the
 translation and rotation, we assume a zero-mean normal distribution:
 
 ```scala mdoc:silent
-case class PriorEvaluator(model: StatisticalMeshModel)
-    extends DistributionEvaluator[Sample] {
+case class PriorEvaluator(model: PointDistributionModel[_3D, TriangleMesh]) extends DistributionEvaluator[Sample] {
 
-    val translationPrior = breeze.stats.distributions.Gaussian(0.0, 5.0)
-    val rotationPrior = breeze.stats.distributions.Gaussian(0, 0.1)
+  val translationPrior = breeze.stats.distributions.Gaussian(0.0, 5.0)
+  val rotationPrior = breeze.stats.distributions.Gaussian(0, 0.1)
 
-    override def logValue(sample: Sample): Double = {
-      model.gp.logpdf(sample.parameters.modelCoefficients) +
+  override def logValue(sample: Sample): Double = {
+    model.gp.logpdf(sample.parameters.modelCoefficients) +
       translationPrior.logPdf(sample.parameters.translationParameters.x) +
       translationPrior.logPdf(sample.parameters.translationParameters.y) +
       translationPrior.logPdf(sample.parameters.translationParameters.z) +
       rotationPrior.logPdf(sample.parameters.rotationParameters._1) +
       rotationPrior.logPdf(sample.parameters.rotationParameters._2) +
       rotationPrior.logPdf(sample.parameters.rotationParameters._3)
-    }
   }
+}
 ```
 
 To compute the likelihood $$p(D | \theta)$$ we first compute
@@ -178,22 +184,21 @@ modelled by the uncertainty of the observations. We can therefore directly use
 the modelled uncertainty to compute the likelihood of our model given the data:
 
 ``` scala mdoc:silent
-case class SimpleCorrespondenceEvaluator(model: StatisticalMeshModel,
-                                   correspondences: Seq[(PointId, Point[_3D], MultivariateNormalDistribution)])
-  extends DistributionEvaluator[Sample] {
+case class SimpleCorrespondenceEvaluator(model: PointDistributionModel[_3D, TriangleMesh],
+                                         correspondences: Seq[(PointId, Point[_3D], MultivariateNormalDistribution)])
+    extends DistributionEvaluator[Sample] {
 
   override def logValue(sample: Sample): Double = {
 
     val currModelInstance = model.instance(sample.parameters.modelCoefficients).transform(sample.poseTransformation)
 
-    val likelihoods = correspondences.map( correspondence => {
+    val likelihoods = correspondences.map(correspondence => {
       val (id, targetPoint, uncertainty) = correspondence
       val modelInstancePoint = currModelInstance.pointSet.point(id)
       val observedDeformation = targetPoint - modelInstancePoint
 
       uncertainty.logpdf(observedDeformation.toBreezeVector)
     })
-
 
     val loglikelihood = likelihoods.sum
     loglikelihood
@@ -214,48 +219,50 @@ points of interest. Since marginalization changes the point ids, we need to map 
 ids given as```correspondences``` to their new ids. This is achieved by the following helper function:
 
 ```scala mdoc:silent
-def marginalizeModelForCorrespondences(model: StatisticalMeshModel,
-                                         correspondences: Seq[(PointId, Point[_3D], MultivariateNormalDistribution)])
-    : (StatisticalMeshModel, Seq[(PointId, Point[_3D], MultivariateNormalDistribution)]) = {
+def marginalizeModelForCorrespondences(model: PointDistributionModel[_3D, TriangleMesh],
+                                       correspondences: Seq[(PointId, Point[_3D], MultivariateNormalDistribution)])
+  : (PointDistributionModel[_3D, UnstructuredPointsDomain],
+     Seq[(PointId, Point[_3D], MultivariateNormalDistribution)]) = {
 
-    val (modelIds, _, _) = correspondences.unzip3
-    val marginalizedModel = model.marginal(modelIds.toIndexedSeq)
-    val newCorrespondences = correspondences.map(idWithTargetPoint => {
-      val (id, targetPoint, uncertainty) = idWithTargetPoint
-      val modelPoint = model.referenceMesh.pointSet.point(id)
-      val newId = marginalizedModel.referenceMesh.pointSet.findClosestPoint(modelPoint).id
-      (newId, targetPoint, uncertainty)
-    })
-    (marginalizedModel, newCorrespondences)
-  }
+  val (modelIds, _, _) = correspondences.unzip3
+  val marginalizedModel = model.marginal(modelIds.toIndexedSeq)
+  val newCorrespondences = correspondences.map(idWithTargetPoint => {
+    val (id, targetPoint, uncertainty) = idWithTargetPoint
+    val modelPoint = model.reference.pointSet.point(id)
+    val newId = marginalizedModel.reference.pointSet.findClosestPoint(modelPoint).id
+    (newId, targetPoint, uncertainty)
+  })
+  (marginalizedModel, newCorrespondences)
+}
 ```
 
 The more efficient version of the evaluator uses now the marginalized model to evaluate the likelihood:
 
 ```scala mdoc:silent
- case class CorrespondenceEvaluator(model: StatisticalMeshModel,
-                                     correspondences: Seq[(PointId, Point[_3D], MultivariateNormalDistribution)])
+case class CorrespondenceEvaluator(model: PointDistributionModel[_3D, TriangleMesh],
+                                   correspondences: Seq[(PointId, Point[_3D], MultivariateNormalDistribution)])
     extends DistributionEvaluator[Sample] {
 
-    val (marginalizedModel, newCorrespondences) = marginalizeModelForCorrespondences(model, correspondences)
+  val (marginalizedModel, newCorrespondences) = marginalizeModelForCorrespondences(model, correspondences)
 
-    override def logValue(sample: Sample): Double = {
+  override def logValue(sample: Sample): Double = {
 
-      val currModelInstance = marginalizedModel.instance(sample.parameters.modelCoefficients).transform(sample.poseTransformation)
+    val currModelInstance = marginalizedModel
+      .instance(sample.parameters.modelCoefficients)
+      .transform(sample.poseTransformation)
 
-      val likelihoods = newCorrespondences.map( correspondence => {
-        val (id, targetPoint, uncertainty) = correspondence
-        val modelInstancePoint = currModelInstance.pointSet.point(id)
-        val observedDeformation = targetPoint - modelInstancePoint
+    val likelihoods = newCorrespondences.map(correspondence => {
+      val (id, targetPoint, uncertainty) = correspondence
+      val modelInstancePoint = currModelInstance.pointSet.point(id)
+      val observedDeformation = targetPoint - modelInstancePoint
 
-        uncertainty.logpdf(observedDeformation.toBreezeVector)
-      })
+      uncertainty.logpdf(observedDeformation.toBreezeVector)
+    })
 
-
-      val loglikelihood = likelihoods.sum
-      loglikelihood
-    }
+    val loglikelihood = likelihoods.sum
+    loglikelihood
   }
+}
 ```
 
 In order for the Metropolis-Hastings algorithm to decide if a new sample is accepted,
@@ -266,14 +273,13 @@ not recomputed, but simply taken from cache. Using the following utility class,
 we can obtain for any evaluator a new evaluator, which performs such caching:
 
 ```scala mdoc:silent
- case class CachedEvaluator[A](evaluator: DistributionEvaluator[A]) extends DistributionEvaluator[A] {
-    val memoizedLogValue = Memoize(evaluator.logValue, 10)
+case class CachedEvaluator[A](evaluator: DistributionEvaluator[A]) extends DistributionEvaluator[A] {
+  val memoizedLogValue = Memoize(evaluator.logValue, 10)
 
-    override def logValue(sample: A): Double = {
-      memoizedLogValue(sample)
-    }
+  override def logValue(sample: A): Double = {
+    memoizedLogValue(sample)
   }
-
+}
 ```
 
 #### The posterior evaluator
@@ -304,79 +310,79 @@ The definition of the proposals are straight-forward.
 
 We start with the shape update proposal:
 ```scala mdoc:silent
-  case class ShapeUpdateProposal(paramVectorSize : Int, stddev: Double)
-    extends ProposalGenerator[Sample]  with TransitionProbability[Sample] {
+case class ShapeUpdateProposal(paramVectorSize: Int, stddev: Double)
+    extends ProposalGenerator[Sample]
+    with TransitionProbability[Sample] {
 
-    val perturbationDistr = new MultivariateNormalDistribution(
-      DenseVector.zeros(paramVectorSize),
-      DenseMatrix.eye[Double](paramVectorSize) * stddev * stddev
-    )
+  val perturbationDistr = new MultivariateNormalDistribution(
+    DenseVector.zeros(paramVectorSize),
+    DenseMatrix.eye[Double](paramVectorSize) * stddev * stddev
+  )
 
-
-    override def propose(sample: Sample): Sample = {
-      val perturbation = perturbationDistr.sample()
-      val newParameters = sample.parameters.copy(modelCoefficients = sample.parameters.modelCoefficients + perturbationDistr.sample)
-      sample.copy(generatedBy = s"ShapeUpdateProposal ($stddev)", parameters = newParameters)
-    }
-
-    override def logTransitionProbability(from: Sample, to: Sample) = {
-      val residual = to.parameters.modelCoefficients - from.parameters.modelCoefficients
-      perturbationDistr.logpdf(residual)
-    }
+  override def propose(sample: Sample): Sample = {
+    val perturbation = perturbationDistr.sample()
+    val newParameters =
+      sample.parameters.copy(modelCoefficients = sample.parameters.modelCoefficients + perturbationDistr.sample)
+    sample.copy(generatedBy = s"ShapeUpdateProposal ($stddev)", parameters = newParameters)
   }
+
+  override def logTransitionProbability(from: Sample, to: Sample) = {
+    val residual = to.parameters.modelCoefficients - from.parameters.modelCoefficients
+    perturbationDistr.logpdf(residual)
+  }
+}
 ```
 The update of the roation parameters is very similar. Note that we only update the
 rotation parameters, but keep the center of rotation unchanged.
 ```scala mdoc:silent
-  case class RotationUpdateProposal(stddev: Double) extends
-     ProposalGenerator[Sample]  with TransitionProbability[Sample] {
-
-     val perturbationDistr = new MultivariateNormalDistribution(
-       DenseVector.zeros[Double](3),
-       DenseMatrix.eye[Double](3) * stddev * stddev)
-
-     def propose(sample: Sample): Sample= {
-       val perturbation = perturbationDistr.sample
-       val newRotationParameters = (
-         sample.parameters.rotationParameters._1 + perturbation(0),
-         sample.parameters.rotationParameters._2 + perturbation(1),
-         sample.parameters.rotationParameters._3 + perturbation(2)
-       )
-       val newParameters = sample.parameters.copy(rotationParameters = newRotationParameters)
-       sample.copy(generatedBy = s"RotationUpdateProposal ($stddev)", parameters = newParameters)
-     }
-
-     override def logTransitionProbability(from: Sample, to: Sample) = {
-       val residual = DenseVector(
-         to.parameters.rotationParameters._1 - from.parameters.rotationParameters._1,
-         to.parameters.rotationParameters._2 - from.parameters.rotationParameters._2,
-         to.parameters.rotationParameters._3 - from.parameters.rotationParameters._3
-       )
-       perturbationDistr.logpdf(residual)
-     }
-   }
+case class RotationUpdateProposal(stddev: Double)
+    extends ProposalGenerator[Sample]
+    with TransitionProbability[Sample] {
+  val perturbationDistr =
+    new MultivariateNormalDistribution(DenseVector.zeros[Double](3), DenseMatrix.eye[Double](3) * stddev * stddev)
+  def propose(sample: Sample): Sample = {
+    val perturbation = perturbationDistr.sample
+    val newRotationParameters = (
+      sample.parameters.rotationParameters._1 + perturbation(0),
+      sample.parameters.rotationParameters._2 + perturbation(1),
+      sample.parameters.rotationParameters._3 + perturbation(2)
+    )
+    val newParameters = sample.parameters.copy(rotationParameters = newRotationParameters)
+    sample.copy(generatedBy = s"RotationUpdateProposal ($stddev)", parameters = newParameters)
+  }
+  override def logTransitionProbability(from: Sample, to: Sample) = {
+    val residual = DenseVector(
+      to.parameters.rotationParameters._1 - from.parameters.rotationParameters._1,
+      to.parameters.rotationParameters._2 - from.parameters.rotationParameters._2,
+      to.parameters.rotationParameters._3 - from.parameters.rotationParameters._3
+    )
+    perturbationDistr.logpdf(residual)
+  }
+}
 ```
 
 Finally, we define the update proposal for the translation:
 ```scala mdoc:silent
-  case class TranslationUpdateProposal(stddev: Double) extends
-     ProposalGenerator[Sample]  with TransitionProbability[Sample] {
+case class TranslationUpdateProposal(stddev: Double)
+    extends ProposalGenerator[Sample]
+    with TransitionProbability[Sample] {
 
-     val perturbationDistr = new MultivariateNormalDistribution( DenseVector.zeros(3),
-       DenseMatrix.eye[Double](3) * stddev * stddev)
+  val perturbationDistr =
+    new MultivariateNormalDistribution(DenseVector.zeros(3), DenseMatrix.eye[Double](3) * stddev * stddev)
 
-     def propose(sample: Sample): Sample= {
-       val newTranslationParameters = sample.parameters.translationParameters + EuclideanVector.fromBreezeVector(perturbationDistr.sample())
-       val newParameters = sample.parameters.copy(translationParameters = newTranslationParameters)
-       sample.copy(generatedBy = s"TranlationUpdateProposal ($stddev)", parameters = newParameters)
-     }
+  def propose(sample: Sample): Sample = {
+    val newTranslationParameters = sample.parameters.translationParameters + EuclideanVector.fromBreezeVector(
+      perturbationDistr.sample()
+    )
+    val newParameters = sample.parameters.copy(translationParameters = newTranslationParameters)
+    sample.copy(generatedBy = s"TranlationUpdateProposal ($stddev)", parameters = newParameters)
+  }
 
-     override def logTransitionProbability(from: Sample, to: Sample) = {
-       val residual = to.parameters.translationParameters - from.parameters.translationParameters
-       perturbationDistr.logpdf(residual.toBreezeVector)
-     }
-   }
-
+  override def logTransitionProbability(from: Sample, to: Sample) = {
+    val residual = to.parameters.translationParameters - from.parameters.translationParameters
+    perturbationDistr.logpdf(residual.toBreezeVector)
+  }
+}
 ```
 
 The final proposal is a mixture of the three proposals we defined above.
@@ -387,10 +393,10 @@ val shapeUpdateProposal = ShapeUpdateProposal(model.rank, 0.1)
 val rotationUpdateProposal = RotationUpdateProposal(0.01)
 val translationUpdateProposal = TranslationUpdateProposal(1.0)
 val generator = MixtureProposal.fromProposalsWithTransition(
-                                    (0.6, shapeUpdateProposal),
-                                    (0.2, rotationUpdateProposal),
-                                    (0.2, translationUpdateProposal)
-                                )
+  (0.6, shapeUpdateProposal),
+  (0.2, rotationUpdateProposal),
+  (0.2, translationUpdateProposal)
+)
 ```
 
 
@@ -401,92 +407,88 @@ to compute the accept/reject ratios of the individual generators
 
 ```scala mdoc:silent
 class Logger extends AcceptRejectLogger[Sample] {
-    private val numAccepted = collection.mutable.Map[String, Int]()
-    private val numRejected = collection.mutable.Map[String, Int]()
+  private val numAccepted = collection.mutable.Map[String, Int]()
+  private val numRejected = collection.mutable.Map[String, Int]()
 
-    override def accept(current: Sample,
-                        sample: Sample,
-                        generator: ProposalGenerator[Sample],
-                        evaluator: DistributionEvaluator[Sample]
-                       ): Unit = {
-      val numAcceptedSoFar = numAccepted.getOrElseUpdate(sample.generatedBy, 0)
-      numAccepted.update(sample.generatedBy, numAcceptedSoFar + 1)
-    }
-
-    override def reject(current: Sample,
-                          sample: Sample,
-                          generator: ProposalGenerator[Sample],
-                          evaluator: DistributionEvaluator[Sample]
-                         ): Unit = {
-      val numRejectedSoFar = numRejected.getOrElseUpdate(sample.generatedBy, 0)
-      numRejected.update(sample.generatedBy, numRejectedSoFar + 1)
-    }
-
-
-    def acceptanceRatios() : Map[String, Double] = {
-      val generatorNames = numRejected.keys.toSet.union(numAccepted.keys.toSet)
-      val acceptanceRatios = for (generatorName <- generatorNames ) yield {
-        val total = (numAccepted.getOrElse(generatorName, 0)
-                     + numRejected.getOrElse(generatorName, 0)).toDouble
-        (generatorName, numAccepted.getOrElse(generatorName, 0) / total)
-      }
-      acceptanceRatios.toMap
-    }
+  override def accept(current: Sample,
+                      sample: Sample,
+                      generator: ProposalGenerator[Sample],
+                      evaluator: DistributionEvaluator[Sample]): Unit = {
+    val numAcceptedSoFar = numAccepted.getOrElseUpdate(sample.generatedBy, 0)
+    numAccepted.update(sample.generatedBy, numAcceptedSoFar + 1)
   }
+
+  override def reject(current: Sample,
+                      sample: Sample,
+                      generator: ProposalGenerator[Sample],
+                      evaluator: DistributionEvaluator[Sample]): Unit = {
+    val numRejectedSoFar = numRejected.getOrElseUpdate(sample.generatedBy, 0)
+    numRejected.update(sample.generatedBy, numRejectedSoFar + 1)
+  }
+
+  def acceptanceRatios(): Map[String, Double] = {
+    val generatorNames = numRejected.keys.toSet.union(numAccepted.keys.toSet)
+    val acceptanceRatios = for (generatorName <- generatorNames) yield {
+      val total = (numAccepted.getOrElse(generatorName, 0)
+        + numRejected.getOrElse(generatorName, 0)).toDouble
+      (generatorName, numAccepted.getOrElse(generatorName, 0) / total)
+    }
+    acceptanceRatios.toMap
+  }
+}
 ```
 
 We then create the initial sample, where we choose here the center of mass of the model mean as the
 rotation center.
 
 ```scala mdoc:silent
-def computeCenterOfMass(mesh : TriangleMesh[_3D]) : Point[_3D] = {
-    val normFactor = 1.0 / mesh.pointSet.numberOfPoints
-    mesh.pointSet.points.foldLeft(Point(0, 0, 0))((sum, point) => sum + point.toVector * normFactor)
+def computeCenterOfMass(mesh: TriangleMesh[_3D]): Point[_3D] = {
+  val normFactor = 1.0 / mesh.pointSet.numberOfPoints
+  mesh.pointSet.points.foldLeft(Point(0, 0, 0))((sum, point) => sum + point.toVector * normFactor)
 }
 
-
 val initialParameters = Parameters(
-    EuclideanVector(0, 0, 0),
-    (0.0, 0.0, 0.0),
-    DenseVector.zeros[Double](model.rank)
-    )
+  EuclideanVector(0, 0, 0),
+  (0.0, 0.0, 0.0),
+  DenseVector.zeros[Double](model.rank)
+)
 
 val initialSample = Sample("initial", initialParameters, computeCenterOfMass(model.mean))
-
 ```
+
 *Remark: Setting the rotation center correctly is very important for the rotation proposal to work as expected.
 Fortunately, most of the time this error is easy to diagnose, as the acceptance ratio of the rotation proposal will be unexpectedly low.*
 
 Next we set up the chain and obtain an iterator.
 ```scala mdoc:silent
-  val chain = MetropolisHastings(generator, posteriorEvaluator)
-  val logger = new Logger()
-  val mhIterator = chain.iterator(initialSample, logger)
+val chain = MetropolisHastings(generator, posteriorEvaluator)
+val logger = new Logger()
+val mhIterator = chain.iterator(initialSample, logger)
 ```
 
 In this example we are interested to visualize some samples from the posterior as we run the chain. This can be done
 by augmenting the iterator with visualization code:
 ```scala mdoc:silent
-   val samplingIterator = for((sample, iteration) <- mhIterator.zipWithIndex) yield {
-      println("iteration " + iteration)
-      if (iteration % 500 == 0) {
-        modelView.shapeModelTransformationView.shapeTransformationView.coefficients = sample.parameters.modelCoefficients
-        modelView.shapeModelTransformationView.poseTransformationView.transformation = sample.poseTransformation
-      }
-      sample
+val samplingIterator = for ((sample, iteration) <- mhIterator.zipWithIndex) yield {
+    println("iteration " + iteration)
+    if (iteration % 500 == 0) {
+      modelView.shapeModelTransformationView.shapeTransformationView.coefficients = sample.parameters.modelCoefficients
+      modelView.shapeModelTransformationView.poseTransformationView.transformation = sample.poseTransformation
     }
+    sample
+}
 ```
 
 Finally, we draw the samples using the chain by consuming the iterator. We drop the first 1000 iterations, as the
 chain needs some burn-in time to converge to a equilibrium solution:
 ```scala mdoc:silent
-  val samples = samplingIterator.drop(1000).take(10000).toIndexedSeq
+val samples = samplingIterator.drop(1000).take(10000).toIndexedSeq
 ```
 
 
 Before working with the results, we check the acceptance ratios to verify that all the proposals work as expected:
 ```scala mdoc
-  println(logger.acceptanceRatios())
+println(logger.acceptanceRatios())
 ```
 
 ### Analyzing the results
@@ -494,10 +496,10 @@ Before working with the results, we check the acceptance ratios to verify that a
 Once we have the samples, we can now use them to analyze our fit.
 For example, we can select the best fit from these samples and visualize it
 ```scala mdoc:silent
-  val bestSample = samples.maxBy(posteriorEvaluator.logValue)
-  val bestFit = model.instance(bestSample.parameters.modelCoefficients).transform(bestSample.poseTransformation)
-  val resultGroup = ui.createGroup("result")
-  ui.show(resultGroup, bestFit, "best fit")
+val bestSample = samples.maxBy(posteriorEvaluator.logValue)
+val bestFit = model.instance(bestSample.parameters.modelCoefficients).transform(bestSample.poseTransformation)
+val resultGroup = ui.createGroup("result")
+ui.show(resultGroup, bestFit, "best fit")
 ```
 
 The samples allow us to infer much more about the distribution. For example, we can estimate the expected position of
@@ -505,39 +507,43 @@ any point in the model and the variance from the samples:
 
 ```scala mdoc:silent
 
- def computeMean(model : StatisticalMeshModel, id: PointId): Point[_3D] = {
-    var mean = EuclideanVector(0, 0, 0)
-    for (sample <- samples) yield {
-      val modelInstance = model.instance(sample.parameters.modelCoefficients)
-      val pointForInstance = modelInstance.transform(sample.poseTransformation).pointSet.point(id)
-      mean += pointForInstance.toVector
-    }
-    (mean * 1.0 / samples.size).toPoint
+def computeMean(model: PointDistributionModel[_3D, UnstructuredPointsDomain], id: PointId): Point[_3D] = {
+  var mean = EuclideanVector(0, 0, 0)
+  for (sample <- samples) yield {
+    val modelInstance = model.instance(sample.parameters.modelCoefficients)
+    val pointForInstance = modelInstance.transform(sample.poseTransformation).pointSet.point(id)
+    mean += pointForInstance.toVector
   }
+  (mean * 1.0 / samples.size).toPoint
+}
 
-  def computeCovarianceFromSamples(model : StatisticalMeshModel, id: PointId, mean: Point[_3D]): SquareMatrix[_3D] = {
-    var cov = SquareMatrix.zeros[_3D]
-    for (sample <- samples) yield {
-      val modelInstance = model.instance(sample.parameters.modelCoefficients)
-      val pointForInstance = modelInstance.transform(sample.poseTransformation).pointSet.point(id)
-      val v = pointForInstance - mean
-      cov += v.outer(v)
-    }
-    cov * (1.0 / samples.size)
+def computeCovarianceFromSamples(model: PointDistributionModel[_3D, UnstructuredPointsDomain],
+                                 id: PointId,
+                                 mean: Point[_3D]): SquareMatrix[_3D] = {
+  var cov = SquareMatrix.zeros[_3D]
+  for (sample <- samples) yield {
+    val modelInstance = model.instance(sample.parameters.modelCoefficients)
+    val pointForInstance = modelInstance.transform(sample.poseTransformation).pointSet.point(id)
+    val v = pointForInstance - mean
+    cov += v.outer(v)
   }
-
+  cov * (1.0 / samples.size)
+}
 ```
 
 For efficiency reasons, we do the computations here only for the landmark points, using again the marginalized model:
 ```scala mdoc:silent
 val (marginalizedModel, newCorrespondences) = marginalizeModelForCorrespondences(model, correspondences)
 ```
+
 ```scala mdoc
 for ((id, _, _) <- newCorrespondences) {
-    val meanPointPosition = computeMean(marginalizedModel, id)
-    println(s"expected position for point at id $id  = $meanPointPosition")
-    val cov = computeCovarianceFromSamples(marginalizedModel, id, meanPointPosition)
-    println(s"posterior variance computed  for point at id (shape and pose) $id  = ${cov(0,0)}, ${cov(1,1)}, ${cov(2,2)}")
+  val meanPointPosition = computeMean(marginalizedModel, id)
+  println(s"expected position for point at id $id  = $meanPointPosition")
+  val cov = computeCovarianceFromSamples(marginalizedModel, id, meanPointPosition)
+  println(
+    s"posterior variance computed  for point at id (shape and pose) $id  = ${cov(0, 0)}, ${cov(1, 1)}, ${cov(2, 2)}"
+  )
 }
 ```
 
@@ -551,7 +557,9 @@ Not surprisingly, computing the variance of this models reveals, that the points
 ```scala mdoc
 for ((id, _, _) <- newCorrespondences) {
   val cov = posteriorFixedPose.cov(id, id)
-  println(s"posterior variance computed by analytic posterior (shape only) for point with id $id = ${cov(0,0)}, ${cov(1,1)}, ${cov(2,2)}")
+  println(
+    s"posterior variance computed by analytic posterior (shape only) for point with id $id = ${cov(0, 0)}, ${cov(1, 1)}, ${cov(2, 2)}"
+  )
 }
 ```
 The reason for the reduced flexibility is that the model cannot adjust the pose, and hence has less freedom to explain the observed data.

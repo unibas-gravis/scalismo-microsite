@@ -1,8 +1,7 @@
 ---
 id: tutorial13
-title: Active Shape Model fitting
+title: Active Shape Model Fitting
 ---
-
 
 In this tutorial we show how we can perform active shape model fitting in Scalismo.
 
@@ -18,14 +17,15 @@ some helpful context for this tutorial:
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
 ```scala mdoc:silent
-  import scalismo.geometry._
-  import scalismo.ui.api._
-  import scalismo.registration._
-  import scalismo.mesh.TriangleMesh
-  import scalismo.statisticalmodel.asm._
-  import scalismo.io.{ActiveShapeModelIO, ImageIO}
-  import breeze.linalg.{DenseVector}
+import scalismo.geometry._
+import scalismo.transformations._
+import scalismo.registration._
+import scalismo.mesh.TriangleMesh
+import scalismo.statisticalmodel.asm._
+import scalismo.io.{ActiveShapeModelIO, ImageIO}
 
+import scalismo.ui.api._
+import breeze.linalg.{DenseVector}
 
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
@@ -62,11 +62,11 @@ expect for this profile.
 
 The following code shows how this information can be accessed:
 ```scala mdoc:silent
-    val profiles = asm.profiles
-    profiles.map(profile => {
-        val pointId = profile.pointId
-        val distribution = profile.distribution
-    })
+val profiles = asm.profiles
+profiles.map(profile => {
+  val pointId = profile.pointId
+  val distribution = profile.distribution
+})
 ```
 
 #### Finding likely model correspondences in an image
@@ -94,7 +94,7 @@ val preprocessedImage = asm.preprocessor(image)
 
 We can now extract features at a given point:
 ```scala mdoc:silent
-val point1 = image.domain.origin + EuclideanVector(10.0, 10.0, 10.0)
+val point1 = image.domain.origin + EuclideanVector3D(10.0, 10.0, 10.0)
 val profile = asm.profiles.head
 val feature1 : DenseVector[Double] = asm.featureExtractor(preprocessedImage, point1, asm.statisticalModel.mean, profile.pointId).get
 ```
@@ -105,7 +105,7 @@ of a line at this point.
 We can retrieve the likelihood that each corresponding point corresponds to a given profile point:
 
 ```scala mdoc:silent
-val point2 = image.domain.origin + EuclideanVector(20.0, 10.0, 10.0)
+val point2 = image.domain.origin + EuclideanVector3D(20.0, 10.0, 10.0)
 val featureVec1 = asm.featureExtractor(preprocessedImage, point1, asm.statisticalModel.mean, profile.pointId).get
 val featureVec2 = asm.featureExtractor(preprocessedImage, point2, asm.statisticalModel.mean, profile.pointId).get
 
@@ -129,12 +129,12 @@ the ICP algorithm that we described in the previous tutorials.
 One search strategy that is already implemented in Scalismo is to search along
 the normal direction of a model point. This behavior is provided by the ```NormalDirectionSearchPointSampler```
 ```scala mdoc:silent
- val searchSampler = NormalDirectionSearchPointSampler(numberOfPoints = 100, searchDistance = 3)
+val searchSampler = NormalDirectionSearchPointSampler(numberOfPoints = 100, searchDistance = 3)
 ```
 
 In addition to the search strategy, we can specify some additional configuration parameters to control the fitting process:
 ```scala mdoc:silent
-    val config = FittingConfiguration(featureDistanceThreshold = 3, pointDistanceThreshold = 5, modelCoefficientBounds = 3)
+val config = FittingConfiguration(featureDistanceThreshold = 3, pointDistanceThreshold = 5, modelCoefficientBounds = 3)
 ```
 The first parameter determines how far away (as measured by the mahalanobis distance) an intensity feature can be, such that it is still
 chosen as corresponding. The ```pointDistanceThreshold``` does the same for the distance of the points; I.e. in this  case points which are
@@ -148,47 +148,48 @@ In order to allow it to optimize the rotation, it is important that we choose a 
 the center of mass of the model:
 ```scala mdoc:silent
     // make sure we rotate around a reasonable center point
-    val modelBoundingBox = asm.statisticalModel.referenceMesh.boundingBox
-    val rotationCenter = modelBoundingBox.origin + modelBoundingBox.extent * 0.5
+val modelBoundingBox = asm.statisticalModel.referenceMesh.boundingBox
+val rotationCenter = modelBoundingBox.origin + modelBoundingBox.extent * 0.5
 ```
 
 To initialize the fitting process, we also need to set up the initial transformation:
 ```scala mdoc:silent
-    // we start with the identity transform
-    val translationTransformation = TranslationTransform(EuclideanVector(0, 0, 0))
-    val rotationTransformation = RotationTransform(0, 0, 0, rotationCenter)
-    val initialRigidTransformation = RigidTransformation(translationTransformation, rotationTransformation)
-    val initialModelCoefficients = DenseVector.zeros[Double](asm.statisticalModel.rank)
-    val initialTransformation = ModelTransformations(initialModelCoefficients, initialRigidTransformation)
+
+// we start with the identity transform
+val translationTransformation = Translation3D(EuclideanVector3D(0, 0, 0))
+val rotationTransformation = Rotation3D(0, 0, 0, rotationCenter)
+val initialRigidTransformation = TranslationAfterRotation3D(translationTransformation, rotationTransformation)
+val initialModelCoefficients = DenseVector.zeros[Double](asm.statisticalModel.rank)
+val initialTransformation = ModelTransformations(initialModelCoefficients, initialRigidTransformation)
 ```
 
 To start the fitting, we obtain an iterator, which we subsequently use to drive the iteration.
 ```scala mdoc:silent
-
-    val numberOfIterations = 20
-    val asmIterator = asm.fitIterator(image, searchSampler, numberOfIterations, config, initialTransformation)
+val numberOfIterations = 20
+val asmIterator = asm.fitIterator(image, searchSampler, numberOfIterations, config, initialTransformation)
 ```
 
 Especially in a debugging phase, we want to visualize the result in every iteration. The following code shows,
 how we can obtain a new iterator, which updates the pose transformation and model coefficients in the ```ui```
 in every iteration:
 ```scala mdoc:silent
-    val asmIteratorWithVisualization = asmIterator.map(it => {
-      it match {
+val asmIteratorWithVisualization = asmIterator.map(it => {
+    it match {
         case scala.util.Success(iterationResult) => {
-          modelView.shapeModelTransformationView.poseTransformationView.transformation = iterationResult.transformations.rigidTransform
-          modelView.shapeModelTransformationView.shapeTransformationView.coefficients = iterationResult.transformations.coefficients
+            modelView.shapeModelTransformationView.poseTransformationView.transformation = iterationResult.transformations.rigidTransform
+            modelView.shapeModelTransformationView.shapeTransformationView.coefficients = iterationResult.transformations.coefficients
         }
         case scala.util.Failure(error) => System.out.println(error.getMessage)
-      }
-      it
-    })
+    }
+    it
+})
 ```
 
 To run the fitting, and get the result, we finally consume the iterator:
 ```scala mdoc:silent
 val result = asmIteratorWithVisualization.toIndexedSeq.last
 val finalMesh = result.get.mesh
+
 ```
 
 ## Evaluating the likelihood of a model instance under the image
@@ -207,10 +208,10 @@ def likelihoodForMesh(asm : ActiveShapeModel, mesh : TriangleMesh[_3D], preproce
     val ids = asm.profiles.ids
 
     val likelihoods = for (id <- ids) yield {
-        val profile = asm.profiles(id)
-        val profilePointOnMesh = mesh.pointSet.point(profile.pointId)
-        val featureAtPoint = asm.featureExtractor(preprocessedImage, profilePointOnMesh, mesh, profile.pointId).get
-        profile.distribution.logpdf(featureAtPoint)
+      val profile = asm.profiles(id)
+      val profilePointOnMesh = mesh.pointSet.point(profile.pointId)
+      val featureAtPoint = asm.featureExtractor(preprocessedImage, profilePointOnMesh, mesh, profile.pointId).get
+      profile.distribution.logpdf(featureAtPoint)
     }
     likelihoods.sum
 }

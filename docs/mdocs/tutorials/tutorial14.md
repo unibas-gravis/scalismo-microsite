@@ -207,21 +207,25 @@ class. If we always use this random generator to generate our random numbers, we
 by seeding this random generator at the beginning of our program.*
 
 Let's define two random walk proposals with different step length:
+
 ```scala mdoc:silent
 val smallStepProposal = RandomWalkProposal(3.0, 1.0)
 val largeStepProposal = RandomWalkProposal(9.0, 3.0)
 ```
+
 Varying the step length allow us to sometimes take large step, in order to explore the global
 landscape, and sometimes smaller steps, to explore a local environment. We can combine these proposal into a
 ```MixtureProposal```, which chooses the individual proposals with a given
 probability. Here We choose to take the large step 20% of the time, and the smaller
 steps 80% of the time:
+
 ```scala mdoc:silent
 val generator = MixtureProposal.fromProposalsWithTransition[Sample](
     (0.8, smallStepProposal),
     (0.2, largeStepProposal)
     )
 ```
+
 
 #### Building the Markov Chain
 

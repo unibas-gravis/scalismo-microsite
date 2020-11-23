@@ -19,15 +19,19 @@ some helpful context for this tutorial:
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
 ```scala mdoc:silent
+import scalismo.ui.api._
+
 import scalismo.geometry._
 import scalismo.common._
-import scalismo.ui.api._
+import scalismo.common.interpolation.TriangleMeshInterpolator3D
 import scalismo.mesh._
 import scalismo.io.{StatisticalModelIO, MeshIO}
 import scalismo.statisticalmodel._
 import scalismo.registration._
 import scalismo.statisticalmodel.dataset._
 import scalismo.numerics.PivotedCholesky.RelativeTolerance
+
+
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 
@@ -42,7 +46,6 @@ Let us load (and visualize) a set of face meshes based on which we would like to
 val dsGroup = ui.createGroup("datasets")
 
 val meshFiles = new java.io.File("datasets/nonAlignedFaces/").listFiles
-
 val (meshes, meshViews) = meshFiles.map(meshFile => {
   val mesh = MeshIO.readMesh(meshFile).get
   val meshView = ui.show(dsGroup, mesh, "mesh")
@@ -83,9 +86,9 @@ After locating the landmark positions on the reference, we iterate on each remai
 
 ```scala mdoc:silent
 val alignedMeshes = toAlign.map { mesh =>
-     val landmarks = pointIds.map{id => Landmark("L_"+id, mesh.pointSet.point(PointId(id)))}
-     val rigidTrans = LandmarkRegistration.rigid3DLandmarkRegistration(landmarks, refLandmarks, center = Point(0,0,0))
-     mesh.transform(rigidTrans)
+  val landmarks = pointIds.map{id => Landmark("L_"+id, mesh.pointSet.point(PointId(id)))}
+  val rigidTrans = LandmarkRegistration.rigid3DLandmarkRegistration(landmarks, refLandmarks, center = Point(0,0,0))
+  mesh.transform(rigidTrans)
 }
 ```
 
@@ -102,10 +105,9 @@ from which we then build the model:
 ```scala mdoc:silent
 val defFields = alignedMeshes.map{ m =>
     val deformationVectors = reference.pointSet.pointIds.map{ id : PointId =>
-    m.pointSet.point(id) - reference.pointSet.point(id)
-  }.toIndexedSeq
-
-  DiscreteField[_3D, UnstructuredPointsDomain[_3D], EuclideanVector[_3D]](reference.pointSet, deformationVectors)
+        m.pointSet.point(id) - reference.pointSet.point(id)
+    }.toIndexedSeq
+    DiscreteField3D(reference, deformationVectors)
 }
 ```
 
@@ -113,33 +115,31 @@ Learning the shape variations from this deformation fields is
 done by calling the method ```createUsingPCA``` of the
 ```DiscreteLowRankGaussianProcess``` class.
 Note that the deformation fields need to be interpolated, such that we are sure that they are defined on
-all the points of the reference mesh.
+all the points of the reference mesh. Once we have the deformation fields, we can build and
+visualize the Point Distribution Model:
+
 ```scala mdoc:silent
-val interpolator = NearestNeighborInterpolator[_3D, EuclideanVector[_3D]]()
-val continuousFields = defFields.map(f => f.interpolate(interpolator) )
-val gp = DiscreteLowRankGaussianProcess.createUsingPCA(reference.pointSet, continuousFields, RelativeTolerance(1e-8))
+val continuousFields = defFields.map(f => f.interpolate(TriangleMeshInterpolator3D()) )
+val gp = DiscreteLowRankGaussianProcess.createUsingPCA(reference,
+            continuousFields, RelativeTolerance(1e-8)
+          )
+val model = PointDistributionModel(gp)
+val modelGroup = ui.createGroup("model")
+val ssmView = ui.show(modelGroup, model, "model")
 ```
+
+
+Notice that when we visualize this mesh model in Scalismo-ui,
+it generates a GaussianProcessTransformation and the reference mesh in the
+Scene Tree of Scalismo-ui.
+
+
 *Exercise: display the mean deformation field of the returned Gaussian Process.*
 
 *Exercise: sample and display a few deformation fields from this GP.*
 
 *Exercise: using the GP's *cov* method, evaluate the sample covariance between two close points on the right cheek first, and a point on the nose and one on the cheek second. What does the data tell you?*
 
-By combining this Gaussian process over deformation fields with the reference mesh,
-we obtain a Statistical Mesh Model:
-
-```scala mdoc:silent
-val model = StatisticalMeshModel(reference, gp.interpolate(interpolator))
-```
-
-Notice that when we visualize this mesh model in Scalismo-ui,
-it generates a GaussianProcessTransformation and the reference mesh in the
-Scene Tree of Scalismo-ui. .
-
-```scala mdoc:silent
-val modelGroup = ui.createGroup("model")
-val ssmView = ui.show(modelGroup, model, "model")
-```
 
 ### An easier way to build a model.
 
@@ -156,28 +156,19 @@ We can create a *DataCollection* by providing a reference mesh, and
 a sequence of meshes, which are in correspondence with this reference.
 
 ```scala mdoc:silent
-val dc = DataCollection.fromMeshSequence(reference, alignedMeshes)._1.get
-```
-
-For each mesh, the data collection automatically computes
-the transformation, which transforms the reference into the respective mesh:
-
-```scala mdoc:silent
-val item0 :DataItem[_3D] = dc.dataItems(0)
-val transform : Transformation[_3D] = item0.transformation
+val dc = DataCollection.fromTriangleMesh3DSequence(reference, alignedMeshes)
 ```
 
 Now that we have our data collection, we can build a shape model as follows:
 
 ```scala mdoc:silent
-val modelNonAligned = StatisticalMeshModel.createUsingPCA(dc).get
+val modelFromDataCollection = PointDistributionModel.createUsingPCA(dc)
 
 val modelGroup2 = ui.createGroup("modelGroup2")
-ui.show(modelGroup2, modelNonAligned, "nonAligned")
+ui.show(modelGroup2, modelFromDataCollection, "ModelDC")
 ```
 
-Here again, a PCA is performed based the deformation fields
-retrieved from the data in correspondence.
+Here again, a PCA is performed based the deformation fields retrieved from the data in correspondence.
 
 Notice that, in this case, we built a model from **misaligned** meshes
 in correspondence.

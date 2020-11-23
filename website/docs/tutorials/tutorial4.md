@@ -3,6 +3,8 @@ id: tutorial4
 title: Gaussian processes and Point Distribution Models
 ---
 
+# Gaussian processes and Point Distribution Models
+
 With this tutorial we aim at illuminating the relationship between Point Distribution Models (PDM) and Gaussian Processes.
 
 
@@ -20,10 +22,10 @@ As in the previous tutorials, we start by importing some commonly used objects a
 ```scala
 import scalismo.geometry._
 import scalismo.common._
-import scalismo.ui.api._
 import scalismo.mesh._
-import scalismo.io.StatismoIO
+import scalismo.io.{StatismoIO, StatisticalModelIO}
 import scalismo.statisticalmodel._
+import scalismo.ui.api._
 
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
@@ -37,7 +39,7 @@ val ui = ScalismoUI()
 We start by loading and visualizing a shape model (or PDM) of faces :
 
 ```scala
-val faceModel = StatismoIO.readStatismoMeshModel(new java.io.File("datasets/bfm.h5")).get
+val faceModel : PointDistributionModel[_3D, TriangleMesh] = StatisticalModelIO.readStatisticalTriangleMeshModel3D(new java.io.File("datasets/bfm.h5")).get
 val modelGroup = ui.createGroup("model")
 ```
 
@@ -67,8 +69,8 @@ In Scalismo, a PDM is represented as a triangle mesh (called the reference mesh)
 on which a Gaussian Process over deformation fields is defined:
 
 ```scala
-val reference : TriangleMesh[_3D] = faceModel.referenceMesh
-val faceGP : DiscreteLowRankGaussianProcess[_3D, UnstructuredPointsDomain[_3D], EuclideanVector[_3D]] = faceModel.gp
+val reference : TriangleMesh[_3D] = faceModel.reference
+val faceGP : DiscreteLowRankGaussianProcess[_3D, TriangleMesh, EuclideanVector[_3D]] = faceModel.gp
 ```
 
 The type signature of the GP looks slightly scary.
@@ -77,7 +79,7 @@ we can, however, rather easily make sense of the individual bits.
 The type signature tells us that:
 - It is a DiscreteGaussianProcess. This means, the function, which the process models are defined on a discrete, finite set of points.
 - It is defined in 3D Space (indicated by the type parameter ```_3D```)
-- Its domain of the modeled functions is a ```UnstructuredPointsDomain``` (namely the points of the reference mesh)
+- Its domain of the modeled functions is a ```TriangleMesh```
 - The values of the modeled functions are vectors (more precisely, they are of type ```EuclideanVector```).
 - It is represented using a low-rank approximation. This is a technicality, which we will come back to later.
 
@@ -85,8 +87,8 @@ Consequently, when we draw samples or obtain the mean from the Gaussian process,
 signature. This is indeed the case
 
 ```scala
-val meanDeformation : DiscreteField[_3D, UnstructuredPointsDomain[_3D], EuclideanVector[_3D]] = faceGP.mean
-val sampleDeformation : DiscreteField[_3D, UnstructuredPointsDomain[_3D], EuclideanVector[_3D]] = faceGP.sample
+val meanDeformation : DiscreteField[_3D, TriangleMesh, EuclideanVector[_3D]] = faceGP.mean
+val sampleDeformation : DiscreteField[_3D, TriangleMesh, EuclideanVector[_3D]] = faceGP.sample
 ```
 
 Let's visualize the mean deformation:

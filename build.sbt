@@ -2,9 +2,9 @@
 organization  := "ch.unibas.cs.gravis"
 
 name := """scalismo-website"""
-version       := "0.16.0"
+version       := "0.90-RC2"
 
-scalaVersion  := "2.12.8"
+scalaVersion  := "2.12.10"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
@@ -15,7 +15,7 @@ resolvers += Opts.resolver.sonatypeSnapshots
 
 libraryDependencies  ++= Seq(
             "ch.unibas.cs.gravis" % "scalismo-native-all" % "4.0.0",
-            "ch.unibas.cs.gravis" %% "scalismo-ui" % "0.14-RC1"
+            "ch.unibas.cs.gravis" %% "scalismo-ui" % "0.90-RC2"
 )
 
 lazy val root = (project in file("."))

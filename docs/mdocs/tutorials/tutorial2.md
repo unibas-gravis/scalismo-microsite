@@ -1,6 +1,6 @@
 ---
-id: tutorial2
-title: Rigid Alignment
+-id: tutorial2
+-title: Rigid Alignment
 ---
 
 In this tutorial we show how rigid alignment of shapes can be performed in Scalismo.
@@ -19,9 +19,9 @@ As in the previous tutorials, we start by importing some commonly used objects a
 ```scala mdoc:silent
 import scalismo.geometry._
 import scalismo.common._
-import scalismo.ui.api._
 import scalismo.mesh.TriangleMesh
 import scalismo.io.MeshIO
+import scalismo.ui.api._
 
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
@@ -34,17 +34,16 @@ Let's start by loading and showing Paola's mesh again:
 ```scala mdoc:silent
 val ui = ScalismoUI()
 val paolaGroup = ui.createGroup("paola")
-val mesh : TriangleMesh[_3D] = MeshIO.readMesh(new java.io.File("datasets/Paola.ply")).get
+val mesh: TriangleMesh[_3D] = MeshIO.readMesh(new java.io.File("datasets/Paola.ply")).get
 val meshView = ui.show(paolaGroup, mesh, "Paola")
 ```
 
 Scalismo allows us to perform geometric transformations on meshes.
 
 Transformations are *functions* that map a given point, into a new *transformed* point.
-We find the transformations in the package ```scalismo.registration```.
 Let's import the classes in this package
 ```scala mdoc:silent
-import scalismo.registration.{Transformation, RotationTransform, TranslationTransform, RigidTransformation}
+import scalismo.transformations._
 ```
 
 
@@ -54,13 +53,13 @@ which flips the point along the x axis.
 
 
 ```scala mdoc:silent
-val flipTransform = Transformation((p : Point[_3D]) => Point(-p.x, p.y, p.z))
+val flipTransform = Transformation((p: Point[_3D]) => Point3D(-p.x, p.y, p.z))
 ```
 
 When given a point as an argument, the defined transform will then simply return a new point:
 
 ```scala mdoc
-val pt : Point[_3D] = flipTransform(Point(1.0, 1.0, 1.0))
+val pt: Point[_3D] = flipTransform(Point3D(1.0, 1.0, 1.0))
 ```
 
 An important class of transformations are the rigid transformation, i.e. a rotation followed by a translation. Due to their
@@ -70,25 +69,25 @@ A translation can be defined by specifying the translation vector, which is
 added to every point:
 
 ```scala mdoc:silent
-val translation = TranslationTransform[_3D](EuclideanVector(100,0,0))
+val translation = Translation3D(EuclideanVector3D(100, 0, 0))
 ```
 
 For defining a rotation, we define the 3 [Euler angles](https://en.wikipedia.org/wiki/Euler_angles) , as well as the center of rotation.
 ```scala mdoc:silent
-val rotationCenter = Point(0.0, 0.0, 0.0)
-val rotation : RotationTransform[_3D] = RotationTransform(0f,3.14f,0f, rotationCenter)
+val rotationCenter = Point3D(0.0, 0.0, 0.0)
+val rotation: Rotation[_3D] = Rotation3D(0f, 3.14f, 0f, rotationCenter)
 ```
 This transformation rotates every point with approximately 180 degrees around the Y axis (centered at the origin of the space).
 
 ```scala mdoc
-val pt2 : Point[_3D] = rotation(Point(1,1,1))
+val pt2: Point[_3D] = rotation(Point(1, 1, 1))
 ```
 
 In Scalismo, such transformations can be applied not only to single points, but most collections of points such as triangle meshes, can be
 transformed by invoking the method ```transform``` on the respective object.
 
 ```scala mdoc:silent
-val translatedPaola : TriangleMesh[_3D] = mesh.transform(translation)
+val translatedPaola: TriangleMesh[_3D] = mesh.transform(translation)
 val paolaMeshTranslatedView = ui.show(paolaGroup, translatedPaola, "translatedPaola")
 ```
 
@@ -96,14 +95,15 @@ val paolaMeshTranslatedView = ui.show(paolaGroup, translatedPaola, "translatedPa
 
 Simple transformations can be composed to more complicated ones using the ```compose``` method. For example, we can define a rigid
 tranformation as a composition of translation and rotation:
+
 ```scala mdoc:silent
-val rigidTransform1 = translation.compose(rotation)
+val rigidTransform1 = CompositeTransformation(translation, rotation)
 ```
 
 In Scalismo, rigid transformations are also already predefined. We could have written instead:
 
 ```scala mdoc:silent
-val rigidTransform2 : RigidTransformation[_3D] = RigidTransformation[_3D](translation, rotation)
+val rigidTransform2 : RigidTransformation[_3D] = TranslationAfterRotation3D(translation, rotation)
 ```
 
 

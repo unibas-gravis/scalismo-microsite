@@ -43,16 +43,18 @@ which is defined in the package ```scalismo.mesh```.
 In the following we will need access to the following object, which we
 now import:
 ```scala mdoc:silent
-import scalismo.mesh.TriangleMesh // the mesh class
-import scalismo.io.MeshIO // to read meshes
-import scalismo.common.PointId // to refer to points by id
-import scalismo.mesh.TriangleId // to refer to triangles by id
-import scalismo.geometry._3D // indicates that we work in 3D space
+import scalismo.mesh.TriangleMesh
+import scalismo.io.{MeshIO, StatisticalModelIO}
+import scalismo.common.PointId
+import scalismo.mesh.TriangleId
+import scalismo.geometry.{_3D, Point3D}
+import scalismo.image.{DiscreteImage, DiscreteImage3D}
+import scalismo.statisticalmodel.PointDistributionModel // indicates that we work in 3D space
 ```
 
 Meshes can be read from a file using the method ```readMesh``` from the ```MeshIO```:
 ```scala mdoc:silent
-val mesh : TriangleMesh[_3D] = MeshIO.readMesh(new java.io.File("datasets/Paola.ply")).get
+val mesh: TriangleMesh[_3D] = MeshIO.readMesh(new java.io.File("datasets/Paola.ply")).get
 ```
 To visualize any object in Scalismo, we can use the ```show``` method of the ```ui``` object.
 We often want to organize different visualizations of an object in a group.
@@ -119,26 +121,26 @@ import scalismo.geometry.{EuclideanVector}
 
 We define points by specifying their coordinates:
 ```scala mdoc:silent
-val p1 : Point[_3D] = Point(4.0, 5.0, 6.0)
-val p2 : Point[_3D] = Point(1.0, 2.0, 3.0)
+val p1: Point[_3D] = Point3D(4.0, 5.0, 6.0)
+val p2: Point[_3D] = Point3D(1.0, 2.0, 3.0)
 ```
 The difference between two points is a ```EuclideanVector```
 
 ```scala mdoc:silent
-val v1 : EuclideanVector[_3D] = Point(4.0, 5.0, 6.0) - Point(1.0 , 2.0, 3.0)
+val v1: EuclideanVector[_3D] = Point3D(4.0, 5.0, 6.0) - Point3D(1.0, 2.0, 3.0)
 ```
 
 The sum of a point with a vector yields a new point:
 ```scala mdoc:silent
-val p3 : Point[_3D] = p1 + v1
+val p3: Point[_3D] = p1 + v1
 ```
 Points can be converted to vectors:
 ```scala mdoc:silent
-val v2 : EuclideanVector[_3D] = p1.toVector
+val v2: EuclideanVector[_3D] = p1.toVector
 ```
 and vice versa:
 ```scala mdoc:silent
-val v3 : Point[_3D] = v1.toPoint
+val v3: Point[_3D] = v1.toPoint
 ```
 
 *Remark: Observe that the type of the expression is a parametric type ```Point[_3D]```, where the type parameter ```_3D``` encodes the dimensionality. This pattern holds true for most types in Scalismo. It allows us to write generic code, which is independent of the dimensionality of the space.*
@@ -146,18 +148,23 @@ val v3 : Point[_3D] = v1.toPoint
 We put these concepts in practice, and illustrate how we can compute the center of mass, given a sequence of points:
 
 ```scala mdoc:silent
-val pointList = Seq(Point(4.0, 5.0, 6.0), Point(1.0, 2.0, 3.0), Point(14.0, 15.0, 16.0), Point(7.0, 8.0, 9.0), Point(
-10.0, 11.0, 12.0))
+val pointList = Seq(
+    Point3D(4.0, 5.0, 6.0),
+    Point3D(1.0, 2.0, 3.0),
+    Point3D(14.0, 15.0, 16.0),
+    Point3D(7.0, 8.0, 9.0),
+    Point3D(10.0, 11.0, 12.0)
+  )
 ```
 
 In a first step, we treat all the points as displacement vectors (the displacement of the points from the origin)
 ```scala mdoc:silent
-val vectors = pointList.map{p : Point[_3D] => p.toVector}  // use map to turn points into vectors
+val vectors = pointList.map { p: Point[_3D] => p.toVector } // use map to turn points into vectors
 ```
 The average displacement can be easily computed by averaging all the vectors.
 ```scala mdoc:silent
-val vectorSum = vectors.reduce{ (v1, v2) => v1 + v2} // sum up all vectors in the collection
-val centerV: EuclideanVector[_3D] = vectorSum * (1.0 / pointList.length ) // divide the sum by the number of points
+val vectorSum = vectors.reduce { (v1, v2) => v1 + v2 } // sum up all vectors in the collection
+val centerV: EuclideanVector[_3D] = vectorSum * (1.0 / pointList.length) // divide the sum by the number of points
 ```
 
 And finally we treat the average displacement again as a point in space.
@@ -173,15 +180,13 @@ A *discrete* scalar image (e.g. gray level image) in Scalismo is simply a functi
 We will need the following imports:
 ```scala mdoc:silent
 import scalismo.io.ImageIO; // to read images
-import scalismo.image.{DiscreteScalarImage, DiscreteScalarImage3D} // discrete images
-import scalismo.image.ScalarImage // continuous images
 import scalismo.geometry.{IntVector, IntVector3D} // represent image indices
 ```
 
 Let's read and display a 3D image (MRI of a human):
 
 ```scala mdoc:silent
-val image = ImageIO.read3DScalarImage[Short](new java.io.File("datasets/PaolaMRI.vtk")).get
+val image: DiscreteImage[_3D, Short] = ImageIO.read3DScalarImage[Short](new java.io.File("datasets/PaolaMRI.vtk")).get
 val imageView = ui.show(paolaGroup, image, "mri")
 ```
 
@@ -198,9 +203,9 @@ You can also change the way of visualizing the 3D scene under the
 Let's inspect the domain of the image :
 
 ```scala mdoc
-val origin : Point[_3D] = image.domain.origin
-val spacing : EuclideanVector[_3D] = image.domain.spacing
-val size : IntVector[_3D] = image.domain.size
+val origin: Point[_3D] = image.domain.origin
+val spacing: EuclideanVector[_3D] = image.domain.spacing
+val size: IntVector[_3D] = image.domain.size
 ```
 
 The discrete image domain is a 3-dimensional regular grid of points originating at point (92.5485, -121.926, 135.267),
@@ -209,7 +214,7 @@ with regular spacing of 1.5 mm in each dimension and containing 171, 171, 139 gr
 To better see this, let's display the first 172 points of the image domain
 
 ```scala mdoc:silent
-val imagePoints : Iterator[Point[_3D]] = image.domain.points.take(172)
+val imagePoints: Iterator[Point[_3D]] = image.domain.pointSet.points.take(172)
 val gridPointsView = ui.show(paolaGroup, imagePoints.toIndexedSeq, "imagePoints")
 ```
 
@@ -233,10 +238,10 @@ The point *origin* corresponds to the grid point with index (0,0,0). Hence, the 
 image(IntVector(0,0,0))
 ```
 
-Naturally, the number of scalar values should be equal to the number of point domains
+Naturally, the number of scalar values should be equal to the number of points
 
 ```scala mdoc:silent
-image.values.size == image.domain.points.size
+image.values.size == image.domain.pointSet.numberOfPoints
 ```
 
 Notice that you can check the intensity value at a particular point position in the image, by maintaining the Ctrl key pressed and hovering over the image. The intensity value will then be displayed in the lower left corner of the Scalismo viewer window.
@@ -251,32 +256,28 @@ all the values above 300 are replaced with 0.
 
 
 ```scala mdoc:silent
-val threshValues = image.values.map{v :Short => if (v <= 300) v else 0.toShort}
-val thresholdedImage : DiscreteScalarImage[_3D, Short] = DiscreteScalarImage[_3D, Short](image.domain, threshValues.toSeq)
+val threshValues = image.values.map { v: Short => if (v <= 300) v else 0.toShort }
+val thresholdedImage: DiscreteImage[_3D, Short] = DiscreteImage3D[Short](image.domain, threshValues.toIndexedSeq)
 ui show(paolaGroup, thresholdedImage, "thresh")
 ```
 *Note: We need to write 0.toShort or 0 : Short in order to ensure that the ```threshValues``` have type ```Short``` and not ```Int```.*
 
-There is, however, also a more elegant way to write above code. ```DiscreteScalarImage``` supports a ```map``` method, which applies
+There is, however, also a more elegant way to write above code, namely using the ```map``` method. The ```map``` method applies
 an operation to all values. Using this method, we can write instead
 ```scala mdoc:silent
-val thresholdedImage2 : DiscreteScalarImage[_3D,Short] = image.map(v => if (v <= 300) v else 0.toShort)
+val thresholdedImage2 = image.map(v => if (v <= 300) v else 0.toShort)
 ```
 
 ## Statistical Mesh Models
 
 Finally, we look at Statistical Shape Models.
 
-We need the following imports
+
+Statistical models can be read by calling ```readStatisticalMeshModel```
 
 ```scala mdoc:silent
 import scalismo.io.StatisticalModelIO // to read statistical shape models
-import scalismo.statisticalmodel.StatisticalMeshModel // the statistical shape models
-```
-
-Statistical models can be read by calling ```readStatisticalMeshModel```
-```scala mdoc:silent
-val faceModel = StatisticalModelIO.readStatisticalMeshModel(new java.io.File("datasets/bfm.h5")).get
+val faceModel: PointDistributionModel[_3D, TriangleMesh] = StatisticalModelIO.readStatisticalTriangleMeshModel3D(new java.io.File("datasets/bfm.h5")).get
 val faceModelView = ui.show(faceModel, "faceModel")
 ```
 
@@ -294,7 +295,7 @@ As you can see, a new instance of the face model is displayed each time along wi
 Sampling in the ui is useful for getting a visual impression of the variability of a model. But more often we want to
 sample from a model programmatically. We can obtain a sample from the model, by calling the ```sample method```:
 ```scala mdoc:silent
-val randomFace : TriangleMesh[_3D] = faceModel.sample
+val randomFace: TriangleMesh[_3D] = faceModel.sample
 ```
 #### Exercise: Visualize a few randomly generated meshes in the ui.
 

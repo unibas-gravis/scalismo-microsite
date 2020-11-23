@@ -1,6 +1,6 @@
 ---
 id: tutorial8
-title: Posterior Shape Models
+title: Posterior shape models
 ---
 
 In this tutorial we will use Gaussian processes for regression tasks and experiment with the concept of posterior shape models.
@@ -23,12 +23,14 @@ As in the previous tutorials, we start by importing some commonly used objects a
 ```scala mdoc:silent
 import scalismo.geometry._
 import scalismo.common._
-import scalismo.ui.api._
+import scalismo.common.interpolation.TriangleMeshInterpolator3D
 import scalismo.mesh._
 import scalismo.io.{StatisticalModelIO, MeshIO}
 import scalismo.statisticalmodel._
 import scalismo.numerics.UniformMeshSampler3D
 import scalismo.kernels._
+
+import scalismo.ui.api._
 import breeze.linalg.{DenseMatrix, DenseVector}
 
 scalismo.initialize()
@@ -40,7 +42,7 @@ val ui = ScalismoUI()
 
 We also load and visualize the face model:
 ```scala mdoc:silent
-val model = StatisticalModelIO.readStatisticalMeshModel(new java.io.File("datasets/bfm.h5")).get
+val model = StatisticalModelIO.readStatisticalTriangleMeshModel3D(new java.io.File("datasets/bfm.h5")).get
 
 val modelGroup = ui.createGroup("modelGroup")
 val ssmView = ui.show(modelGroup, model, "model")
@@ -60,7 +62,7 @@ nose:
 
 ```scala mdoc:silent
 val idNoseTip = PointId(8156)
-val noseTipReference = model.referenceMesh.pointSet.point(idNoseTip)
+val noseTipReference = model.reference.pointSet.point(idNoseTip)
 val noseTipMean = model.mean.pointSet.point(idNoseTip)
 val noseTipDeformation = (noseTipMean - noseTipReference) * 2.0
 ```
@@ -68,9 +70,8 @@ val noseTipDeformation = (noseTipMean - noseTipReference) * 2.0
 To visualize this deformation, we need to define a ```DiscreteField```, which can then be passed to the show
 method of our ```ui``` object.
 ```scala mdoc:silent
-val noseTipDomain = UnstructuredPointsDomain(IndexedSeq(noseTipReference))
-val noseTipDeformationAsSeq = IndexedSeq(noseTipDeformation)
-val noseTipDeformationField = DiscreteField[_3D, UnstructuredPointsDomain[_3D], EuclideanVector[_3D]](noseTipDomain, noseTipDeformationAsSeq)
+val noseTipDomain = UnstructuredPointsDomain3D(IndexedSeq(noseTipReference))
+val noseTipDeformationField = DiscreteField3D(noseTipDomain,  IndexedSeq(noseTipDeformation))
 
 val observationGroup = ui.createGroup("observation")
 ui.show(observationGroup, noseTipDeformationField, "noseTip")
@@ -91,7 +92,7 @@ val regressionData = IndexedSeq((noseTipReference, noseTipDeformation, noise))
 We can now obtain the regression result by feeding this data to the method ```regression``` of the ```GaussianProcess``` object:
 
 ```scala mdoc:silent
-val gp : LowRankGaussianProcess[_3D, EuclideanVector[_3D]] = model.gp.interpolate(NearestNeighborInterpolator())
+val gp : LowRankGaussianProcess[_3D, EuclideanVector[_3D]] = model.gp.interpolate(TriangleMeshInterpolator3D())
 val posteriorGP : LowRankGaussianProcess[_3D, EuclideanVector[_3D]] = LowRankGaussianProcess.regression(gp, regressionData)
 ```
 
@@ -106,8 +107,8 @@ gp.posterior(regressionData)
 Independently of how you call the method, the returned type is a continuous (low rank) Gaussian Process from which we can now sample deformations at any set of points:
 
 ```scala mdoc:silent
-val posteriorSample : DiscreteField[_3D, UnstructuredPointsDomain[_3D], EuclideanVector[_3D]]
-    = posteriorGP.sampleAtPoints(model.referenceMesh.pointSet)
+val posteriorSample: DiscreteField[_3D, TriangleMesh, EuclideanVector[_3D]] =
+    posteriorGP.sampleAtPoints(model.reference)
 val posteriorSampleGroup = ui.createGroup("posteriorSamples")
 for (i <- 0 until 10) {
     ui.show(posteriorSampleGroup, posteriorSample, "posteriorSample")
@@ -123,7 +124,7 @@ Given that the StatisticalMeshModel is merely a wrapper around a GP, the same po
 val littleNoise = MultivariateNormalDistribution(DenseVector.zeros[Double](3), DenseMatrix.eye[Double](3) * 0.01)
 val pointOnLargeNose = noseTipReference + noseTipDeformation
 val discreteTrainingData = IndexedSeq((PointId(8156), pointOnLargeNose, littleNoise))
-val meshModelPosterior : StatisticalMeshModel = model.posterior(discreteTrainingData)
+val meshModelPosterior: PointDistributionModel[_3D, TriangleMesh] = model.posterior(discreteTrainingData)
 ```
 
 Notice in this case, since we are working with a discrete Gaussian process, the observed data is specified in terms of the *point identifier* of the nose tip point instead of its 3D coordinates.

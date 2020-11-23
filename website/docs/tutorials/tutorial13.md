@@ -1,8 +1,7 @@
 ---
 id: tutorial13
-title: Active Shape Model fitting
+title: Active Shape Model Fitting
 ---
-
 
 In this tutorial we show how we can perform active shape model fitting in Scalismo.
 
@@ -18,14 +17,15 @@ some helpful context for this tutorial:
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
 ```scala
-  import scalismo.geometry._
-  import scalismo.ui.api._
-  import scalismo.registration._
-  import scalismo.mesh.TriangleMesh
-  import scalismo.statisticalmodel.asm._
-  import scalismo.io.{ActiveShapeModelIO, ImageIO}
-  import breeze.linalg.{DenseVector}
+import scalismo.geometry._
+import scalismo.transformations._
+import scalismo.registration._
+import scalismo.mesh.TriangleMesh
+import scalismo.statisticalmodel.asm._
+import scalismo.io.{ActiveShapeModelIO, ImageIO}
 
+import scalismo.ui.api._
+import breeze.linalg.{DenseVector}
 
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
@@ -65,8 +65,8 @@ The following code shows how this information can be accessed:
 ```scala
 val profiles = asm.profiles
 profiles.map(profile => {
-    val pointId = profile.pointId
-    val distribution = profile.distribution
+  val pointId = profile.pointId
+  val distribution = profile.distribution
 })
 ```
 
@@ -96,7 +96,7 @@ val preprocessedImage = asm.preprocessor(image)
 We can now extract features at a given point:
 
 ```scala
-val point1 = image.domain.origin + EuclideanVector(10.0, 10.0, 10.0)
+val point1 = image.domain.origin + EuclideanVector3D(10.0, 10.0, 10.0)
 val profile = asm.profiles.head
 val feature1 : DenseVector[Double] = asm.featureExtractor(preprocessedImage, point1, asm.statisticalModel.mean, profile.pointId).get
 ```
@@ -108,7 +108,7 @@ of a line at this point.
 We can retrieve the likelihood that each corresponding point corresponds to a given profile point:
 
 ```scala
-val point2 = image.domain.origin + EuclideanVector(20.0, 10.0, 10.0)
+val point2 = image.domain.origin + EuclideanVector3D(20.0, 10.0, 10.0)
 val featureVec1 = asm.featureExtractor(preprocessedImage, point1, asm.statisticalModel.mean, profile.pointId).get
 val featureVec2 = asm.featureExtractor(preprocessedImage, point2, asm.statisticalModel.mean, profile.pointId).get
 
@@ -154,7 +154,7 @@ In order to allow it to optimize the rotation, it is important that we choose a 
 the center of mass of the model:
 
 ```scala
-// make sure we rotate around a reasonable center point
+    // make sure we rotate around a reasonable center point
 val modelBoundingBox = asm.statisticalModel.referenceMesh.boundingBox
 val rotationCenter = modelBoundingBox.origin + modelBoundingBox.extent * 0.5
 ```
@@ -162,10 +162,11 @@ val rotationCenter = modelBoundingBox.origin + modelBoundingBox.extent * 0.5
 To initialize the fitting process, we also need to set up the initial transformation:
 
 ```scala
+
 // we start with the identity transform
-val translationTransformation = TranslationTransform(EuclideanVector(0, 0, 0))
-val rotationTransformation = RotationTransform(0, 0, 0, rotationCenter)
-val initialRigidTransformation = RigidTransformation(translationTransformation, rotationTransformation)
+val translationTransformation = Translation3D(EuclideanVector3D(0, 0, 0))
+val rotationTransformation = Rotation3D(0, 0, 0, rotationCenter)
+val initialRigidTransformation = TranslationAfterRotation3D(translationTransformation, rotationTransformation)
 val initialModelCoefficients = DenseVector.zeros[Double](asm.statisticalModel.rank)
 val initialTransformation = ModelTransformations(initialModelCoefficients, initialRigidTransformation)
 ```
@@ -173,9 +174,8 @@ val initialTransformation = ModelTransformations(initialModelCoefficients, initi
 To start the fitting, we obtain an iterator, which we subsequently use to drive the iteration.
 
 ```scala
-
-    val numberOfIterations = 20
-    val asmIterator = asm.fitIterator(image, searchSampler, numberOfIterations, config, initialTransformation)
+val numberOfIterations = 20
+val asmIterator = asm.fitIterator(image, searchSampler, numberOfIterations, config, initialTransformation)
 ```
 
 Especially in a debugging phase, we want to visualize the result in every iteration. The following code shows,
@@ -184,14 +184,14 @@ in every iteration:
 
 ```scala
 val asmIteratorWithVisualization = asmIterator.map(it => {
-  it match {
-    case scala.util.Success(iterationResult) => {
-      modelView.shapeModelTransformationView.poseTransformationView.transformation = iterationResult.transformations.rigidTransform
-      modelView.shapeModelTransformationView.shapeTransformationView.coefficients = iterationResult.transformations.coefficients
+    it match {
+        case scala.util.Success(iterationResult) => {
+            modelView.shapeModelTransformationView.poseTransformationView.transformation = iterationResult.transformations.rigidTransform
+            modelView.shapeModelTransformationView.shapeTransformationView.coefficients = iterationResult.transformations.coefficients
+        }
+        case scala.util.Failure(error) => System.out.println(error.getMessage)
     }
-    case scala.util.Failure(error) => System.out.println(error.getMessage)
-  }
-  it
+    it
 })
 ```
 
@@ -200,6 +200,7 @@ To run the fitting, and get the result, we finally consume the iterator:
 ```scala
 val result = asmIteratorWithVisualization.toIndexedSeq.last
 val finalMesh = result.get.mesh
+
 ```
 
 ## Evaluating the likelihood of a model instance under the image
@@ -218,10 +219,10 @@ def likelihoodForMesh(asm : ActiveShapeModel, mesh : TriangleMesh[_3D], preproce
     val ids = asm.profiles.ids
 
     val likelihoods = for (id <- ids) yield {
-        val profile = asm.profiles(id)
-        val profilePointOnMesh = mesh.pointSet.point(profile.pointId)
-        val featureAtPoint = asm.featureExtractor(preprocessedImage, profilePointOnMesh, mesh, profile.pointId).get
-        profile.distribution.logpdf(featureAtPoint)
+      val profile = asm.profiles(id)
+      val profilePointOnMesh = mesh.pointSet.point(profile.pointId)
+      val featureAtPoint = asm.featureExtractor(preprocessedImage, profilePointOnMesh, mesh, profile.pointId).get
+      profile.distribution.logpdf(featureAtPoint)
     }
     likelihoods.sum
 }

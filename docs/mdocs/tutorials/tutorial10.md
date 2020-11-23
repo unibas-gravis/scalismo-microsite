@@ -20,9 +20,9 @@ some helpful context for this tutorial:
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
 ```scala mdoc:silent
+import scalismo.ui.api._
 import scalismo.geometry._
 import scalismo.common._
-import scalismo.ui.api._
 import scalismo.mesh._
 import scalismo.registration.LandmarkRegistration
 import scalismo.io.{MeshIO}
@@ -115,8 +115,9 @@ val newCorrespondences = attributeCorrespondences(transformed, ptIds)
 val newClosestPoints = newCorrespondences.map(pointPair => pointPair._2)
 ui.show(group2, newClosestPoints.toIndexedSeq, "newCandidateCorr")
 val newRigidTransformation =
-    LandmarkRegistration.rigid3DLandmarkRegistration(newCorrespondences, center = Point3D(0, 0, 0))
+  LandmarkRegistration.rigid3DLandmarkRegistration(newCorrespondences, center = Point3D(0, 0, 0))
 val newTransformed = transformed.transform(newRigidTransformation)
+
 val alignedMeshView2 =  ui.show(group2, newTransformed, "aligned??")
 alignedMeshView2.color = java.awt.Color.BLUE
 ```
@@ -135,7 +136,7 @@ def ICPRigidAlign(movingMesh: TriangleMesh[_3D], ptIds : Seq[PointId], numberOfI
     val correspondences = attributeCorrespondences(movingMesh, ptIds)
     val transform = LandmarkRegistration.rigid3DLandmarkRegistration(correspondences, center = Point(0, 0, 0))
     val transformed = movingMesh.transform(transform)
-
+//
     ICPRigidAlign(transformed, ptIds, numberOfIterations - 1)
   }
 }

@@ -28,13 +28,17 @@ As in the previous tutorials, we start by importing some commonly used objects a
 ```scala mdoc:silent
 import scalismo.geometry._
 import scalismo.common._
-import scalismo.ui.api._
+import scalismo.common.interpolation._
 import scalismo.mesh._
 import scalismo.registration._
-import scalismo.io.{MeshIO}
+import scalismo.io.MeshIO
 import scalismo.numerics._
 import scalismo.kernels._
 import scalismo.statisticalmodel._
+import breeze.linalg.DenseVector
+
+import scalismo.ui.api._
+
 import breeze.linalg.{DenseVector}
 
 scalismo.initialize()
@@ -51,6 +55,7 @@ domain for our Gaussian Process model.
 ```scala mdoc:silent
 val referenceMesh = MeshIO.readMesh(new java.io.File("datasets/quickstart/facemesh.ply")).get
 
+
 val modelGroup = ui.createGroup("model")
 val refMeshView = ui.show(modelGroup, referenceMesh, "referenceMesh")
 refMeshView.color = java.awt.Color.RED
@@ -63,21 +68,21 @@ This justifies the use of a zero-mean Gaussian process. As a covariance function
 of the vector field to be uncorrelated (indicated by the use of the ```DiagonalKernel```).
 
 ```scala mdoc:silent
-val mean = VectorField(RealSpace[_3D], (_ : Point[_3D]) => EuclideanVector.zeros[_3D])
-val kernel = DiagonalKernel[_3D](GaussianKernel(sigma = 70) * 50.0, outputDim = 3)
-val gp = GaussianProcess(mean, kernel)
+val zeroMean = Field(EuclideanSpace3D, (_: Point[_3D]) => EuclideanVector.zeros[_3D])
+val kernel = DiagonalKernel3D(GaussianKernel3D(sigma = 70) * 50.0, outputDim = 3)
+val gp = GaussianProcess(zeroMean, kernel)
 ```
 
 We then perform a low-rank approximation, to get a parametric representation of the
 Gaussian process:
 
 ```scala mdoc:silent
+val interpolator = TriangleMeshInterpolator3D[EuclideanVector[_3D]]()
 val lowRankGP = LowRankGaussianProcess.approximateGPCholesky(
-    referenceMesh.pointSet,
+    referenceMesh,
     gp,
     relativeTolerance = 0.05,
-    interpolator = NearestNeighborInterpolator()
-    )
+    interpolator = interpolator)
 ```
 
 To visualize the effect of this Gaussian process, we add it to the
@@ -193,7 +198,7 @@ The final mesh representation can be obtained by obtaining the transform corresp
 warp the reference mesh with this tranform:
 
 ```scala mdoc:silent
-val registrationTransformation = transformationSpace.transformForParameters(registrationResult.parameters)
+val registrationTransformation = transformationSpace.transformationForParameters(registrationResult.parameters)
 val fittedMesh = referenceMesh.transform(registrationTransformation)
 ```
 
@@ -204,8 +209,8 @@ However, sometimes, we need an exact representation of the target mesh. This can
 
 ```scala mdoc:silent
 val targetMeshOperations = targetMesh.operations
-val projection = (pt : Point[_3D]) => {
-  targetMeshOperations.closestPointOnSurface(pt).point
+val projection = (pt: Point[_3D]) => {
+    targetMeshOperations.closestPointOnSurface(pt).point
 }
 ```
 
@@ -233,50 +238,48 @@ with decreasing regularization weights. In the following we illustrate this proc
 collects all relevant parameters:
 
 ```scala mdoc:silent
-case class RegistrationParameters(regularizationWeight : Double, numberOfIterations : Int, numberOfSampledPoints : Int)
+case class RegistrationParameters(regularizationWeight: Double, numberOfIterations: Int, numberOfSampledPoints: Int)
 ```
 
 We put all the registration code into a function, which takes (among others) the registration parameters as an argument.
 
 ```scala mdoc:silent
 def doRegistration(
-            lowRankGP : LowRankGaussianProcess[_3D, EuclideanVector[_3D]],
-            referenceMesh : TriangleMesh[_3D],
-            targetmesh : TriangleMesh[_3D],
-            registrationParameters : RegistrationParameters,
-            initialCoefficients : DenseVector[Double]
-        ) : DenseVector[Double] =
-    {
-        val transformationSpace = GaussianProcessTransformationSpace(lowRankGP)
-        val fixedImage = referenceMesh.operations.toDistanceImage
-        val movingImage = targetMesh.operations.toDistanceImage
-        val sampler = FixedPointsUniformMeshSampler3D(
-            referenceMesh,
-            registrationParameters.numberOfSampledPoints
-            )
-        val metric = MeanSquaresMetric(
-            fixedImage,
-            movingImage,
-            transformationSpace,
-            sampler
-            )
-        val optimizer = LBFGSOptimizer(registrationParameters.numberOfIterations)
-        val regularizer = L2Regularizer(transformationSpace)
-        val registration = Registration(
-            metric,
-            regularizer,
-            registrationParameters.regularizationWeight,
-            optimizer
-            )
-        val registrationIterator = registration.iterator(initialCoefficients)
-        val visualizingRegistrationIterator = for ((it, itnum) <- registrationIterator.zipWithIndex) yield {
-              println(s"object value in iteration $itnum is ${it.value}")
-              gpView.coefficients = it.parameters
-              it
-        }
-        val registrationResult = visualizingRegistrationIterator.toSeq.last
-        registrationResult.parameters
+    lowRankGP: LowRankGaussianProcess[_3D, EuclideanVector[_3D]],
+    referenceMesh: TriangleMesh[_3D],
+    targetmesh: TriangleMesh[_3D],
+    registrationParameters: RegistrationParameters,
+    initialCoefficients: DenseVector[Double]
+  ): DenseVector[Double] = {
+    val transformationSpace = GaussianProcessTransformationSpace(lowRankGP)
+    val fixedImage = referenceMesh.operations.toDistanceImage
+    val movingImage = targetMesh.operations.toDistanceImage
+    val sampler = FixedPointsUniformMeshSampler3D(
+      referenceMesh,
+      registrationParameters.numberOfSampledPoints
+    )
+    val metric = MeanSquaresMetric(
+      fixedImage,
+      movingImage,
+      transformationSpace,
+      sampler
+    )
+    val optimizer = LBFGSOptimizer(registrationParameters.numberOfIterations)
+    val regularizer = L2Regularizer(transformationSpace)
+    val registration = Registration(
+      metric,
+      regularizer,
+      registrationParameters.regularizationWeight,
+      optimizer
+    )
+    val registrationIterator = registration.iterator(initialCoefficients)
+    val visualizingRegistrationIterator = for ((it, itnum) <- registrationIterator.zipWithIndex) yield {
+      println(s"object value in iteration $itnum is ${it.value}")
+      it
     }
+    val registrationResult = visualizingRegistrationIterator.toSeq.last
+    registrationResult.parameters
+}
 ```
 
 Finally, we define the parameters and run the registration. Note that for large regularization weights, we sample fewer points on the surface to save some computation time.
@@ -284,14 +287,17 @@ This is justified as, a strongly regularized model will not be able to adapt to 
 
 ```scala mdoc:silent
 val registrationParameters = Seq(
-        RegistrationParameters(regularizationWeight = 1e-1, numberOfIterations = 20, numberOfSampledPoints = 1000),
-        RegistrationParameters(regularizationWeight = 1e-2, numberOfIterations = 30, numberOfSampledPoints = 1000),
-        RegistrationParameters(regularizationWeight = 1e-4, numberOfIterations = 40, numberOfSampledPoints = 2000),
-        RegistrationParameters(regularizationWeight = 1e-6, numberOfIterations = 50, numberOfSampledPoints = 4000)
-    )
+    RegistrationParameters(regularizationWeight = 1e-1, numberOfIterations = 20, numberOfSampledPoints = 1000),
+    RegistrationParameters(regularizationWeight = 1e-2, numberOfIterations = 30, numberOfSampledPoints = 1000),
+    RegistrationParameters(regularizationWeight = 1e-4, numberOfIterations = 40, numberOfSampledPoints = 2000),
+    RegistrationParameters(regularizationWeight = 1e-6, numberOfIterations = 50, numberOfSampledPoints = 4000)
+  )
 
-    val finalCoefficients = registrationParameters.foldLeft(initialCoefficients)((modelCoefficients, regParameters) =>
-            doRegistration(lowRankGP, referenceMesh, targetMesh, regParameters, modelCoefficients))
+
+val finalCoefficients = registrationParameters.foldLeft(initialCoefficients)((modelCoefficients, regParameters) =>
+    doRegistration(lowRankGP, referenceMesh, targetMesh, regParameters, modelCoefficients)
+  )
+
 ```
 
 From this point we use the procedure described above to work with the registration result.

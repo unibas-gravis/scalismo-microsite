@@ -15,7 +15,7 @@ import scalismo.ui.api._
 // some objects and readers from scalismo
 import scalismo.io._
 import scalismo.geometry._
-import scalismo.registration._
+import scalismo.transformations._
 
 // some other things needed in the examples
 import java.io.File
@@ -132,7 +132,7 @@ just a mesh that is transformed by a parametric family of transformation.
 Let's load a statistical shape model and visualize it:
 
 ```scala
-val ssm = StatismoIO.readStatismoMeshModel(new File("datasets/bfm.h5")).get
+val ssm = StatisticalModelIO.readStatisticalTriangleMeshModel3D(new File("datasets/bfm.h5")).get
 val ssmGroup = ui.createGroup("shape-model")
 val ssmView = ui.show(ssmGroup, ssm, "ssm")
 ```
@@ -143,7 +143,7 @@ one that controls the actual shape. We can access the individual parts of an ssm
 the ```ssmView``` object.
 
 ```scala
- ssmView.meshView
+ ssmView.referenceView
  ssmView.shapeModelTransformationView.shapeTransformationView
  ssmView.shapeModelTransformationView.poseTransformationView
 

@@ -3,7 +3,6 @@ id: tutorial11
 title: Model fitting with Iterative Closest Points
 ---
 
-
 The goal in this tutorial is to non-rigidly fit a shape model to a target surface using Iterative Closest Points (ICP)
 in order to establish correspondences among two surfaces.
 
@@ -22,11 +21,13 @@ As in the previous tutorials, we start by importing some commonly used objects a
 ```scala
 import scalismo.geometry._
 import scalismo.common._
-import scalismo.ui.api._
 import scalismo.mesh._
 import scalismo.statisticalmodel.MultivariateNormalDistribution
 import scalismo.numerics.UniformMeshSampler3D
 import scalismo.io.{MeshIO, StatisticalModelIO, LandmarkIO}
+
+import scalismo.ui.api._
+
 import breeze.linalg.{DenseMatrix, DenseVector}
 
 scalismo.initialize()
@@ -43,7 +44,7 @@ a statistical shape model.
 
 ```scala
 val targetMesh = MeshIO.readMesh(new java.io.File("datasets/target.ply")).get
-val model = StatisticalModelIO.readStatisticalMeshModel(new java.io.File("datasets/bfm.h5")).get
+val model = StatisticalModelIO.readStatisticalTriangleMeshModel3D(new java.io.File("datasets/bfm.h5")).get
 
 val targetGroup = ui.createGroup("targetGroup")
 val targetMeshView = ui.show(targetGroup, targetMesh, "targetMesh")
@@ -78,14 +79,14 @@ We start by first selecting the points for which we want to find the corresponde
 points on the surface, which we can obtain as follows:
 
 ```scala
-val sampler = UniformMeshSampler3D(model.referenceMesh, numberOfPoints = 5000)
+val sampler = UniformMeshSampler3D(model.reference, numberOfPoints = 5000)
 val points : Seq[Point[_3D]] = sampler.sample.map(pointWithProbability => pointWithProbability._1) // we only want the points
 ```
 
 Instead of working directly with the points, it is easier to work with the point ids of the sampled points:
 
 ```scala
-val ptIds = points.map(point => model.referenceMesh.pointSet.findClosestPoint(point).id)
+val ptIds = points.map(point => model.reference.pointSet.findClosestPoint(point).id)
 ```
 
 As in the previous tutorial, we write the method ```attributeCorrespondences```, which finds for each
