@@ -94,7 +94,7 @@ Equipped with our new model, we will perform the reconstruction in three steps:
 3. We choose a suitable nose from the model
 
 As we saw previously, to perform GP regression we need observations of the deformation vectors at some points.
-We will discussed in [Tutorial 10](./tutorial10.html) how such observations can be obtained fully automatically.
+We will discussed in [Tutorial 10](./tutorial10) how such observations can be obtained fully automatically.
 Here, we have done this already in a separate step and saved 200 corresponding points as landmarks, which we will now load and visualize:
 
 ```scala mdoc:silent
