@@ -4,6 +4,8 @@ organization  := "ch.unibas.cs.gravis"
 name := """scalismo-website"""
 version       := "0.90-RC2"
 
+fork := true
+
 scalaVersion  := "2.12.10"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
@@ -19,8 +21,6 @@ libraryDependencies  ++= Seq(
 )
 
 lazy val root = (project in file("."))
-
-
 
 lazy val docs = project       // new documentation project
   .in(file("myproject-docs"))

@@ -23,16 +23,18 @@ module.exports = {
     },
   ],
   themeConfig: {
-
+    prism: {
+      additionalLanguages: ['scala'],
+    },
     colorMode: {
       // "light" | "dark"
       defaultMode: 'light',
 
       // Hides the switch in the navbar
       // Useful if you want to support a single color mode
-      disableSwitch: true
+      disableSwitch: true,
     },
-    navbar: {
+   navbar: {
       title: 'Scalismo',
       logo: {
         alt: 'Scalismo',
