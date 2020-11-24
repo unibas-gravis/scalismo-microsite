@@ -66,8 +66,8 @@ function Home() {
   const {siteConfig = {}} = context;
   return (
     <Layout
-      title={`Hello from ${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />">
+      title={`Scalismo - Scalable Image and Shape Modelling`}
+      description="A scala library for statistical shape modeling and model-based image analysis, developed by the Graphics and Vision Research Group at the University of Basel.">
       <header className={clsx('hero hero--primary', styles.heroBanner)}>
         <div className="container">
           <h1 className="hero__title">{siteConfig.title}</h1>
