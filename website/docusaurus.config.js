@@ -143,6 +143,9 @@ module.exports = {
         },
         blog: {
           showReadingTime: true,
+          remarkPlugins: [math],
+          rehypePlugins: [katex],
+
           // Please change this to your repo.
           editUrl:
             'https://github.com/unibas-gravis/scalismo-microsite/edit/master/website/blog/',
