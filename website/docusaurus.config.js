@@ -47,6 +47,13 @@ module.exports = {
           label: 'Docs',
           position: 'left',
         },
+        {
+          to: 'onlinecourse',
+          activeBasePath: 'onlinecourse',
+          label: 'Online courses',
+          position: 'left',
+        },
+
         {to: 'blog', label: 'Blog', position: 'left'},
         {
           href: 'https://github.com/unibas-gravis/scalismo',
@@ -149,6 +156,10 @@ module.exports = {
           // Please change this to your repo.
           editUrl:
             'https://github.com/unibas-gravis/scalismo-microsite/edit/master/website/blog/',
+        },
+        pages: {
+          remarkPlugins: [math],
+          rehypePlugins: [katex],
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
