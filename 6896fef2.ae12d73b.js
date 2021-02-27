@@ -1,0 +1,1 @@
+(window.webpackJsonp=window.webpackJsonp||[]).push([[40],{106:function(i){i.exports=JSON.parse('{"title":"Recent posts","items":[{"title":"Images in Scalismo 0.90","permalink":"/blog/pdms-images-scalismo-090"},{"title":"Point Distribution Models in Scalismo 0.90","permalink":"/blog/pdms-scalismo-090"},{"title":"Welcome","permalink":"/blog/welcome"}]}')}}]);
