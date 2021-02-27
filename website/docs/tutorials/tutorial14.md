@@ -98,7 +98,7 @@ case class Sample(parameters : Parameters, generatedBy : String)
 
 In Scalismo, the target density is represented by classes, which we will refer to
 as *Evaluators*. Any Evaluator is a subclass of the class ```DistributionEvalutor```,
-defined as follows:
+which is defined in Scalismo as follows:
 
 ```scala
 trait DistributionEvaluator[A] {
@@ -106,6 +106,8 @@ trait DistributionEvaluator[A] {
   def logValue(sample: A): Double
 }
 ```
+
+*Note: This trait is already defined in Scalismo, don't paste it into your code.*
 
 We see that the only thing we need to define is the log probability of a sample.
 
@@ -183,6 +185,8 @@ trait TransitionProbability[A] extends TransitionRatio[A] {
   def logTransitionProbability(from: A, to: A): Double
 }
 ```
+
+*Note: The above traits are already defined in Scalismo, don't paste them into your code.*
 
 To keep things simple, we use here a *random walk proposal*. This is a proposal
 which updates the current state by taking a step of random length in a random direction.
@@ -271,13 +275,13 @@ our data:
 
 ```scala
 val estimatedMean = samples.map(sample => sample.parameters.mu).sum  / samples.size
-// estimatedMean: Double = -5.764070430280445
+// estimatedMean: Double = -3.975918224574242
   println("estimated mean is " + estimatedMean)
-// estimated mean is -5.764070430280445
+// estimated mean is -3.975918224574242
   val estimatedSigma = samples.map(sample => sample.parameters.sigma).sum / samples.size
-// estimatedSigma: Double = 18.633380981865635
+// estimatedSigma: Double = 16.298926813433784
   println("estimated sigma is " + estimatedSigma)
-// estimated sigma is 18.633380981865635
+// estimated sigma is 16.298926813433784
 ```
 
 In the next tutorial, we see an example of how the exact same  mechanism can be used for
@@ -301,6 +305,8 @@ trait AcceptRejectLogger[A] {
   def reject(current: A, sample: A, generator: ProposalGenerator[A], evaluator: DistributionEvaluator[A]): Unit
 }
 ```
+
+*Note: This trait is already defined in Scalismo, don't paste it into your code.*
 
 The two methods, ```accept``` and ```reject``` are called whenever a sample is
 accepted or rejected. We can overwrite these methods to implement our debugging code.
@@ -361,7 +367,7 @@ We can now check how often the individual samples got accepted.
 
 ```scala
 println("acceptance ratio is " +logger.acceptanceRatios())
-// acceptance ratio is Map(randomWalkProposal (3.0, 1.0) -> 0.5050441361916772, randomWalkProposal (9.0, 3.0) -> 0.13180169286577992)
+// acceptance ratio is Map(randomWalkProposal (3.0, 1.0) -> 0.44194875039544446, randomWalkProposal (9.0, 3.0) -> 0.12291169451073986)
 ```
 
 We see that the acceptance ratio of the random walk proposal, which takes the

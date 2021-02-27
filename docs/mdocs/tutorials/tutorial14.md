@@ -96,13 +96,15 @@ on, which proposal generator generated the sample:
 
 In Scalismo, the target density is represented by classes, which we will refer to
 as *Evaluators*. Any Evaluator is a subclass of the class ```DistributionEvalutor```,
-defined as follows:
+which is defined in Scalismo as follows:
 ```scala
 trait DistributionEvaluator[A] {
   /** log probability/density of sample */
   def logValue(sample: A): Double
 }
 ```
+*Note: This trait is already defined in Scalismo, don't paste it into your code.*
+
 We see that the only thing we need to define is the log probability of a sample.
 
 In our case, we will define separate evaluators for the prior distribution $$p(\theta)$$ and
@@ -165,6 +167,7 @@ trait ProposalGenerator[A] {
   def propose(current: A): A
 }
 ```
+
 In order to be able to use a proposal generator in the Metropolis-Hastings algorithm,
 we also need to implement the trait ```TransitionProbability```:
 ```scala
@@ -173,6 +176,7 @@ trait TransitionProbability[A] extends TransitionRatio[A] {
   def logTransitionProbability(from: A, to: A): Double
 }
 ```
+*Note: The above traits are already defined in Scalismo, don't paste them into your code.*
 
 To keep things simple, we use here a *random walk proposal*. This is a proposal
 which updates the current state by taking a step of random length in a random direction.
@@ -281,6 +285,8 @@ trait AcceptRejectLogger[A] {
   def reject(current: A, sample: A, generator: ProposalGenerator[A], evaluator: DistributionEvaluator[A]): Unit
 }
 ```
+*Note: This trait is already defined in Scalismo, don't paste it into your code.*
+
 The two methods, ```accept``` and ```reject``` are called whenever a sample is
 accepted or rejected. We can overwrite these methods to implement our debugging code.
 
