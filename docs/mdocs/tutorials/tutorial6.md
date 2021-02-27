@@ -168,14 +168,20 @@ val modelGroup2 = ui.createGroup("modelGroup2")
 ui.show(modelGroup2, modelFromDataCollection, "ModelDC")
 ```
 
-Here again, a PCA is performed based the deformation fields retrieved from the data in correspondence.
+There is a technique called *Generalized Procrustes Analysis (GPA)*, which can 
+improve the alignment of the data even better. It works by computing
+the mean of a set of surfaces in correspondence, aligning all the surfaces rigidly
+to this mean, and then iterating this procedure until the changes in the 
+computed mean are below a certain threshold. In Scalismo, this alignment
+procedure is defined on data collections. We can use it as follows:
 
-Notice that, in this case, we built a model from **misaligned** meshes
-in correspondence.
+```scala mdoc:silent
+val dcWithGPAAlignedShapes = DataCollection.gpa(dc)
+val modelFromDataCollectionGPA = PointDistributionModel.createUsingPCA(dcWithGPAAlignedShapes)
 
-*Exercise: sample a few faces from the second model. How does the quality of the obtained shapes compare to the model built from aligned data?*
-
-*Exercise: using the GUI, change the coefficient of the first principal component of the nonAligned shape model. What is the main shape variation encoded in the model?*
+val modelGroup3 = ui.createGroup("modelGroup3")
+ui.show(modelGroup3, modelFromDataCollectionGPA, "ModelDCGPA")
+```
 
 
 
