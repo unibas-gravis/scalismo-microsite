@@ -12,11 +12,16 @@ provide some theoretical background.
 ### Preparation
 
 To run the code in the tutorials, you will need to setup a Scala project,
-which depends on the latest scalismo version.
+which depends on the latest Scalismo version.
 
-If you are new to Scala and are have never worked with Scala in an IDE,
-follow the instructions in the guide [Using Scalismo in an IDE](ide) to
-set up a project and programming environment. To use Scala in an existing project, simply add the following lines to
+If you are new to Scala and are have never worked with Scala in an IDE, follow the instructions in the guide: 
+
+* [Using Scalismo in an IDE](ide) 
+
+This guide will walk you through the steps of setting up a complete Scala programming environment, and importing a first project into an IDE.
+
+
+If you are an experience Scala developer and you just want to use Scalismo as a library in an existing project, simply add the following lines to
 your ```build.sbt```.
 
 ```scala
@@ -26,9 +31,10 @@ libraryDependencies ++=
   Seq("ch.unibas.cs.gravis" %% "scalismo-ui" % "0.90.0")
 ```
 
+### Tutorials
+
 You will also need to [download](https://drive.switch.ch/index.php/s/zOJDpqh2ZGxzJJH) the datasets used in the tutorials and unzip them into your project folder.
 
-### Tutorials
 
 * [Tutorial 1](tutorials/tutorial1): Hello Scalismo
 * [Tutorial 2](tutorials/tutorial2): Rigid alignment

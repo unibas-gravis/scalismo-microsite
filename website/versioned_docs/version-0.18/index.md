@@ -3,7 +3,6 @@ id: index
 title: Scalismo tutorials
 slug: /
 ---
-
 The following tutorials explain all the basic concepts behind Scalismo, which are needed for developing complete shape modelling applications.
 The intention behind these tutorials is not only to show how to use the software, but also to help understanding the theoretical concepts underlying the software.
 Originally, these tutorials were designed as part of the Open Online Course [Statistical Shape Modelling - Computing the Human Anatomy](https://www.futurelearn.com/courses/statistical-shape-modelling).
@@ -13,23 +12,29 @@ provide some theoretical background.
 ### Preparation
 
 To run the code in the tutorials, you will need to setup a Scala project,
-which depends on the latest scalismo version.
+which depends on the latest Scalismo version.
 
-If you are new to Scala and are have never worked with Scala in an IDE,
-follow the instructions in the guide [Using Scalismo in an IDE](ide) to
-set up a project and programming environment. To use Scala in an existing project, simply add the following lines to
+If you are new to Scala and are have never worked with Scala in an IDE, follow the instructions in the guide: 
+
+* [Using Scalismo in an IDE](ide) 
+
+This guide will walk you through the steps of setting up a complete Scala programming environment, and importing a first project into an IDE.
+
+
+If you are an experience Scala developer and you just want to use Scalismo as a library in an existing project, simply add the following lines to
 your ```build.sbt```.
 
 ```scala
 resolvers += Resolver.bintrayRepo("unibas-gravis", "maven")
 
 libraryDependencies ++=
-  Seq("ch.unibas.cs.gravis" %% "scalismo-ui" % "0.14.0")
+  Seq("ch.unibas.cs.gravis" %% "scalismo-ui" % "0.18.0")
 ```
+
+### Tutorials
 
 You will also need to [download](https://drive.switch.ch/index.php/s/zOJDpqh2ZGxzJJH) the datasets used in the tutorials and unzip them into your project folder.
 
-### Tutorials
 
 * [Tutorial 1](tutorials/tutorial1): Hello Scalismo
 * [Tutorial 2](tutorials/tutorial2): Rigid alignment

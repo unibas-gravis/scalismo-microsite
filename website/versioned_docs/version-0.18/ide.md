@@ -3,81 +3,67 @@ id: ide
 title: Using Scalismo in an IDE
 ---
 
-## The Environment
+In this article we describe how to set up Scalismo such that it can be used to program shape modelling applications from an Integrated Development Environment (IDE).
+For this, we need to set up a Scala development environment (including JDK, a Scala Compiler and a build tool) the source control management system *git* as well as
+the IDE. As an IDE we use of *Intellij IDEA*.
 
-Our environment should run on the most common platforms (Linux, Windows and OSX). The minimal need is a **64-bit JDK**.
+## Setting up Scala
 
-Additionally we need the build tool *sbt* and a *git* client. This would be enough, but for convenience we propose to install and the *Intellij IDEA*.
+To setup a Scala environment, we will use the tool [Coursier](https://get-coursier.io/), which will set up an appropriate JDK, the Scala compiler as well as the Scala build tool (sbt) for us.
 
-#### Installation
+On MacOS and Linux, use the following commands to download and install coursier:
 
-Please install the following tools:
+```
+$ curl -fLo cs https://git.io/coursier-cli-"$(uname | tr LD ld)"
+$ chmod +x cs
+$ ./cs setup
+$ rm -f cs
+```
 
-|     Tool      |               Download Link               |              Test command              |
-|---------------|-------------------------------------------|----------------------------------------|
-| JDK 64-bit    | [all OS](https://adoptopenjdk.net/)       | `java -version`                        |
-| git           | [all OS](https://git-scm.com/)            | `git --version`                        |
-| sbt           | [all OS](http://www.scala-sbt.org/)       | `sbt sbt-version`                      |
-| Intellij IDEA | [all OS](https://www.jetbrains.com/idea/) | *(first start later in this tutorial)* |
+On Windows, open a terminal (cmd.exe not powershell) and issue the following commands
 
-##### Java
+```
+> bitsadmin /transfer cs-cli https://git.io/coursier-cli-windows-exe "%cd%\cs.exe"
+> .\cs setup
+> del cs.exe
+```
 
-To test your java installation you can use the following command:
+*Note, after the setup of coursier you might need to open a new terminal for the ```cs``` command to be found on your system.*
+
+When coursier finds a valid JVM on the system, it will use that. Most JVM versions should work fine, but we recommend to use either Java 8 or Java 11. There is also a known bug in many JVM implementations, which causes Scalismo-ui to crash on startup on MacOS. On MacOS we therefore strongly suggest to use the the Zulu JVM. It can be installed using Coursier as follows:
+
+```
+cs java --jvm zulu:1.11.0-9 --setup
+```
+
+To see which java version is used by your system, type
 
 ```bash
-java -version
+cs java -version
 ```
 
-The output should look similar to the one below, with the version number changing according to the version you downloaded:
+*In case this command does not report the right version, you might need to open a new terminal.*
 
-
-```bash
-java version "1.8.0_131"
-```
+Finally, you may want to know the location, where Coursier installed the JVM. You can find this out by
+typing
 
 ```
-Java(TM) SE Runtime Environment (build 1.8.0_131-b11)
-Java HotSpot(TM) 64-Bit Server VM (build 25.131-b11, mixed mode)
+cs java --jvm zulu:1.11.0-9  --env
 ```
 
-*Note: Any Java version >= 1.8 should work. Only 64 bit architecture are supported!*
 
-##### Git
+More details on how to work with *coursier* and how to manage JVM versions can be found on the [Coursier Webpage](https://get-coursier.io/docs/cli-overview) and in
+this [blog post](https://get-coursier.io/docs/cli-setup).
 
-To check your installation of git enter the following on a command line
+## Installing Git
 
-```bash
-git --version
-```
-
-Note: On windows you should have a program called *Git Bash* after the installation of git.
-
-While the exact version does not matter, the output of the above command should be something as simple as:
-
-```bash
-git version 2.7.4
-```
-
-##### sbt
-
-
-To check whether sbt is installed correctly execute:
-
-```bash
-sbt sbtVersion
-```
-
-Looking at the output you should see at the end of the output a line similar to:
-
-```bash
-[info] 1.3.0
-```
-
+In addition to the Scala environment, we will need the *git* source control management system and also an integrated development environment.
+To install Git, please go to the [Git website](https://git-scm.com/downloads) and following the download and installation instructions there.
 
 ## Getting and building the seed project
 
 In this step we provide you with a small "Hello World" example project.
-First, we download the project, then we run it from the command line and set up the IDE for the later usage.
+We download the project  run it from the command line and set up the IDE for the later usage.
 
 To get the project, use the follow command
 
@@ -97,44 +83,39 @@ sbt run
 
 A successful run should display a Scalismo UI with a pink mean face.
 
-From now on we will mainly be working from an IDE. As Sbt is integrated in the IDE, we will not explain more about its usage.
-If you want more information go to the official [documentation](https://www.scala-sbt.org/1.x/docs/).
+> We have now a working setup of Scalismo and could use any editor to work on the code.
+> However, we strongly recommend to use an IDE when working with Scala. Our recommendation
+> is to use [IntelliJ idea](https://www.jetbrains.com/idea/).
 
 
-## IntelliJ Idea
+## Using Scalismo from IntelliJ Idea
 
-Now it is time to start the IDE. As we will be working with Scala, we will enable the scala plugin before importing the project.
-When you start the IDE for the first time you can configure which parts are enabled and or downloaded.
-We recommend to go with the default settings as long as you have enough disk space.
-Go through the dialog step by step until you encounter the point *Featured Plugins*.
-Then select to install the *Scala Plugin*.
+In this last step, we will set up Scalismo such that we can use it from the IDE IntelliJ Idea.
+To Install IntelliJ, go to the [IntelliJ Idea download page](https://www.jetbrains.com/idea/download/#section=windows), download the *Community edition* and follow the installation instructions. Once we have installed IntelliJ, we will to install the Scala plugin. This is
+installed and enabled from within IntelliJ, as described [here](https://www.jetbrains.com/help/idea/discover-intellij-idea-for-scala.html#).
 
-
-If you have already used the IDE but have not yet installed  the Scala plugin, you can enable it through the
-menu *File->Settings->Plugins*
 
 After the Scala plugin has been installed and you see the welcome screen, choose *File->New->Project From Existing Sources*.
-Then navigate to the folder containing the seed project directory.
+Then navigate to the folder containing the seed project directory. In the next dialog select the option: *Import project from external model* and select *sbt* as a model (see screenshots below).
 
-In the next dialog select the option: *Import project from external model* and select *sbt* as a model.
+In the next dialog you need to choose the right *Project JDK*. If your system required you to use the Zulu JDK in the previous step, go to *Project JDK*, choose Download JDK and select
+*Version 11* and as Vendor *Azul Zulu Community* and then press the *Download* button.
 
-In the next dialog check that the *Project SDK* points to the location where you installed the Java SDK.
-If the checkbox *auto import* is shown, activate it. Then continue by clicking onto the *Finish* button.
+Then continue by clicking onto the *Finish* button.
 
+![ide](images/project-import-intellij.png)
 
-Now the IDE should change and display the project. When you start the IDE for the first time,
-there is a lot of processing that is done in the background.
-In the bottom right you can spot an indication for the ongoing work.
-Due to the workload it may take a while until the IDE reacts responsive.
+Now the IDE should import the project. When you start the IDE for the first time,
+there is a lot of processing that is done in the background and it might take a few minutes
+before the project is ready for use. In the bottom right you can spot an indication for the ongoing work.
 
-To see what is already present in the project hit *[Alt+1]* which should display the project structure tab to the left.
-If you do not see the project structure, then have a look at the top of the newly opened view.
-There should be a drop down list where you can select *Project*.
-You should then be able to navigate through the project folder to
+Once all the importing is done, you should then be able to navigate through the project folder to
 ```src/main/scala/com/example/``` and double-click *ExampleApp*.
 This will open the code of the application we have already executed before from the console using sbt.
 
-To execute the file from within the IDE right-click the source file and select *Run 'ExampleApp'*.
+To execute the file from within the IDE right-click the source file and click *Run*.
+
+![ide](images/project-in-intellij.png)
 
 
 ### Other Ressources
