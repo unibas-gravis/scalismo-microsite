@@ -20,7 +20,7 @@ $ ./cs setup
 $ rm -f cs
 ```
 
-On Windows, open a terminal (cmd.exe not powershell) and issue the following commands
+On Windows, open a terminal (cmd.exe not powershell) as administrator and issue the following commands
 
 ```
 > bitsadmin /transfer cs-cli https://git.io/coursier-cli-windows-exe "%cd%\cs.exe"
