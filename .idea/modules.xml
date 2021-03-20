@@ -2,7 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/docs.iml" filepath="$PROJECT_DIR$/.idea/modules/docs.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/scalismo-microsite.iml" filepath="$PROJECT_DIR$/.idea/scalismo-microsite.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/scalismo-website.iml" filepath="$PROJECT_DIR$/.idea/modules/scalismo-website.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/scalismo-website-build.iml" filepath="$PROJECT_DIR$/.idea/modules/scalismo-website-build.iml" />
     </modules>
   </component>
 </project>

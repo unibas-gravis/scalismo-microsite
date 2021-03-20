@@ -63,6 +63,7 @@ As in the previous tutorials, we start by importing some commonly used objects a
  import scalismo.sampling.loggers.AcceptRejectLogger
  import scalismo.sampling.proposals.MixtureProposal
  import scalismo.sampling.{DistributionEvaluator, ProposalGenerator, TransitionProbability}
+ import breeze.stats.distributions.Gaussian
 
  scalismo.initialize()
  implicit val rng = scalismo.utils.Random(42)
@@ -73,7 +74,7 @@ To test our method, we generate data from a normal distribution $$N(-5, 17)$$.
   val mu = -5
   val sigma = 17
 
-  val trueDistribution = breeze.stats.distributions.Gaussian(mu, sigma)
+  val trueDistribution = Gaussian(mu, sigma)(rand = rng.breezeRandBasis) // use breezeRandBasis for reproducible results.
   val data = for (_ <- 0 until 100) yield {
     trueDistribution.draw()
   }
@@ -201,7 +202,7 @@ case class RandomWalkProposal(stddevMu: Double, stddevSigma : Double)(implicit r
 
       val residualMu = to.parameters.mu - from.parameters.mu
       val residualSigma = to.parameters.sigma - from.parameters.sigma
-      stepDistMu.logPdf(residualMu)  + stepDistMu.logPdf(residualSigma)
+      stepDistMu.logPdf(residualMu)  + stepDistSigma.logPdf(residualSigma)
     }
   }
 ```

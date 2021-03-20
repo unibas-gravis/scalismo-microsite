@@ -9,6 +9,7 @@ Originally, these tutorials were designed as part of the Open Online Course [Sta
 Each tutorial contains links to videos and articles from the online course, which will
 provide some theoretical background.
 
+
 ### Preparation
 
 To run the code in the tutorials, you will need to setup a Scala project,

@@ -62,6 +62,7 @@ As in the previous tutorials, we start by importing some commonly used objects a
  import scalismo.sampling.loggers.AcceptRejectLogger
  import scalismo.sampling.proposals.MixtureProposal
  import scalismo.sampling.{DistributionEvaluator, ProposalGenerator, TransitionProbability}
+ import breeze.stats.distributions.Gaussian
 
  scalismo.initialize()
  implicit val rng = scalismo.utils.Random(42)
@@ -73,7 +74,7 @@ To test our method, we generate data from a normal distribution $$N(-5, 17)$$.
   val mu = -5
   val sigma = 17
 
-  val trueDistribution = breeze.stats.distributions.Gaussian(mu, sigma)
+  val trueDistribution = Gaussian(mu, sigma)(rand = rng.breezeRandBasis) // use breezeRandBasis for reproducible results.
   val data = for (_ <- 0 until 100) yield {
     trueDistribution.draw()
   }
@@ -212,7 +213,7 @@ case class RandomWalkProposal(stddevMu: Double, stddevSigma : Double)(implicit r
 
       val residualMu = to.parameters.mu - from.parameters.mu
       val residualSigma = to.parameters.sigma - from.parameters.sigma
-      stepDistMu.logPdf(residualMu)  + stepDistMu.logPdf(residualSigma)
+      stepDistMu.logPdf(residualMu)  + stepDistSigma.logPdf(residualSigma)
     }
   }
 ```
@@ -275,13 +276,13 @@ our data:
 
 ```scala
 val estimatedMean = samples.map(sample => sample.parameters.mu).sum  / samples.size
-// estimatedMean: Double = -3.975918224574242
+// estimatedMean: Double = -4.900435880653013
   println("estimated mean is " + estimatedMean)
-// estimated mean is -3.975918224574242
+// estimated mean is -4.900435880653013
   val estimatedSigma = samples.map(sample => sample.parameters.sigma).sum / samples.size
-// estimatedSigma: Double = 16.298926813433784
+// estimatedSigma: Double = 16.876427834272945
   println("estimated sigma is " + estimatedSigma)
-// estimated sigma is 16.298926813433784
+// estimated sigma is 16.876427834272945
 ```
 
 In the next tutorial, we see an example of how the exact same  mechanism can be used for
@@ -367,7 +368,7 @@ We can now check how often the individual samples got accepted.
 
 ```scala
 println("acceptance ratio is " +logger.acceptanceRatios())
-// acceptance ratio is Map(randomWalkProposal (3.0, 1.0) -> 0.44194875039544446, randomWalkProposal (9.0, 3.0) -> 0.12291169451073986)
+// acceptance ratio is Map(randomWalkProposal (3.0, 1.0) -> 0.4464627151051625, randomWalkProposal (9.0, 3.0) -> 0.12311265969802555)
 ```
 
 We see that the acceptance ratio of the random walk proposal, which takes the

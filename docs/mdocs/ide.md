@@ -18,7 +18,7 @@ $ chmod +x cs
 $ ./cs setup
 $ rm -f cs
 ```
-On Windows, open a terminal (cmd.exe not powershell) and issue the following commands
+On Windows, open a terminal (cmd.exe not powershell), *navigate to a folder where you have write permissions* and issue the following commands
 ```
 > bitsadmin /transfer cs-cli https://git.io/coursier-cli-windows-exe "%cd%\cs.exe"
 > .\cs setup
@@ -64,9 +64,15 @@ To get the project, use the follow command
 ```bash
 sbt new unibas-gravis/scalismo-seed.g8
 ```
+*Note: On Windows this command might report the error, that it was not able to delete some resources. You can ignore this error.*
 
 On the following prompt, enter a name for your project. The seed project will now be available in the subdirectory
-the your chosen name. Change to this directory.
+with the corresponding name. Change to this directory.
+
+```
+cd NAME_OF_YOUR_PROJECT
+```
+
 We will now run the project. This will trigger the project to be built by sbt.
 Note that the initial build will download some dependencies specific to the project. This may take a while.
 The command to run the project is:
@@ -85,7 +91,7 @@ A successful run should display a Scalismo UI with a pink mean face.
 ## Using Scalismo from IntelliJ Idea
 
 In this last step, we will set up Scalismo such that we can use it from the IDE IntelliJ Idea. 
-To Install IntelliJ, go to the [IntelliJ Idea download page](https://www.jetbrains.com/idea/download/#section=windows), download the *Community edition* and follow the installation instructions. Once we have installed IntelliJ, we will to install the Scala plugin. This is 
+To install IntelliJ, go to the [IntelliJ Idea download page](https://www.jetbrains.com/idea/download/#section=windows), download the *Community edition* and follow the installation instructions. Once we have installed IntelliJ, we will to install the Scala plugin. This is 
 installed and enabled from within IntelliJ, as described [here](https://www.jetbrains.com/help/idea/discover-intellij-idea-for-scala.html#).
 
 
