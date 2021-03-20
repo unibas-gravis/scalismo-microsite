@@ -78,15 +78,16 @@ $$k: X \times X \to R^{ d \times d}$$, which defines the covariance between the
 values at any pair of points $$x, x'$$ of the domain. Since we are modelling deformation
 fields (I.e. vector-valued functions), the covariance function is matrix-valued.
 
-To define a kernel in Scalismo, we need to implement the following methods of the abstract class ```MatrixValuedPDKernel```:
+To define a kernel in Scalismo, we need to implement the following methods of the abstract class ```MatrixValuedPDKernel```, which is defined in Scalismo:
 ```scala
-abstract class MatrixValuedPDKernel[_3D]() {
+abstract class MatrixValuedPDKernel[D]() {
 
     def outputDim: Int;
-    def domain: Domain[_3D];
-    def k(x: Point[_3D], y: Point[_3D]): DenseMatrix[Double];
+    def domain: Domain[D];
+    def k(x: Point[D], y: Point[D]): DenseMatrix[Double];
   }
 ```
+*Note: This class is already defined as part of Scalismo. Don't paste it into your code.*
 
 The field ```outputDim``` determines the dimensionality of the values we model. In our case, we model 3D vectors, and hence ```outputDim```should be 3.
 The ```domain``` indicates the set of points on which our kernel is defined. Most often, we set this to the entire Euclidean space ```RealSpace3D```.
