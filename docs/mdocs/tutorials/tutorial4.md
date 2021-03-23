@@ -3,8 +3,6 @@ id: tutorial4
 title: Gaussian processes and Point Distribution Models
 ---
 
-# Gaussian processes and Point Distribution Models
-
 With this tutorial we aim at illuminating the relationship between Point Distribution Models (PDM) and Gaussian Processes.
 
 

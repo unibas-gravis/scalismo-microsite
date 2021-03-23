@@ -91,10 +91,11 @@ val alignedMeshes = toAlign.map { mesh =>
   mesh.transform(rigidTrans)
 }
 ```
-
 Now, the IndexedSeq of triangle meshes *alignedMeshes* contains the faces that are aligned to the reference mesh.
 
 *Exercise: verify visually that at least the first element of the aligned dataset is indeed aligned to the reference.*
+
+
 
 ### Building a discrete Gaussian process from data
 

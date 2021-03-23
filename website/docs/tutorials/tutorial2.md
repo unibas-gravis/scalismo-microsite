@@ -1,6 +1,6 @@
 ---
--id: tutorial2
--title: Rigid Alignment
+id: tutorial2
+title: Rigid Alignment
 ---
 
 In this tutorial we show how rigid alignment of shapes can be performed in Scalismo.
@@ -137,7 +137,14 @@ with the original mesh, from the meshes alone.
 
 Rigid alignment is easiest if we already know some corresponding points in both shapes. Assume for the moment, that we
 have identified a few corresponding points and marked them using landmarks. We can then apply *Procrustes Analysis*.
-Usually, these landmarks would need to be clicked manually in a GUI framework. To simplify this tutorial, we exploit that the two meshes
+Usually, these landmarks would need to be clicked manually in a GUI, saved to disk and then loaded in Scalismo using the
+methods in ``` LandmarksIO```:
+
+```scala
+val landmarks : Seq[Landmark[_3D]] = LandmarkIO.readLandmarksJson3D(new java.io.File("landmarks.json")).get
+```
+
+To simplify this tutorial, we exploit that the two meshes
 are the same and hence have the same point ids. We can thus define landmarks programmatically:
 
 ```scala

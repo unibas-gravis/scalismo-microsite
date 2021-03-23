@@ -1,7 +1,7 @@
 module.exports = {
   docs: {
     Tutorials: [
-      'tutorials/tutorial1',
+      `tutorials/tutorial1`,
       `tutorials/tutorial2`,
       `tutorials/tutorial3`,
       `tutorials/tutorial4`,
