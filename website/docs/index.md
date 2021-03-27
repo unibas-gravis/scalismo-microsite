@@ -3,21 +3,21 @@ id: index
 title: Scalismo tutorials
 slug: /
 ---
+
 The following tutorials explain all the basic concepts behind Scalismo, which are needed for developing complete shape modelling applications.
 The intention behind these tutorials is not only to show how to use the software, but also to help understanding the theoretical concepts underlying the software.
 Originally, these tutorials were designed as part of the Open Online Course [Statistical Shape Modelling - Computing the Human Anatomy](https://www.futurelearn.com/courses/statistical-shape-modelling).
 Each tutorial contains links to videos and articles from the online course, which will
 provide some theoretical background.
 
-
 ### Preparation
 
 To run the code in the tutorials, you will need to setup a Scala project,
 which depends on the latest Scalismo version.
 
-If you are new to Scala and are have never worked with Scala in an IDE, follow the instructions in the guide: 
+If you are new to Scala and are have never worked with Scala in an IDE, follow the instructions in the guide:
 
-* [Using Scalismo in an IDE](ide) 
+* [Using Scalismo in an IDE](ide)
 
 This guide will walk you through the steps of setting up a complete Scala programming environment, and importing a first project into an IDE.
 

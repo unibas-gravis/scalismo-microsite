@@ -4,41 +4,46 @@ title: Model fitting using MCMC - The basic framework
 ---
 
 In this tutorial we show how Bayesian model fitting using Markov Chain Monte Carlo can be done in Scalismo. To be able
-to focus on the main components of the framework instead of technical details, we start in this tutorial with a simple toy example from statistics.
-Although the example has nothing to do with shape modelling, the modelling principles and the steps involve to do the inference are
-exactly the same. The application to shape modelling is discussed in depth in the next tutorial.
-
+to focus on the main components of the framework instead of technical details, we start in this tutorial with a simple toy example, namely
+1D Bayesian linear regression. The application to 3D shape modelling is discussed in depth in the next tutorial.
 
 ### Problem setting
 
-The problem we are considering here is a simple toy problem from Bayesian statistics: We are trying to fit a (univariate) normal distribution $$N(\mu, \sigma)$$,
-with unknown mean and unknown standard deviation to a set of data points.
-In the following we will denote the unknown parameters by $$\theta$$; I.e. $$\theta = (\mu, \sigma)$$ and the observed data points
-by $$y$$. In a Bayesian setting, doing inference means that we compute the *posterior distribution* $$p(\theta | y)$$. Formally, the *posterior distribution* is defined as follows:
+In a Bayesian linear regression an outcome variable $$y$$ is modelled a linear function of the explanatory variable $x$.
+The normal linear model assumes that the distribution of $$y$$ is a normal distribution with a mean $$a \cdot x + b$$ and variance $$\sigma^2$$.
+$$
+y \sim N(a \cdot x + b, \sigma^2 ).
+$$
 
-$$p(\theta \mid y) = \frac{p(\theta) p(y \mid \theta)}{p(y)}$$.
+In the following we will denote the unknown parameters $$a$$, $$b$$ and $$\sigma^2$$ by $$\theta$$; I.e. $$\theta = (a, b, \sigma^2)$$.
+The inference problem is to estimate the parameters $$\theta$$, given observations $$X=(x_1, \ldots, x_n)$$ and $$Y=(y_1, \ldots, y_n)$$.
+This is done by computing the posterior distribution:
+$$
+p(\theta | Y, X) = \frac{p(Y | \theta, X)p(\theta)}{\int P(Y | \theta, X)p(\theta) \, d\theta}
+$$
 
-The term $$p(y | \theta)$$ is called the likelihood function, and is
-given directly by the problem definition as $$p(y | \theta) = N(\mu, \sigma)$$. The term $$p(\theta)$$ is a prior distribution over the parameters,
-which we will define later. The final term involved $$p(y)$$ is called the marginal likelihood. Formally, it can be defined as $$p(y) = \int_\theta p(y | \theta) p(\theta) d\theta$$.
-Fortunately, we will never need to compute this quantity.
+The likelihood term $$p(Y | \theta, X)$$ is given by the normal distribution $$N(a \cdot x + b,\sigma^2)$$ define above. Hence the likelihood of observing the data $X, Y$ is
+$$
+\prod_{i=1}^n p(y_i | \theta, x_i) = \prod_{i=1}^n N(y_i | a \cdot x_i + b, \sigma^2)
+$$
 
-
-*Remark: Computing the posterior distribution of the parameters will also be our goal in a real shape model fitting application.
-The only difference is that the parameters $$\theta$$ are not mean and standard deviation, but the shape model parameters, and the data $$y$$ are
-not simulated numbers, but measurements of the target object, such as a set of landmark points, a surface or even an image.*
-
+As prior distribution $$p(\theta)$$ we define
+$$
+a \sim N(0, 5) \\
+b \sim N(0, 10) \\
+\sigma^2 \sim logNormal(0, 0.25)
+$$
 
 ### Metropolis Hastings Algorithm
 
-The way we approach such fitting problem in Scalismo is by using the
-Metropolis Hastings algorithm. The Metropolis-Hastings algorithm allows us to
+The way we approach such an inference problem in Scalismo is by using the
+Metropolis-Hastings algorithm. The Metropolis-Hastings algorithm allows us to
 draw samples from any distribution, given that the unnormalized distribution can be evaluated point-wise. This requirement is
 easy to fulfill for all shape modelling applications.
 
 For setting up the Metropolis-Hastings algorithm, we need two things:
-1. The (unnormalized) target distribution, from which we want to sample. In our case this is the posterior distribution $$p(\theta \mid y)$$. In Scalismo
-   the corresponding class is called the ```Distribution Evaluator```.
+1. The (unnormalized) target distribution, from which we want to sample. In our case this is the posterior distribution $$p(\theta \mid Y, X))$$. In Scalismo
+   the corresponding class is called the ```DistributionEvaluator```.
 2. A proposal distribution $$Q(\theta' \mid \theta)$$, which generates for a given sample $$\theta$$ a new sample $$\theta'$$.
 
 The Metropolis Hastings algorithm introduces an ingenious scheme for accepting
@@ -63,28 +68,32 @@ As in the previous tutorials, we start by importing some commonly used objects a
  import scalismo.sampling.proposals.MixtureProposal
  import scalismo.sampling.{DistributionEvaluator, ProposalGenerator, TransitionProbability}
  import breeze.stats.distributions.Gaussian
+ import breeze.stats.meanAndVariance
 
  scalismo.initialize()
  implicit val rng = scalismo.utils.Random(42)
 ```
 
-To test our method, we generate data from a normal distribution $$N(-5, 17)$$.
+To make the setup simple, we generate artificial data, which follows exactly our assumptions. In this way we will be able to see
+how well we estimated the parameters.
 
 ```scala
-  val mu = -5
-  val sigma = 17
+  
+      val a = 0.2
+      val b = 3
+      val sigma2 = 0.5
+      val errorDist = breeze.stats.distributions.Gaussian(0, sigma2)
+      val data = for (x <- 0 until 100) yield {
+        (x.toDouble, a * x + b + errorDist.draw())
+      }
 
-  val trueDistribution = Gaussian(mu, sigma)(rand = rng.breezeRandBasis) // use breezeRandBasis for reproducible results.
-  val data = for (_ <- 0 until 100) yield {
-    trueDistribution.draw()
-  }
 ```
 
 Before we discuss the two main components, the *Evaluator* and *Proposal generator* in detail, we first define a class for representing
-the parameters $$\theta = (\mu, \sigma)$$:
+the parameters $$\theta = (a, b, \sigma^2)$$:
 
 ```scala
-case class Parameters(mu : Double, sigma: Double)
+case class Parameters(a : Double, b:  Double, sigma2 : Double)
 ```
 
 We introduce a further class to represent a sample from the chain. A sample is
@@ -113,24 +122,20 @@ trait DistributionEvaluator[A] {
 We see that the only thing we need to define is the log probability of a sample.
 
 In our case, we will define separate evaluators for the prior distribution $$p(\theta)$$ and
-the likelihood $$p(y | \theta)$$.
-The evaluator for the likelihood is simple: Assuming a normal model, we define
-the normal distribution with the given parameters $$\theta$$, and use this model
-to evaluate the likelihood of the individual observations.
-We assume that the observations are i.i.d. and hence the joint probability
-factorises as
-$$p(y |\theta) = p(y_1, \ldots, y_n |\theta) = \prod_{i=1}^n p(y_i |\theta)$$.
-This leads to the following implementation of the liklihood function:
+the likelihood $$p(Y | \theta, X)$$.
+
+The likelihood function, defined above, can be implemented as follows:
 
 ```scala
-  case class LikelihoodEvaluator(data : Seq[Double]) extends DistributionEvaluator[Sample] {
+case class LikelihoodEvaluator(data : Seq[(Double, Double)]) extends DistributionEvaluator[Sample] {
 
     override def logValue(theta: Sample): Double = {
-      val likelihood = breeze.stats.distributions.Gaussian(
-        theta.parameters.mu, theta.parameters.sigma
-      )
-      val likelihoods = for (x <- data) yield {
-        likelihood.logPdf(x)
+
+      val likelihoods = for ((x, y) <- data) yield {
+        val likelihood = breeze.stats.distributions.Gaussian(
+          theta.parameters.a * x + theta.parameters.b, theta.parameters.sigma2)
+
+        likelihood.logPdf(y)
       }
       likelihoods.sum
     }
@@ -140,19 +145,21 @@ This leads to the following implementation of the liklihood function:
 Notice that we work in Scalismo with log probabilities, and hence the product in above formula
 becomes a sum.
 
-As a prior, we also use for both parameters a univariate normal distribution.
+In a similar way, we encode the prior distribution:
 
 ```scala
+
 object PriorEvaluator extends DistributionEvaluator[Sample] {
 
-    val priorDistMu = breeze.stats.distributions.Gaussian(0, 20)
-    val priorDistSigma = breeze.stats.distributions.Gaussian(0, 100)
-
-    override def logValue(theta: Sample): Double = {
-      priorDistMu.logPdf(theta.parameters.mu)
-      + priorDistSigma.logPdf(theta.parameters.sigma)
-    }
+  val priorDistA = breeze.stats.distributions.Gaussian(0, 1)
+  val priorDistB = breeze.stats.distributions.Gaussian(0, 10)
+  val priorDistSigma = breeze.stats.distributions.LogNormal(0, 0.25)
+  override def logValue(theta: Sample): Double = {
+    priorDistA.logPdf(theta.parameters.a)
+    + priorDistB.logPdf(theta.parameters.b)
+    + priorDistSigma.logPdf(theta.parameters.sigma2)
   }
+}
 ```
 
 The target density (i.e. the posterior distribution) can be computed by
@@ -189,33 +196,36 @@ trait TransitionProbability[A] extends TransitionRatio[A] {
 
 *Note: The above traits are already defined in Scalismo, don't paste them into your code.*
 
-To keep things simple, we use here a *random walk proposal*. This is a proposal
-which updates the current state by taking a step of random length in a random direction.
-It is defined as follows:
+We use here one of the simples possible proposals, namely a *random walk proposal*. This is a proposal
+which updates the current state by taking a step of random length in a random direction. For simplicity,
+we update all three parameters together:
 
 ```scala
-case class RandomWalkProposal(stddevMu: Double, stddevSigma : Double)(implicit rng : scalismo.utils.Random)
+  case class RandomWalkProposal(stepLengthA: Double, stepLengthB : Double, stepLengthSigma2 : Double)(implicit rng : scalismo.utils.Random)
     extends ProposalGenerator[Sample] with TransitionProbability[Sample] {
 
     override def propose(sample: Sample): Sample = {
       val newParameters = Parameters(
-        mu = sample.parameters.mu + rng.breezeRandBasis.gaussian(0, stddevMu).draw(),
-        sigma = sample.parameters.sigma + rng.breezeRandBasis.gaussian(0, stddevSigma).draw()
+        a = sample.parameters.a + rng.breezeRandBasis.gaussian(0, stepLengthA).draw(),
+        b = sample.parameters.b + rng.breezeRandBasis.gaussian(0, stepLengthB).draw(),
+        sigma2 = sample.parameters.sigma2 + rng.breezeRandBasis.gaussian(0, stepLengthSigma2).draw(),
       )
 
-      Sample(newParameters, s"randomWalkProposal ($stddevMu, $stddevSigma)")
+      Sample(newParameters, s"randomWalkProposal ($stepLengthA, $stepLengthB)")
     }
 
     override def logTransitionProbability(from: Sample, to: Sample) : Double = {
 
-      val stepDistMu = breeze.stats.distributions.Gaussian(0, stddevMu)
-      val stepDistSigma = breeze.stats.distributions.Gaussian(0, stddevSigma)
-
-      val residualMu = to.parameters.mu - from.parameters.mu
-      val residualSigma = to.parameters.sigma - from.parameters.sigma
-      stepDistMu.logPdf(residualMu)  + stepDistSigma.logPdf(residualSigma)
+      val stepDistA = breeze.stats.distributions.Gaussian(0, stepLengthA)
+      val stepDistB = breeze.stats.distributions.Gaussian(0, stepLengthB)
+      val stepDistSigma2 = breeze.stats.distributions.Gaussian(0, stepLengthSigma2)
+      val residualA = to.parameters.a - from.parameters.a
+      val residualB = to.parameters.b - from.parameters.b
+      val residualSigma2 = to.parameters.sigma2 - from.parameters.sigma2
+      stepDistA.logPdf(residualA)  + stepDistB.logPdf(residualB) + stepDistSigma2.logPdf(residualSigma2)
     }
   }
+
 ```
 
 *Remark: the second constructor argument ```implicit rng : scalismo.utils.Random```
@@ -226,8 +236,8 @@ by seeding this random generator at the beginning of our program.*
 Let's define two random walk proposals with different step length:
 
 ```scala
-val smallStepProposal = RandomWalkProposal(3.0, 1.0)
-val largeStepProposal = RandomWalkProposal(9.0, 3.0)
+val smallStepProposal = RandomWalkProposal(0.01, 0.01, 0.01)
+val largeStepProposal = RandomWalkProposal(0.1, 0.1, 0.1)
 ```
 
 Varying the step length allow us to sometimes take large step, in order to explore the global
@@ -257,7 +267,7 @@ which we then consume to drive the sampling generation. To obtain the iterator, 
 sample:
 
 ```scala
-val initialSample = Sample(Parameters(0.0, 10.0), generatedBy="initial")
+val initialSample = Sample(Parameters(0.0, 0.0, 1.0), generatedBy="initial")
 val mhIterator = chain.iterator(initialSample)
 ```
 
@@ -267,7 +277,7 @@ start to follow the required distribution. We therefore have to drop the
 samples in this burn-in phase, before we use the samples:
 
 ```scala
-val samples = mhIterator.drop(1000).take(5000).toIndexedSeq
+val samples = mhIterator.drop(5000).take(15000).toIndexedSeq
 ```
 
 As we have generated synthetic data, we can check if the expected value, computed
@@ -275,14 +285,12 @@ from this samples, really corresponds to the parameters from which we sampled
 our data:
 
 ```scala
-val estimatedMean = samples.map(sample => sample.parameters.mu).sum  / samples.size
-// estimatedMean: Double = -4.900435880653013
-  println("estimated mean is " + estimatedMean)
-// estimated mean is -4.900435880653013
-  val estimatedSigma = samples.map(sample => sample.parameters.sigma).sum / samples.size
-// estimatedSigma: Double = 16.876427834272945
-  println("estimated sigma is " + estimatedSigma)
-// estimated sigma is 16.876427834272945
+val meanAndVarianceA = meanAndVariance(samples.map(_.parameters.a))
+println(s"Estimates for parameter a: mean = ${meanAndVarianceA.mean}, var = ${meanAndVarianceA.variance}")
+val meanAndVarianceB = meanAndVariance(samples.map(_.parameters.b))
+println(s"Estimates for parameter b: mean = ${meanAndVarianceB.mean}, var = ${meanAndVarianceB.variance}")
+val meanAndVarianceSigma2 = meanAndVariance(samples.map(_.parameters.sigma2))
+println(s"Estimates for parameter sigma2: mean = ${meanAndVarianceSigma2.mean}, var = ${meanAndVarianceSigma2.variance}")
 ```
 
 In the next tutorial, we see an example of how the exact same  mechanism can be used for
@@ -291,7 +299,7 @@ to discuss how the chain can be debugged in case something goes wrong.
 You can safely skip this section and come back to it later if you first want to
 see a practical example.
 
-#### Debugging the markov Chain
+#### Debugging the Markov chain
 
 
 Sometimes a chain does not work as expected. The reason is usually that our proposals
@@ -351,7 +359,6 @@ indicator to diagnose if all proposal generators function as expected.
       acceptanceRatios.toMap
     }
   }
-
 ```
 
 To use the logger, we simply rerun the chain, but pass the logger now as
@@ -361,14 +368,14 @@ a second argument to the ```iterator``` method:
   val logger = new Logger()
   val mhIteratorWithLogging = chain.iterator(initialSample, logger)
 
-  val samples2 = mhIteratorWithLogging.drop(1000).take(3000).toIndexedSeq
+  val samples2 = mhIteratorWithLogging.drop(5000).take(15000).toIndexedSeq
 ```
 
 We can now check how often the individual samples got accepted.
 
 ```scala
 println("acceptance ratio is " +logger.acceptanceRatios())
-// acceptance ratio is Map(randomWalkProposal (3.0, 1.0) -> 0.4464627151051625, randomWalkProposal (9.0, 3.0) -> 0.12311265969802555)
+// acceptance ratio is Map(randomWalkProposal (0.1, 0.1) -> 0.007948335817188276, randomWalkProposal (0.01, 0.01) -> 0.13679333875915609)
 ```
 
 We see that the acceptance ratio of the random walk proposal, which takes the
