@@ -64,7 +64,7 @@ nose:
 val idNoseTip = PointId(8156)
 val noseTipReference = model.reference.pointSet.point(idNoseTip)
 val noseTipMean = model.mean.pointSet.point(idNoseTip)
-val noseTipDeformation = (noseTipMean - noseTipReference) * 2.0
+val noseTipDeformation = (noseTipReference - noseTipMean) * 2.0
 ```
 
 To visualize this deformation, we need to define a ```DiscreteField```, which can then be passed to the show
