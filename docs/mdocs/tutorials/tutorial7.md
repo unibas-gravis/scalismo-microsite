@@ -182,11 +182,11 @@ These in turn, can be used to warp a reference mesh, as discussed above:
 referenceMesh.transform((p : Point[_3D]) => p + defField(p))
 ```
 
-More conveniently, we can visualize the sampled meshes by building again a ```StatisticalMeshModel```,
+More conveniently, we can visualize the sampled meshes by building again a Point Distribution Model:
 ```scala mdoc:silent
 val pdm = PointDistributionModel3D(referenceMesh, lowRankGP)
 ```
-which we can directly visualize
+This model can be visualized directly in ScalismoUI.
 ```scala mdoc:silent
 val pdmView = ui.show(modelGroup, pdm, "group")
 ```
