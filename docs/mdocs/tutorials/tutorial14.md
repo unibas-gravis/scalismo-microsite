@@ -7,6 +7,12 @@ In this tutorial we show how Bayesian model fitting using Markov Chain Monte Car
 to focus on the main components of the framework instead of technical details, we start in this tutorial with a simple toy example, namely 
 1D Bayesian linear regression. The application to 3D shape modelling is discussed in depth in the next tutorial.
 
+
+##### Related resources
+
+Week 2 of our [online course](https://shapemodelling.cs.unibas.ch/probabilistic-fitting-course/) on shape model fitting may provide some helpful context for this tutorial.
+
+
 ### Problem setting
 
 In a Bayesian linear regression an outcome variable $$y$$ is modelled a linear function of the explanatory variable $x$. 

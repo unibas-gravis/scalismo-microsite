@@ -7,6 +7,12 @@ In this tutorial we show how Bayesian model fitting using Markov Chain Monte Car
 to focus on the main components of the framework instead of technical details, we start in this tutorial with a simple toy example, namely
 1D Bayesian linear regression. The application to 3D shape modelling is discussed in depth in the next tutorial.
 
+
+##### Related resources
+
+Week 2 of our [online course](https://shapemodelling.cs.unibas.ch/probabilistic-fitting-course/) on shape model fitting may provide some helpful context for this tutorial.
+
+
 ### Problem setting
 
 In a Bayesian linear regression an outcome variable $$y$$ is modelled a linear function of the explanatory variable $x$.
@@ -375,7 +381,7 @@ We can now check how often the individual samples got accepted.
 
 ```scala
 println("acceptance ratio is " +logger.acceptanceRatios())
-// acceptance ratio is Map(randomWalkProposal (0.1, 0.1) -> 0.007948335817188276, randomWalkProposal (0.01, 0.01) -> 0.13679333875915609)
+// acceptance ratio is Map(randomWalkProposal (0.1, 0.1) -> 0.0066699604743083, randomWalkProposal (0.01, 0.01) -> 0.12676321233778445)
 ```
 
 We see that the acceptance ratio of the random walk proposal, which takes the
