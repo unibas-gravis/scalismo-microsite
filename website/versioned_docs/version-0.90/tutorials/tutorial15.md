@@ -18,6 +18,11 @@ computationally efficient. Making the individual parts as efficient as possible 
 important in sampling approaches, as we need to produce many samples to get accurate
 estimates.
 
+##### Related resources
+
+Week 3 of our [online course](https://shapemodelling.cs.unibas.ch/probabilistic-fitting-course/) on shape model fitting may provide some helpful context for this tutorial.
+
+
 ##### Preparation
 
 As in the previous tutorials, we start by importing some commonly used objects and
@@ -91,26 +96,14 @@ val modelLmIds = modelLms.map(l => model.mean.pointSet.pointId(l.point).get)
 val targetPoints = targetLms.map(l => l.point)
 ```
 
-We assume that the target points we observe are subject to
-noise, which we model as a normal distribution with $$3 mm$$ standard deviation (hence $$9 mm$$ variance):
-
-```scala
-val landmarkNoiseVariance = 9.0
-val uncertainty = MultivariateNormalDistribution(
-  DenseVector.zeros[Double](3),
-  DenseMatrix.eye[Double](3) * landmarkNoiseVariance
-)
-```
-
-We summarize the correspondences as a triple, consisting of model id, target position
-and uncertainty.
+We summarize the correspondences as a tuple, consisting of model id and target position.
 
 ```scala
 val correspondences = modelLmIds
   .zip(targetPoints)
   .map(modelIdWithTargetPoint => {
     val (modelId, targetPoint) = modelIdWithTargetPoint
-    (modelId, targetPoint, uncertainty)
+    (modelId, targetPoint)
   })
 ```
 
@@ -120,15 +113,17 @@ In this example, we want to model the posterior $$p(\theta | D)$$, where
 the parameters $$\theta =( t, r, \alpha)$$ consist of the translation parameters
 $$t=(t_x, t_y, t_z)$$, the rotation parameters $$r = (\phi, \psi, \omega)$$,
 represented as Euler angles as well a shape model coefficients $$\alpha = (\alpha_1, \ldots, \alpha_n)$$.
+Furthermore, we also model the noise as a parameter.
 
 ```scala
 case class Parameters(translationParameters: EuclideanVector[_3D],
                       rotationParameters: (Double, Double, Double),
-                      modelCoefficients: DenseVector[Double])
+                      modelCoefficients: DenseVector[Double],
+                      noiseStddev : Double
+                     )
 ```
 
-As in the previous tutorial, we wrap this into a class representing the sample, which can keep track by whom
-it was generated. Furthermore, we will add convenience method,
+As in the previous tutorial, we wrap this into a class representing the sample, which can keep track by whom it was generated. Furthermore, we will add convenience method,
 which builds a ```RigidTransformation``` from the parameters. As a rigid transformation
 is not completely determined by the translation and rotation parameters, we need to
 store also the center of rotation.
@@ -158,13 +153,15 @@ where $$D$$ denotes the data (i.e. the corresponding landmark points) and $$\the
 are our parameters.
 
 As a prior over the shape parameters is given by the shape model. For the
-translation and rotation, we assume a zero-mean normal distribution:
+translation and rotation, we assume a zero-mean normal distribution. As the standard deviation
+characterizing the noise needs to be positive, we use a lognormal distribution.:
 
 ```scala
 case class PriorEvaluator(model: PointDistributionModel[_3D, TriangleMesh]) extends DistributionEvaluator[Sample] {
 
   val translationPrior = breeze.stats.distributions.Gaussian(0.0, 5.0)
   val rotationPrior = breeze.stats.distributions.Gaussian(0, 0.1)
+  val noisePrior = breeze.stats.distributions.LogNormal(0, 0.25)
 
   override def logValue(sample: Sample): Double = {
     model.gp.logpdf(sample.parameters.modelCoefficients) +
@@ -173,7 +170,8 @@ case class PriorEvaluator(model: PointDistributionModel[_3D, TriangleMesh]) exte
       translationPrior.logPdf(sample.parameters.translationParameters.z) +
       rotationPrior.logPdf(sample.parameters.rotationParameters._1) +
       rotationPrior.logPdf(sample.parameters.rotationParameters._2) +
-      rotationPrior.logPdf(sample.parameters.rotationParameters._3)
+      rotationPrior.logPdf(sample.parameters.rotationParameters._3) +
+      noisePrior.logPdf(sample.parameters.noiseStddev)
   }
 }
 ```
@@ -187,19 +185,22 @@ the modelled uncertainty to compute the likelihood of our model given the data:
 
 ```scala
 case class SimpleCorrespondenceEvaluator(model: PointDistributionModel[_3D, TriangleMesh],
-                                         correspondences: Seq[(PointId, Point[_3D], MultivariateNormalDistribution)])
+                                         correspondences: Seq[(PointId, Point[_3D])])
     extends DistributionEvaluator[Sample] {
 
   override def logValue(sample: Sample): Double = {
 
     val currModelInstance = model.instance(sample.parameters.modelCoefficients).transform(sample.poseTransformation)
+    
+    val lmUncertainty = MultivariateNormalDistribution(DenseVector.zeros[Double](3), DenseMatrix.eye[Double](3) * sample.parameters.noiseStddev)
+
 
     val likelihoods = correspondences.map(correspondence => {
-      val (id, targetPoint, uncertainty) = correspondence
+      val (id, targetPoint) = correspondence
       val modelInstancePoint = currModelInstance.pointSet.point(id)
       val observedDeformation = targetPoint - modelInstancePoint
 
-      uncertainty.logpdf(observedDeformation.toBreezeVector)
+      lmUncertainty.logpdf(observedDeformation.toBreezeVector)
     })
 
     val loglikelihood = likelihoods.sum
@@ -222,17 +223,17 @@ ids given as```correspondences``` to their new ids. This is achieved by the foll
 
 ```scala
 def marginalizeModelForCorrespondences(model: PointDistributionModel[_3D, TriangleMesh],
-                                       correspondences: Seq[(PointId, Point[_3D], MultivariateNormalDistribution)])
-  : (PointDistributionModel[_3D, UnstructuredPointsDomain],
-     Seq[(PointId, Point[_3D], MultivariateNormalDistribution)]) = {
+                                        correspondences: Seq[(PointId, Point[_3D])])
+: (PointDistributionModel[_3D, UnstructuredPointsDomain],
+  Seq[(PointId, Point[_3D])]) = {
 
-  val (modelIds, _, _) = correspondences.unzip3
+  val (modelIds, _) = correspondences.unzip
   val marginalizedModel = model.marginal(modelIds.toIndexedSeq)
   val newCorrespondences = correspondences.map(idWithTargetPoint => {
-    val (id, targetPoint, uncertainty) = idWithTargetPoint
+    val (id, targetPoint) = idWithTargetPoint
     val modelPoint = model.reference.pointSet.point(id)
     val newId = marginalizedModel.reference.pointSet.findClosestPoint(modelPoint).id
-    (newId, targetPoint, uncertainty)
+    (newId, targetPoint)
   })
   (marginalizedModel, newCorrespondences)
 }
@@ -242,23 +243,25 @@ The more efficient version of the evaluator uses now the marginalized model to e
 
 ```scala
 case class CorrespondenceEvaluator(model: PointDistributionModel[_3D, TriangleMesh],
-                                   correspondences: Seq[(PointId, Point[_3D], MultivariateNormalDistribution)])
-    extends DistributionEvaluator[Sample] {
+                                   correspondences: Seq[(PointId, Point[_3D])])
+  extends DistributionEvaluator[Sample] {
 
   val (marginalizedModel, newCorrespondences) = marginalizeModelForCorrespondences(model, correspondences)
 
   override def logValue(sample: Sample): Double = {
+
+    val lmUncertainty = MultivariateNormalDistribution(DenseVector.zeros[Double](3), DenseMatrix.eye[Double](3) * sample.parameters.noiseStddev)
 
     val currModelInstance = marginalizedModel
       .instance(sample.parameters.modelCoefficients)
       .transform(sample.poseTransformation)
 
     val likelihoods = newCorrespondences.map(correspondence => {
-      val (id, targetPoint, uncertainty) = correspondence
+      val (id, targetPoint) = correspondence
       val modelInstancePoint = currModelInstance.pointSet.point(id)
       val observedDeformation = targetPoint - modelInstancePoint
 
-      uncertainty.logpdf(observedDeformation.toBreezeVector)
+      lmUncertainty.logpdf(observedDeformation.toBreezeVector)
     })
 
     val loglikelihood = likelihoods.sum
@@ -366,7 +369,7 @@ case class RotationUpdateProposal(stddev: Double)
 }
 ```
 
-Finally, we define the update proposal for the translation:
+We define a similar proposal for the translation.
 
 ```scala
 case class TranslationUpdateProposal(stddev: Double)
@@ -391,7 +394,27 @@ case class TranslationUpdateProposal(stddev: Double)
 }
 ```
 
-The final proposal is a mixture of the three proposals we defined above.
+```scala
+case class NoiseStddevUpdateProposal(stddev: Double)(implicit rng : scalismo.utils.Random)
+  extends ProposalGenerator[Sample]
+    with TransitionProbability[Sample] {
+
+  val perturbationDistr = breeze.stats.distributions.Gaussian(0, stddev)(rng.breezeRandBasis)
+
+  def propose(sample: Sample): Sample = {
+    val newSigma = sample.parameters.noiseStddev +  perturbationDistr.sample()
+    val newParameters = sample.parameters.copy(noiseStddev = newSigma)
+    sample.copy(generatedBy = s"NoiseStddevUpdateProposal ($stddev)", parameters = newParameters)
+  }
+
+  override def logTransitionProbability(from: Sample, to: Sample) = {
+    val residual = to.parameters.noiseStddev - from.parameters.noiseStddev
+    perturbationDistr.logPdf(residual)
+  }
+}
+```
+
+The final proposal is a mixture of the  proposals we defined above.
 We choose to update the shape more often than the translation and rotation parameters,
 as we expect most changes to be shape changes.
 
@@ -399,10 +422,13 @@ as we expect most changes to be shape changes.
 val shapeUpdateProposal = ShapeUpdateProposal(model.rank, 0.1)
 val rotationUpdateProposal = RotationUpdateProposal(0.01)
 val translationUpdateProposal = TranslationUpdateProposal(1.0)
+val noiseStddevUpdateProposal = NoiseStddevUpdateProposal(0.1)
+
 val generator = MixtureProposal.fromProposalsWithTransition(
-  (0.6, shapeUpdateProposal),
+  (0.5, shapeUpdateProposal),
   (0.2, rotationUpdateProposal),
-  (0.2, translationUpdateProposal)
+  (0.2, translationUpdateProposal),
+  (0.1, noiseStddevUpdateProposal)
 )
 ```
 
@@ -455,9 +481,10 @@ def computeCenterOfMass(mesh: TriangleMesh[_3D]): Point[_3D] = {
 }
 
 val initialParameters = Parameters(
-  EuclideanVector(0, 0, 0),
-  (0.0, 0.0, 0.0),
-  DenseVector.zeros[Double](model.rank)
+  translationParameters = EuclideanVector(0, 0, 0),
+  rotationParameters = (0.0, 0.0, 0.0),
+  modelCoefficients = DenseVector.zeros[Double](model.rank),
+  noiseStddev = 1.0
 )
 
 val initialSample = Sample("initial", initialParameters, computeCenterOfMass(model.mean))
@@ -500,7 +527,7 @@ Before working with the results, we check the acceptance ratios to verify that a
 
 ```scala
 println(logger.acceptanceRatios())
-// Map(RotationUpdateProposal (0.01) -> 0.6971894832275612, TranlationUpdateProposal (1.0) -> 0.5043859649122807, ShapeUpdateProposal (0.1) -> 0.7907262398280362)
+// Map(RotationUpdateProposal (0.01) -> 0.27049910873440286, TranlationUpdateProposal (1.0) -> 0.10995475113122172, ShapeUpdateProposal (0.1) -> 0.4661405762525234, NoiseStddevUpdateProposal (0.1) -> 0.8394160583941606)
 ```
 
 ### Analyzing the results
@@ -551,7 +578,7 @@ val (marginalizedModel, newCorrespondences) = marginalizeModelForCorrespondences
 ```
 
 ```scala
-for ((id, _, _) <- newCorrespondences) {
+for ((id, _) <- newCorrespondences) {
   val meanPointPosition = computeMean(marginalizedModel, id)
   println(s"expected position for point at id $id  = $meanPointPosition")
   val cov = computeCovarianceFromSamples(marginalizedModel, id, meanPointPosition)
@@ -559,45 +586,19 @@ for ((id, _, _) <- newCorrespondences) {
     s"posterior variance computed  for point at id (shape and pose) $id  = ${cov(0, 0)}, ${cov(1, 1)}, ${cov(2, 2)}"
   )
 }
-// expected position for point at id PointId(0)  = Point3D(148.10137201095068,-7.151235826279037,291.3929897650882)
-// posterior variance computed  for point at id (shape and pose) PointId(0)  = 4.254464918957609, 3.939366851939425, 3.32790002246177
-// expected position for point at id PointId(1)  = Point3D(142.24949688108646,-4.4064122402505745,266.34241057439533)
-// posterior variance computed  for point at id (shape and pose) PointId(1)  = 2.918968756161676, 2.159129807301085, 2.915190937982501
-// expected position for point at id PointId(2)  = Point3D(141.3051915247215,-4.2897512164448095,226.94538458273826)
-// posterior variance computed  for point at id (shape and pose) PointId(2)  = 2.203212589533782, 1.9443312683620244, 3.558990457373749
-// expected position for point at id PointId(3)  = Point3D(143.33662067133574,-4.885817375124605,201.61254954128444)
-// posterior variance computed  for point at id (shape and pose) PointId(3)  = 4.211176241740335, 3.5805967352101438, 3.8214742761066214
-// expected position for point at id PointId(4)  = Point3D(102.9147937651206,32.77448813851955,248.52670379739345)
-// posterior variance computed  for point at id (shape and pose) PointId(4)  = 3.670091389108584, 4.998066354925429, 3.3640625099189827
-// expected position for point at id PointId(5)  = Point3D(137.63389362946234,101.3277589516202,248.64874726494665)
-// posterior variance computed  for point at id (shape and pose) PointId(5)  = 8.479207875196545, 6.924214739937887, 5.29092402298062
+// expected position for point at id PointId(0)  = Point3D(148.0324861283622,-6.275576357568034,290.59079814866135)
+// posterior variance computed  for point at id (shape and pose) PointId(0)  = 0.5361626780401172, 0.44518844783183426, 0.4712449612711684
+// expected position for point at id PointId(1)  = Point3D(142.25613155050056,-4.578502616840517,267.6662118948927)
+// posterior variance computed  for point at id (shape and pose) PointId(1)  = 0.3358273564280193, 0.27412211397165964, 0.3834512258930212
+// expected position for point at id PointId(2)  = Point3D(141.51450447249726,-5.396538351594542,225.53365136081703)
+// posterior variance computed  for point at id (shape and pose) PointId(2)  = 0.32450811724762585, 0.34599403442859433, 0.38706424978868814
+// expected position for point at id PointId(3)  = Point3D(143.24561920715632,-4.760308138497735,201.7722641818853)
+// posterior variance computed  for point at id (shape and pose) PointId(3)  = 0.5900000898872085, 0.4373150359903246, 0.5292405759059319
+// expected position for point at id PointId(4)  = Point3D(102.70685297949743,32.6549651676325,248.25560554976087)
+// posterior variance computed  for point at id (shape and pose) PointId(4)  = 0.6541511267089476, 0.6578223533565591, 0.44885292685051964
+// expected position for point at id PointId(5)  = Point3D(136.9987480392464,100.7251991156642,249.83446273567114)
+// posterior variance computed  for point at id (shape and pose) PointId(5)  = 0.7664814741591471, 0.7557594068764044, 0.6117844332219701
 ```
-
-It is interesting to compare this posterior variance, with the variance we would have obtained by using a Gaussian process regression,
-where we would have to assume the pose to be fixed:
-
-```scala
-val posteriorFixedPose = model.posterior(correspondences.toIndexedSeq)
-```
-
-Not surprisingly, computing the variance of this models reveals, that the points vary less in this model:
-
-```scala
-for ((id, _, _) <- newCorrespondences) {
-  val cov = posteriorFixedPose.cov(id, id)
-  println(
-    s"posterior variance computed by analytic posterior (shape only) for point with id $id = ${cov(0, 0)}, ${cov(1, 1)}, ${cov(2, 2)}"
-  )
-}
-// posterior variance computed by analytic posterior (shape only) for point with id PointId(0) = 1.7493438462816924, 2.3773798978463545, 2.4529203603071132
-// posterior variance computed by analytic posterior (shape only) for point with id PointId(1) = 1.7425234299448356, 2.347569081897583, 2.484181513654568
-// posterior variance computed by analytic posterior (shape only) for point with id PointId(2) = 1.728312680395977, 2.311983615096077, 2.4760881301654973
-// posterior variance computed by analytic posterior (shape only) for point with id PointId(3) = 1.7362509228394625, 2.3504558671936087, 2.4497130086130414
-// posterior variance computed by analytic posterior (shape only) for point with id PointId(4) = 1.74656771644886, 2.315887303162952, 2.494671632799402
-// posterior variance computed by analytic posterior (shape only) for point with id PointId(5) = 1.7511296018408746, 2.2802845887546255, 2.505733093422708
-```
-
-The reason for the reduced flexibility is that the model cannot adjust the pose, and hence has less freedom to explain the observed data.
 
 ### Beyond landmark fitting
 
