@@ -14,11 +14,11 @@ provide some theoretical background.
 To run the code in the tutorials, you will need to setup a Scala project,
 which depends on the latest Scalismo version.
 
-If you are new to Scala and are have never worked with Scala in an IDE, follow the instructions in the guide: 
+If you are new to Scala and have never worked with Scala in an IDE, follow the instructions in the guide: 
 
 * [Using Scalismo in an IDE](ide) 
 
-This guide will walk you through the steps of setting up a complete Scala programming environment, and importing a first project into an IDE.
+This guide will walk you through the steps of setting up a complete Scala programming environment, and importing a first project into an IDE. 
 
 
 If you are an experience Scala developer and you just want to use Scalismo as a library in an existing project, simply add the following lines to
@@ -28,7 +28,7 @@ your ```build.sbt```.
 resolvers += Resolver.bintrayRepo("unibas-gravis", "maven")
 
 libraryDependencies ++=
-  Seq("ch.unibas.cs.gravis" %% "scalismo-ui" % "0.18.0")
+  Seq("ch.unibas.cs.gravis" %% "scalismo-ui" % "0.14.1") // this will include scalismo 0.18.0
 ```
 
 ### Tutorials
