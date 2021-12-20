@@ -97,6 +97,7 @@ Now, the IndexedSeq of triangle meshes *alignedMeshes* contains the faces that a
 
 *Exercise: verify visually that at least the first element of the aligned dataset is indeed aligned to the reference.*
 
+
 ### Building a discrete Gaussian process from data
 
 Now that we have a set of meshes, which are in correspondence and aligned
