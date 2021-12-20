@@ -1,0 +1,1 @@
+(window.webpackJsonp=window.webpackJsonp||[]).push([[88],{153:function(l){l.exports=JSON.parse('{"allTagsPath":"/blog/tags","slug":"intelli-j","name":"intellij","count":1,"permalink":"/blog/tags/intelli-j"}')}}]);

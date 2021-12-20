@@ -1,0 +1,1 @@
+(window.webpackJsonp=window.webpackJsonp||[]).push([[79],{144:function(s){s.exports=JSON.parse('{"allTagsPath":"/blog/tags","slug":"scalismo","name":"scalismo","count":3,"permalink":"/blog/tags/scalismo"}')}}]);
