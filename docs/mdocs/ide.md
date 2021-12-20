@@ -117,6 +117,8 @@ To execute the file from within the IDE right-click the source file and click *R
 
 ![ide](images/project-in-intellij.png) 
 
+### Troubleshooting
+If you have problems running Scalismo from IntelliJ but not from the command line, have a look at the [blog post](https://scalismo.org/blog/java-on-osx-problem).
 
 ### Other Ressources
 
