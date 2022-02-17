@@ -178,7 +178,7 @@ Here is, howe we would visualize a 3D image:
  The following list shows all the scalismo objects, which can currently be visualized
  in scalismo-ui.
 
- * 3D image (```DiscreteScalarImage[_3D,_]```)
+ * 3D image (```DiscreteScalarImage[_3D, _]```)
  * 3D vector field (```DiscreteField[_3D, Vector[_3D]]```)
  * Point cloud (```IndexedSeq[Point[_3D]]```)
  * Landmark (```Landmark[_3D]```)

@@ -12,26 +12,13 @@ provide some theoretical background.
 
 ### Preparation
 
-To run the code in the tutorials, you will need to setup a Scala project,
-which depends on the latest Scalismo version.
+There are different developement environment that you can use to program with Scala. For beginners we recommend to use *scala-cli* together with Visual Studio Code. If you are an experienced developer, who is already familiar with build systems and integrated development environments, you may want to use Scalismo from within *IntelliJ IDEA* instead.
 
-If you are new to Scala and have never worked with Scala in an IDE, follow the instructions in the guides:
-
-* [Using Scalismo in an IDE (article)](ide)
+The following guides will help you to get started with setting up your first project:
+* [Using Scalismo with Scala-cli and VSCode](vscode)
+* [Using Scalismo with IntelliJ IDEA (article)](ide)
 * [Getting started with Scalismo in IntelliJ IDEA (Video tutorial)](https://www.youtube.com/watch?v=E3br5-Yr-h8)
 
-These guides will walk you through the steps of setting up a complete Scala programming environment, and importing a first project into an IDE.
-
-
-If you are an experience Scala developer and you just want to use Scalismo as a library in an existing project, simply add the following lines to
-your ```build.sbt```.
-
-```scala
-resolvers += Resolver.bintrayRepo("unibas-gravis", "maven")
-
-libraryDependencies ++=
-  Seq("ch.unibas.cs.gravis" %% "scalismo-ui" % "0.90.0")
-```
 
 ### Tutorials
 
