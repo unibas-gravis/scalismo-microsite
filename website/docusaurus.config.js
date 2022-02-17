@@ -1,3 +1,6 @@
+const lightCodeTheme = require('prism-react-renderer/themes/github');
+const darkCodeTheme = require('prism-react-renderer/themes/dracula');
+
 const math = require('remark-math')
 const katex = require('rehype-katex');
 
@@ -6,13 +9,12 @@ module.exports = {
   tagline: 'Scalable Image Analysis and Shape Modelling',
   url: 'https://scalismo.org',
   baseUrl: '/',
+  trailingSlash: true,
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.png',
   organizationName: 'unibas-gravis', // Usually your GitHub org/user name.
   projectName: 'scalismo-microsite', // Usually your repo name.
-  url: 'https://scalismo.org',
-  baseUrl: '/',
   stylesheets: [
     {
       href: 'https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css',
