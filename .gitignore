@@ -22,3 +22,12 @@ yarn-error.log*
 myproject-docs
 
 **/target/
+
+
+null
+.bloop
+.metals
+.idea
+out
+tmp
+coursier
