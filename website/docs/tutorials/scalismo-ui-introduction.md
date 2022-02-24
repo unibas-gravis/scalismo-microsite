@@ -7,7 +7,6 @@ The goal of this tutorial is to give a practical introduction to visualizing wit
 *Scalismo-ui*.
 
 To get it out of the way, we import the following:
-
 ```scala
 // api functions for scalismo-ui
 import scalismo.ui.api._
@@ -26,6 +25,7 @@ import breeze.stats.distributions.Gaussian
 ```
 
 
+
 ## Starting Scalismo-ui and creating groups
 
 The first step is to create a ```ui``` object, with which we interact. This can be done by calling
@@ -41,7 +41,7 @@ You will see that this starts the graphical user interface. Scalismo-ui features
 Before we can start visualizing objects, we need to create a group. A group is a collection of objects that belong together. A typical scenario is that we have an 3D image of a structure, but also a segmentation given in form of a surface mesh and maybe even some manually annotated landmark points. A group is created by calling
 
 ```scala
-val group = ui.createGroup("object-1")
+ val group = ui.createGroup("object-1")
 ```
 
 ## Visualizing objects
@@ -95,10 +95,10 @@ Exactly in the same way as we manipulated the display properties of the mesh, we
 scalismo object and, for example, print out their point coordinates.
 
 ```scala
-for (landmarkView <- landmarkViews) {
-  landmarkView.color = Color.RED
-  println(landmarkView.landmark.point)
-}
+  for (landmarkView <- landmarkViews) {
+    landmarkView.color = Color.RED
+    println(landmarkView.landmark.point)
+  }
 ```
 
 ## Adding transformations
@@ -119,7 +119,6 @@ transformationView.remove()
 ```
 
 Once we are done with the visualization, we can remove the entire group using
-
 ```scala
 group.remove()
 ```
@@ -153,12 +152,12 @@ The pose transformation and shape transformation are parametric transformations,
 the transformation, we can change their parameters. To visualize, for example,  a random shape of the statistical shape model, we can  create a random coefficient vector and set the shape transformation parameters accordingly.
 
 ```scala
-val randCoeffs = DenseVector.rand[Double](ssm.rank, Gaussian(0, 1))
-ssmView.shapeModelTransformationView.shapeTransformationView.coefficients = randCoeffs
+    val randCoeffs = DenseVector.rand[Double](ssm.rank, Gaussian(0, 1))
+    ssmView.shapeModelTransformationView.shapeTransformationView.coefficients = randCoeffs
 ```
-
 This will immediately update the shape transformation to the transformation that
-is defined by these coefficients and the visualized mesh is deformed accordingly.
+ is defined by these coefficients and the visualized mesh is deformed accordingly.
+
 
 
 ## Visualizing other scalismo objects
@@ -170,21 +169,21 @@ which we obtain either directly from the show function, or by using the ```ui.fi
 
 Here is, howe we would visualize a 3D image:
 
-```scala
-val group2 = ui.createGroup("object-2")
-val image = ImageIO.read3DScalarImage[Short](new File("./datasets/PaolaMRI.vtk")).get
-val imageView = ui.show(group2, image, "mri-image")
+```scala mdoc:silent
+  val group2 = ui.createGroup("object-2")
+  val image = ImageIO.read3DScalarImage[Short](new File("./datasets/PaolaMRI.vtk")).get
+  val imageView = ui.show(group2, image, "mri-image")
 ```
 
-    The following list shows all the scalismo objects, which can currently be visualized
-    in scalismo-ui.
-    
-    * 3D image (```DiscreteScalarImage[_3D,_]```)
-    * 3D vector field (```DiscreteField[_3D, Vector[_3D]]```)
-    * Point cloud (```IndexedSeq[Point[_3D]]```)
-    * Landmark (```Landmark[_3D]```)
-    * Scalar field (```DiscreteScalarField[_3D, _]```)
-    * Triangle mesh (```TriangleMesh[_3D]```)
-    * Scalar mesh field(```ScalarMeshField[_]```)
-    * Line mesh (```LineMesh[_3D]```)
+ The following list shows all the scalismo objects, which can currently be visualized
+ in scalismo-ui.
+
+ * 3D image (```DiscreteScalarImage[_3D, _]```)
+ * 3D vector field (```DiscreteField[_3D, Vector[_3D]]```)
+ * Point cloud (```IndexedSeq[Point[_3D]]```)
+ * Landmark (```Landmark[_3D]```)
+ * Scalar field (```DiscreteScalarField[_3D, _]```)
+ * Triangle mesh (```TriangleMesh[_3D]```)
+ * Scalar mesh field(```ScalarMeshField[_]```)
+ * Line mesh (```LineMesh[_3D]```)
 

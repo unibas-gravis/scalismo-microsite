@@ -28,7 +28,7 @@ Week 3 of our [online course](https://shapemodelling.cs.unibas.ch/probabilistic-
 As in the previous tutorials, we start by importing some commonly used objects and
 initializing the system.
 
-```scala
+```scala mdoc:silent
 import scalismo.common.{PointId, UnstructuredPointsDomain}
 import scalismo.geometry._
 import scalismo.io.{LandmarkIO, MeshIO, StatisticalModelIO}
@@ -64,7 +64,7 @@ val ui = ScalismoUI()
 In a first step, we load and visualize all the data that we need.
 First, we load the statistical model:
 
-```scala
+```scala mdoc:silent
 val model = StatisticalModelIO.readStatisticalTriangleMeshModel3D(new java.io.File("datasets/bfm.h5")).get
 
 val modelGroup = ui.createGroup("model")
@@ -75,7 +75,7 @@ modelView.referenceView.opacity = 0.5
 In this example, we will fit the model such that a set of model landmarks, coincide
 with a set of landmark points defined on a target face. We load and visualize the corresponding landmark data:
 
-```scala
+```scala mdoc:silent
 val modelLms = LandmarkIO.readLandmarksJson[_3D](new java.io.File("datasets/modelLM_mcmc.json")).get
 val modelLmViews = ui.show(modelGroup, modelLms, "modelLandmarks")
 modelLmViews.foreach(lmView => lmView.color = java.awt.Color.BLUE)
@@ -90,21 +90,20 @@ modelLmViews.foreach(lmView => lmView.color = java.awt.Color.RED)
 In the following, we will refer to the points on the model using their point id, while the target
 position is represented as physical points. The reason why we use the point id for the model is that the model instances,
 and therefore the points, which are represented by the point id, are changing as we fit the model.
-
-```scala
+```scala mdoc:silent
 val modelLmIds = modelLms.map(l => model.mean.pointSet.pointId(l.point).get)
 val targetPoints = targetLms.map(l => l.point)
 ```
 
 We summarize the correspondences as a tuple, consisting of model id and target position.
 
-```scala
-val correspondences = modelLmIds
-  .zip(targetPoints)
-  .map(modelIdWithTargetPoint => {
-    val (modelId, targetPoint) = modelIdWithTargetPoint
-    (modelId, targetPoint)
-  })
+```scala mdoc:silent
+  val correspondences = modelLmIds
+    .zip(targetPoints)
+    .map(modelIdWithTargetPoint => {
+      val (modelId, targetPoint) = modelIdWithTargetPoint
+      (modelId, targetPoint)
+    })
 ```
 
 ### The parameter class
@@ -113,9 +112,9 @@ In this example, we want to model the posterior $$p(\theta | D)$$, where
 the parameters $$\theta =( t, r, \alpha)$$ consist of the translation parameters
 $$t=(t_x, t_y, t_z)$$, the rotation parameters $$r = (\phi, \psi, \omega)$$,
 represented as Euler angles as well a shape model coefficients $$\alpha = (\alpha_1, \ldots, \alpha_n)$$.
-Furthermore, we also model the noise as a parameter.
+Furthermore, we also model the noise as a parameter. 
 
-```scala
+```scala mdoc:silent
 case class Parameters(translationParameters: EuclideanVector[_3D],
                       rotationParameters: (Double, Double, Double),
                       modelCoefficients: DenseVector[Double],
@@ -128,7 +127,7 @@ which builds a ```RigidTransformation``` from the parameters. As a rigid transfo
 is not completely determined by the translation and rotation parameters, we need to
 store also the center of rotation.
 
-```scala
+```scala mdoc:silent
 case class Sample(generatedBy: String, parameters: Parameters, rotationCenter: Point[_3D]) {
   def poseTransformation: TranslationAfterRotation[_3D] = {
     val translation = Translation3D(parameters.translationParameters)
@@ -156,7 +155,7 @@ As a prior over the shape parameters is given by the shape model. For the
 translation and rotation, we assume a zero-mean normal distribution. As the standard deviation
 characterizing the noise needs to be positive, we use a lognormal distribution.:
 
-```scala
+```scala mdoc:silent
 case class PriorEvaluator(model: PointDistributionModel[_3D, TriangleMesh]) extends DistributionEvaluator[Sample] {
 
   val translationPrior = breeze.stats.distributions.Gaussian(0.0, 5.0)
@@ -183,7 +182,7 @@ the distance to their target position is computed. This distance is what was
 modelled by the uncertainty of the observations. We can therefore directly use
 the modelled uncertainty to compute the likelihood of our model given the data:
 
-```scala
+``` scala mdoc:silent
 case class SimpleCorrespondenceEvaluator(model: PointDistributionModel[_3D, TriangleMesh],
                                          correspondences: Seq[(PointId, Point[_3D])])
     extends DistributionEvaluator[Sample] {
@@ -221,7 +220,7 @@ This is rather inefficient. A more efficient version would first marginalize the
 points of interest. Since marginalization changes the point ids, we need to map the
 ids given as```correspondences``` to their new ids. This is achieved by the following helper function:
 
-```scala
+```scala mdoc:silent
 def marginalizeModelForCorrespondences(model: PointDistributionModel[_3D, TriangleMesh],
                                         correspondences: Seq[(PointId, Point[_3D])])
 : (PointDistributionModel[_3D, UnstructuredPointsDomain],
@@ -241,7 +240,7 @@ def marginalizeModelForCorrespondences(model: PointDistributionModel[_3D, Triang
 
 The more efficient version of the evaluator uses now the marginalized model to evaluate the likelihood:
 
-```scala
+```scala mdoc:silent
 case class CorrespondenceEvaluator(model: PointDistributionModel[_3D, TriangleMesh],
                                    correspondences: Seq[(PointId, Point[_3D])])
   extends DistributionEvaluator[Sample] {
@@ -277,7 +276,7 @@ an evaluator is used the second time with the same parameters, the ```logValue``
 not recomputed, but simply taken from cache. Using the following utility class,
 we can obtain for any evaluator a new evaluator, which performs such caching:
 
-```scala
+```scala mdoc:silent
 case class CachedEvaluator[A](evaluator: DistributionEvaluator[A]) extends DistributionEvaluator[A] {
   val memoizedLogValue = Memoize(evaluator.logValue, 10)
 
@@ -292,7 +291,7 @@ case class CachedEvaluator[A](evaluator: DistributionEvaluator[A]) extends Distr
 Given these evaluators, we can now build the computationally efficient version of
 our target density $$p(\theta | D)$$
 
-```scala
+```scala mdoc:silent
 val likelihoodEvaluator = CachedEvaluator(CorrespondenceEvaluator(model, correspondences))
 val priorEvaluator = CachedEvaluator(PriorEvaluator(model))
 
@@ -303,7 +302,7 @@ val posteriorEvaluator = ProductEvaluator(priorEvaluator, likelihoodEvaluator)
 
 As in the previous tutorials, we will use simple random walk proposals.
 We will define separate proposals for shape, translation and rotation.
-On one hand, this lets us set the step length (i.e. stddev of the distribution from which we
+ On one hand, this lets us set the step length (i.e. stddev of the distribution from which we
 sample the next step) individually for each group, and thus to incorporate our knowledge
 that changes in rotation will be much smaller than the shape changes. On the other hand,
 splitting the parameter updates in blocks will increase our chance for the random updates
@@ -314,8 +313,7 @@ and hence increase the chance of the new state being rejected.
 The definition of the proposals are straight-forward.
 
 We start with the shape update proposal:
-
-```scala
+```scala mdoc:silent
 case class ShapeUpdateProposal(paramVectorSize: Int, stddev: Double)
     extends ProposalGenerator[Sample]
     with TransitionProbability[Sample] {
@@ -338,11 +336,9 @@ case class ShapeUpdateProposal(paramVectorSize: Int, stddev: Double)
   }
 }
 ```
-
 The update of the roation parameters is very similar. Note that we only update the
 rotation parameters, but keep the center of rotation unchanged.
-
-```scala
+```scala mdoc:silent
 case class RotationUpdateProposal(stddev: Double)
     extends ProposalGenerator[Sample]
     with TransitionProbability[Sample] {
@@ -370,8 +366,7 @@ case class RotationUpdateProposal(stddev: Double)
 ```
 
 We define a similar proposal for the translation.
-
-```scala
+```scala mdoc:silent
 case class TranslationUpdateProposal(stddev: Double)
     extends ProposalGenerator[Sample]
     with TransitionProbability[Sample] {
@@ -394,7 +389,7 @@ case class TranslationUpdateProposal(stddev: Double)
 }
 ```
 
-```scala
+```scala mdoc:silent
 case class NoiseStddevUpdateProposal(stddev: Double)(implicit rng : scalismo.utils.Random)
   extends ProposalGenerator[Sample]
     with TransitionProbability[Sample] {
@@ -417,8 +412,7 @@ case class NoiseStddevUpdateProposal(stddev: Double)(implicit rng : scalismo.uti
 The final proposal is a mixture of the  proposals we defined above.
 We choose to update the shape more often than the translation and rotation parameters,
 as we expect most changes to be shape changes.
-
-```scala
+```scala mdoc:silent
 val shapeUpdateProposal = ShapeUpdateProposal(model.rank, 0.1)
 val rotationUpdateProposal = RotationUpdateProposal(0.01)
 val translationUpdateProposal = TranslationUpdateProposal(1.0)
@@ -438,7 +432,7 @@ val generator = MixtureProposal.fromProposalsWithTransition(
 For running the Markov Chain, we proceed exactly as in the previous tutorial. We start by defining the logger,
 to compute the accept/reject ratios of the individual generators
 
-```scala
+```scala mdoc:silent
 class Logger extends AcceptRejectLogger[Sample] {
   private val numAccepted = collection.mutable.Map[String, Int]()
   private val numRejected = collection.mutable.Map[String, Int]()
@@ -474,7 +468,7 @@ class Logger extends AcceptRejectLogger[Sample] {
 We then create the initial sample, where we choose here the center of mass of the model mean as the
 rotation center.
 
-```scala
+```scala mdoc:silent
 def computeCenterOfMass(mesh: TriangleMesh[_3D]): Point[_3D] = {
   val normFactor = 1.0 / mesh.pointSet.numberOfPoints
   mesh.pointSet.points.foldLeft(Point(0, 0, 0))((sum, point) => sum + point.toVector * normFactor)
@@ -494,8 +488,7 @@ val initialSample = Sample("initial", initialParameters, computeCenterOfMass(mod
 Fortunately, most of the time this error is easy to diagnose, as the acceptance ratio of the rotation proposal will be unexpectedly low.*
 
 Next we set up the chain and obtain an iterator.
-
-```scala
+```scala mdoc:silent
 val chain = MetropolisHastings(generator, posteriorEvaluator)
 val logger = new Logger()
 val mhIterator = chain.iterator(initialSample, logger)
@@ -503,8 +496,7 @@ val mhIterator = chain.iterator(initialSample, logger)
 
 In this example we are interested to visualize some samples from the posterior as we run the chain. This can be done
 by augmenting the iterator with visualization code:
-
-```scala
+```scala mdoc:silent
 val samplingIterator = for ((sample, iteration) <- mhIterator.zipWithIndex) yield {
     println("iteration " + iteration)
     if (iteration % 500 == 0) {
@@ -517,25 +509,21 @@ val samplingIterator = for ((sample, iteration) <- mhIterator.zipWithIndex) yiel
 
 Finally, we draw the samples using the chain by consuming the iterator. We drop the first 1000 iterations, as the
 chain needs some burn-in time to converge to a equilibrium solution:
-
-```scala
+```scala mdoc:silent
 val samples = samplingIterator.drop(1000).take(10000).toIndexedSeq
 ```
 
 
 Before working with the results, we check the acceptance ratios to verify that all the proposals work as expected:
-
-```scala
+```scala mdoc
 println(logger.acceptanceRatios())
-// Map(RotationUpdateProposal (0.01) -> 0.27049910873440286, TranlationUpdateProposal (1.0) -> 0.10995475113122172, ShapeUpdateProposal (0.1) -> 0.4661405762525234, NoiseStddevUpdateProposal (0.1) -> 0.8394160583941606)
 ```
 
 ### Analyzing the results
 
 Once we have the samples, we can now use them to analyze our fit.
 For example, we can select the best fit from these samples and visualize it
-
-```scala
+```scala mdoc:silent
 val bestSample = samples.maxBy(posteriorEvaluator.logValue)
 val bestFit = model.instance(bestSample.parameters.modelCoefficients).transform(bestSample.poseTransformation)
 val resultGroup = ui.createGroup("result")
@@ -545,7 +533,7 @@ ui.show(resultGroup, bestFit, "best fit")
 The samples allow us to infer much more about the distribution. For example, we can estimate the expected position of
 any point in the model and the variance from the samples:
 
-```scala
+```scala mdoc:silent
 
 def computeMean(model: PointDistributionModel[_3D, UnstructuredPointsDomain], id: PointId): Point[_3D] = {
   var mean = EuclideanVector(0, 0, 0)
@@ -572,12 +560,11 @@ def computeCovarianceFromSamples(model: PointDistributionModel[_3D, Unstructured
 ```
 
 For efficiency reasons, we do the computations here only for the landmark points, using again the marginalized model:
-
-```scala
+```scala mdoc:silent
 val (marginalizedModel, newCorrespondences) = marginalizeModelForCorrespondences(model, correspondences)
 ```
 
-```scala
+```scala mdoc
 for ((id, _) <- newCorrespondences) {
   val meanPointPosition = computeMean(marginalizedModel, id)
   println(s"expected position for point at id $id  = $meanPointPosition")
@@ -586,18 +573,6 @@ for ((id, _) <- newCorrespondences) {
     s"posterior variance computed  for point at id (shape and pose) $id  = ${cov(0, 0)}, ${cov(1, 1)}, ${cov(2, 2)}"
   )
 }
-// expected position for point at id PointId(0)  = Point3D(148.0324861283622,-6.275576357568034,290.59079814866135)
-// posterior variance computed  for point at id (shape and pose) PointId(0)  = 0.5361626780401172, 0.44518844783183426, 0.4712449612711684
-// expected position for point at id PointId(1)  = Point3D(142.25613155050056,-4.578502616840517,267.6662118948927)
-// posterior variance computed  for point at id (shape and pose) PointId(1)  = 0.3358273564280193, 0.27412211397165964, 0.3834512258930212
-// expected position for point at id PointId(2)  = Point3D(141.51450447249726,-5.396538351594542,225.53365136081703)
-// posterior variance computed  for point at id (shape and pose) PointId(2)  = 0.32450811724762585, 0.34599403442859433, 0.38706424978868814
-// expected position for point at id PointId(3)  = Point3D(143.24561920715632,-4.760308138497735,201.7722641818853)
-// posterior variance computed  for point at id (shape and pose) PointId(3)  = 0.5900000898872085, 0.4373150359903246, 0.5292405759059319
-// expected position for point at id PointId(4)  = Point3D(102.70685297949743,32.6549651676325,248.25560554976087)
-// posterior variance computed  for point at id (shape and pose) PointId(4)  = 0.6541511267089476, 0.6578223533565591, 0.44885292685051964
-// expected position for point at id PointId(5)  = Point3D(136.9987480392464,100.7251991156642,249.83446273567114)
-// posterior variance computed  for point at id (shape and pose) PointId(5)  = 0.7664814741591471, 0.7557594068764044, 0.6117844332219701
 ```
 
 ### Beyond landmark fitting
@@ -605,14 +580,17 @@ for ((id, _) <- newCorrespondences) {
 We have shown above how Scalismo can be used to perform Bayesian model fitting on the example of fitting 3D landmarks. This example
 can easily be extended to other fitting tasks, such as fitting the model to points with unkown correspondences, fitting shapes in surfaces
 of fitting a model to an image using an Active Shape Model as a likelihood function. In principle, all that is required is to
-change the likelihood function and rerun the fit.
-In practice, however, as a change in the likelihood function can dramatically change the posterior density, it is often required
-to tune the proposals, such that good convergence can be achieved. Indeed, finding good proposal distributions is the key to
-applying this method successfully. The more prior knowledge about the target distribution we can incorporate into the proposals,
-the faster will the chain converge to the equilibrium distribution.
+ change the likelihood function and rerun the fit.
+ In practice, however, as a change in the likelihood function can dramatically change the posterior density, it is often required
+ to tune the proposals, such that good convergence can be achieved. Indeed, finding good proposal distributions is the key to
+ applying this method successfully. The more prior knowledge about the target distribution we can incorporate into the proposals,
+ the faster will the chain converge to the equilibrium distribution.
 
 For more complicated use-cases of this method in image analysis , we refer the interested reader is referred to the paper by S. Schönborn et al.
 and references therein:
 
 * Schönborn, Sandro, et al. "Markov chain monte carlo for automated face image analysis." International Journal of Computer Vision 123.2 (2017): 160-183.
 
+```scala mdoc:invisible
+ui.close()
+```

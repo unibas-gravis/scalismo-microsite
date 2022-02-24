@@ -20,7 +20,7 @@ some helpful context for this tutorial:
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
-```scala
+```scala mdoc:silent
 import scalismo.geometry._
 import scalismo.common._
 import scalismo.common.interpolation.TriangleMeshInterpolator3D
@@ -45,7 +45,7 @@ In the following we will always visualize the effect of different Gaussian proce
 by applying the deformations to a reference mesh. We therefore start by loading the mesh and visualizing
 it in a separate group.
 
-```scala
+```scala mdoc:silent
 val referenceMesh = MeshIO.readMesh(new java.io.File("datasets/lowResPaola.ply")).get
 
 val modelGroup = ui.createGroup("gp-model")
@@ -65,7 +65,7 @@ If the reference shape that we choose corresponds approximately to an average sh
 about our shape space, it is entirely reasonable to use a zero mean; I.e. a deformation field which applies to
 every point a zero deformation.
 
-```scala
+```scala mdoc:silent
 val zeroMean = Field(EuclideanSpace3D, (pt:Point[_3D]) => EuclideanVector3D(0,0,0))
 ```
 
@@ -79,7 +79,6 @@ values at any pair of points $$x, x'$$ of the domain. Since we are modelling def
 fields (I.e. vector-valued functions), the covariance function is matrix-valued.
 
 To define a kernel in Scalismo, we need to implement the following methods of the abstract class ```MatrixValuedPDKernel```, which is defined in Scalismo:
-
 ```scala
 abstract class MatrixValuedPDKernel[D]() {
 
@@ -88,7 +87,6 @@ abstract class MatrixValuedPDKernel[D]() {
     def k(x: Point[D], y: Point[D]): DenseMatrix[Double];
   }
 ```
-
 *Note: This class is already defined as part of Scalismo. Don't paste it into your code.*
 
 The field ```outputDim``` determines the dimensionality of the values we model. In our case, we model 3D vectors, and hence ```outputDim```should be 3.
@@ -100,8 +98,7 @@ $$
 k_g(x,x') = \exp^{-\frac{\left\lVert x-x'\right\rVert^2}{\sigma^2} }.
 $$
 A corresponding matrix-valued kernel can be obtained by multiplying the value with an identity matrix (which implies, that we treat each space dimension as independent). In Scalismo, this is defined as follows:
-
-```scala
+```scala mdoc:silent
 case class MatrixValuedGaussianKernel3D(sigma2 : Double) extends MatrixValuedPDKernel[_3D]() {
 
   override def outputDim: Int = 3
@@ -116,20 +113,16 @@ case class MatrixValuedGaussianKernel3D(sigma2 : Double) extends MatrixValuedPDK
 This constructions allows us to define any kernel. For the most commonly used ones, such as the Gaussian kernel, there is, however,
 an easier way in Scalismo. First, the scalar-valued Gaussian kernel is already implemented in Scalismo:
 
-```scala
+```scala mdoc:silent
 val scalarValuedGaussianKernel : PDKernel[_3D]= GaussianKernel3D(sigma = 100.0)
 ```
-
 Further, the class ```DiagonalKernel```allows us to turn any scalar-valued kernel into a matrix-valued kernel,
-by specifying for each dimension of the output-space a kernel and assuming them to be independent. To obtain the same kernel as defined above, we can write:
-
-```scala
+ by specifying for each dimension of the output-space a kernel and assuming them to be independent. To obtain the same kernel as defined above, we can write:
+```scala mdoc:silent
 val matrixValuedGaussianKernel = DiagonalKernel3D(scalarValuedGaussianKernel, scalarValuedGaussianKernel, scalarValuedGaussianKernel)
 ```
-
 In this case, since we are using the same kernel in every space dimension, we can write this even more succinct as:
-
-```scala
+```scala mdoc:silent
 DiagonalKernel3D(scalarValuedGaussianKernel, 3)
 ```
 
@@ -137,14 +130,13 @@ DiagonalKernel3D(scalarValuedGaussianKernel, 3)
 ##### Building the GP :
 
 Now that we have our mean and covariance functions, we can build a Gaussian process as follows:
-
-```scala
+```scala mdoc:silent
 val gp = GaussianProcess3D[EuclideanVector[_3D]](zeroMean, matrixValuedGaussianKernel)
 ```
 
 We can now sample deformations from our Gaussian process **at any desired set of points**. Below we choose the points to be those of the reference mesh:
 
-```scala
+```scala mdoc:silent
 val sampleGroup = ui.createGroup("samples")
 val sample = gp.sampleAtPoints(referenceMesh)
 ui.show(sampleGroup, sample, "gaussianKernelGP_sample")
@@ -154,23 +146,20 @@ The result is an instance from the Gaussian Process evaluated at the points
 we indicated;  in this case on the points of the reference mesh.
 
 We can visualize its effect by interpolating the deformation field, which we then use to deform the reference mesh:
-
-```scala
+```scala mdoc:silent
 val interpolatedSample = sample.interpolate(TriangleMeshInterpolator3D())
 val deformedMesh = referenceMesh.transform((p : Point[_3D]) => p + interpolatedSample(p))
 ui.show(sampleGroup, deformedMesh, "deformed mesh")
 ```
 
 #### Low-rank approximation
-
 Whenever we create a sample using the ```sampleAtPoints``` method of the Gaussian process, internally a matrix of dimensionality $$nd \times nd$$,where $$n$$ denotes the number of points and $$d$$ the dimensionality of the output space, is created. Hence if we want to sample
 from many points we quickly run out of memory.
 
 We can get around this problem by computing a low-rank approximation of the Gaussian process.
 To obtain such a representation in Scalismo, we can use the method
 ````approximateGPCholesky``` of the *LowRankGaussianProcess* object.
-
-```scala
+```scala mdoc:silent
 val lowRankGP = LowRankGaussianProcess.approximateGPCholesky(
   referenceMesh,
   gp,
@@ -178,7 +167,6 @@ val lowRankGP = LowRankGaussianProcess.approximateGPCholesky(
   interpolator = TriangleMeshInterpolator3D[EuclideanVector[_3D]]()
 )
 ```
-
 This call computes a finite-rank approximation of the Gaussian Process using a
 Pivoted Cholesky approximation. The procedure automatically chooses the rank (I.e. the
 number of basis functions of the Gaussian process), such that the given relative error
@@ -186,25 +174,20 @@ is achieved. (The error is measures in terms of the variance of the Gaussian
 process, approximated on the points of the reference Mesh).
 Using this low rank Gaussian process, we can now directly sample continuous deformation fields:
 
-```scala
+```scala mdoc:silent
 val  defField : Field[_3D, EuclideanVector[_3D]]= lowRankGP.sample
 ```
-
 These in turn, can be used to warp a reference mesh, as discussed above:
-
-```scala
+```scala mdoc:silent
 referenceMesh.transform((p : Point[_3D]) => p + defField(p))
 ```
 
 More conveniently, we can visualize the sampled meshes by building again a Point Distribution Model:
-
-```scala
+```scala mdoc:silent
 val pdm = PointDistributionModel3D(referenceMesh, lowRankGP)
 ```
-
 This model can be visualized directly in ScalismoUI.
-
-```scala
+```scala mdoc:silent
 val pdmView = ui.show(modelGroup, pdm, "group")
 ```
 
@@ -226,33 +209,29 @@ In the following, we show how this can be achieved.
 
 In a first step, we get the Gaussian process from the model an interpolate it.
 
-```scala
+```scala mdoc:silent
 val pcaModel = StatisticalModelIO.readStatisticalTriangleMeshModel3D(new java.io.File("datasets/lowresModel.h5")).get
 val gpSSM = pcaModel.gp.interpolate(TriangleMeshInterpolator3D())
 ```
 
 We can then access its covariance function, which is a kernel:
-
-```scala
+```scala mdoc:silent
 val covSSM : MatrixValuedPDKernel[_3D] = gpSSM.cov
 ```
 
 In the next step, we model the additional variance using a Gaussian kernel and add it to the
 *sample covariance kernel*.
-
-```scala
+```scala mdoc:silent
 val augmentedCov = covSSM + DiagonalKernel(GaussianKernel[_3D](100.0), 3)
 ```
 
 Finally, we build the Gaussian process with the new kernel.
-
-```scala
+```scala mdoc:silent
 val augmentedGP = GaussianProcess(gpSSM.mean, augmentedCov)
 ```
 
 From here on, we follow the steps outlined above to obtain the *augmented* SSM.
-
-```scala
+```scala mdoc:silent
 val lowRankAugmentedGP = LowRankGaussianProcess.approximateGPCholesky(
   referenceMesh,
   augmentedGP,
@@ -269,8 +248,7 @@ A changepoint kernel is a combination of different kernels, where each kernel is
 a certain region of the space.
 
 Here we show how we can define a kernel, which has different behavior in two different regions.
-
-```scala
+```scala mdoc:silent
 case class ChangePointKernel(kernel1 : MatrixValuedPDKernel[_3D], kernel2 : MatrixValuedPDKernel[_3D])
   extends MatrixValuedPDKernel[_3D]() {
 
@@ -288,7 +266,7 @@ case class ChangePointKernel(kernel1 : MatrixValuedPDKernel[_3D], kernel2 : Matr
 
 Let's visualize its effect with two different Gaussian Kernels
 
-```scala
+```scala mdoc:silent
 val gk1 = DiagonalKernel3D(GaussianKernel3D(100.0), 3)
 val gk2 = DiagonalKernel3D(GaussianKernel3D(10.0), 3)
 val changePointKernel = ChangePointKernel(gk1, gk2)
@@ -316,7 +294,7 @@ The resulting kernel will preserve the same smoothness properties of the deforma
 
 Let's turn it into code:
 
-```scala
+```scala mdoc:silent
 case class xMirroredKernel(kernel : PDKernel[_3D]) extends PDKernel[_3D] {
   override def domain = kernel.domain
   override def k(x: Point[_3D], y: Point[_3D]) = kernel(Point(x(0) * -1.0 ,x(1), x(2)), y)
@@ -332,10 +310,13 @@ def symmetrizeKernel(kernel : PDKernel[_3D]) : MatrixValuedPDKernel[_3D] = {
 val symmetrizedGaussian = symmetrizeKernel(GaussianKernel[_3D](100))
 ```
 
-```scala
+```scala mdoc:silent
 val gpSym = GaussianProcess3D(zeroMean, symmetrizedGaussian)
 val sampleGpSym =  gpSym.sampleAtPoints(referenceMesh)
 
 ui.show(sampleGroup, sampleGpSym, "ChangePointKernelGP_sample")
 ```
 
+```scala mdoc:invisible
+ui.close()
+```

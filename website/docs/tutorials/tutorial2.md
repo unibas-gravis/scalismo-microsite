@@ -14,10 +14,9 @@ some helpful context for this tutorial:
 - Superimposing shapes [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250330)
 
 ##### Preparation
-
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
-```scala
+```scala mdoc:silent
 import scalismo.geometry._
 import scalismo.common._
 import scalismo.mesh.TriangleMesh
@@ -32,7 +31,7 @@ implicit val rng = scalismo.utils.Random(42)
 
 Let's start by loading and showing Paola's mesh again:
 
-```scala
+```scala mdoc:silent
 val ui = ScalismoUI()
 val paolaGroup = ui.createGroup("paola")
 val mesh: TriangleMesh[_3D] = MeshIO.readMesh(new java.io.File("datasets/Paola.ply")).get
@@ -43,8 +42,7 @@ Scalismo allows us to perform geometric transformations on meshes.
 
 Transformations are *functions* that map a given point, into a new *transformed* point.
 Let's import the classes in this package
-
-```scala
+```scala mdoc:silent
 import scalismo.transformations._
 ```
 
@@ -54,15 +52,14 @@ explicitly. The following example illustrates this by defining a transformation,
 which flips the point along the x axis.
 
 
-```scala
+```scala mdoc:silent
 val flipTransform = Transformation((p: Point[_3D]) => Point3D(-p.x, p.y, p.z))
 ```
 
 When given a point as an argument, the defined transform will then simply return a new point:
 
-```scala
+```scala mdoc
 val pt: Point[_3D] = flipTransform(Point3D(1.0, 1.0, 1.0))
-// pt: Point[_3D] = Point3D(-1.0, 1.0, 1.0)
 ```
 
 An important class of transformations are the rigid transformation, i.e. a rotation followed by a translation. Due to their
@@ -71,28 +68,25 @@ importance, these transformations are readily defined in scalismo.
 A translation can be defined by specifying the translation vector, which is
 added to every point:
 
-```scala
+```scala mdoc:silent
 val translation = Translation3D(EuclideanVector3D(100, 0, 0))
 ```
 
 For defining a rotation, we define the 3 [Euler angles](https://en.wikipedia.org/wiki/Euler_angles) , as well as the center of rotation.
-
-```scala
+```scala mdoc:silent
 val rotationCenter = Point3D(0.0, 0.0, 0.0)
 val rotation: Rotation[_3D] = Rotation3D(0f, 3.14f, 0f, rotationCenter)
 ```
-
 This transformation rotates every point with approximately 180 degrees around the Y axis (centered at the origin of the space).
 
-```scala
+```scala mdoc
 val pt2: Point[_3D] = rotation(Point(1, 1, 1))
-// pt2: Point[_3D] = Point3D(-0.9984061838821647, 1.0, -1.0015912799070552)
 ```
 
 In Scalismo, such transformations can be applied not only to single points, but most collections of points such as triangle meshes, can be
 transformed by invoking the method ```transform``` on the respective object.
 
-```scala
+```scala mdoc:silent
 val translatedPaola: TriangleMesh[_3D] = mesh.transform(translation)
 val paolaMeshTranslatedView = ui.show(paolaGroup, translatedPaola, "translatedPaola")
 ```
@@ -102,13 +96,13 @@ val paolaMeshTranslatedView = ui.show(paolaGroup, translatedPaola, "translatedPa
 Simple transformations can be composed to more complicated ones using the ```compose``` method. For example, we can define a rigid
 tranformation as a composition of translation and rotation:
 
-```scala
+```scala mdoc:silent
 val rigidTransform1 = CompositeTransformation(translation, rotation)
 ```
 
 In Scalismo, rigid transformations are also already predefined. We could have written instead:
 
-```scala
+```scala mdoc:silent
 val rigidTransform2 : RigidTransformation[_3D] = TranslationAfterRotation3D(translation, rotation)
 ```
 
@@ -126,7 +120,7 @@ an object with respect to some reference.
 To illustrate this procedure, we transform the mesh of Paola rigidly using the
 rigid transformation defined above.
 
-```scala
+```scala mdoc:silent
 val paolaTransformedGroup = ui.createGroup("paolaTransformed")
 val paolaTransformed = mesh.transform(rigidTransform2)
 ui.show(paolaTransformedGroup, paolaTransformed, "paolaTransformed")
@@ -137,17 +131,16 @@ with the original mesh, from the meshes alone.
 
 Rigid alignment is easiest if we already know some corresponding points in both shapes. Assume for the moment, that we
 have identified a few corresponding points and marked them using landmarks. We can then apply *Procrustes Analysis*.
-Usually, these landmarks would need to be clicked manually in a GUI, saved to disk and then loaded in Scalismo using the
+Usually, these landmarks would need to be clicked manually in a GUI, saved to disk and then loaded in Scalismo using the 
 methods in ``` LandmarksIO```:
-
-```scala
+```scala 
 val landmarks : Seq[Landmark[_3D]] = LandmarkIO.readLandmarksJson3D(new java.io.File("landmarks.json")).get
-```
+``` 
 
 To simplify this tutorial, we exploit that the two meshes
 are the same and hence have the same point ids. We can thus define landmarks programmatically:
 
-```scala
+```scala mdoc:silent
 val ptIds = Seq(PointId(2213), PointId(14727), PointId(8320), PointId(48182))
 val paolaLandmarks = ptIds.map(pId => Landmark(s"lm-${pId.id}", mesh.pointSet.point(pId)))
 val paolaTransformedLandmarks = ptIds.map(pId => Landmark(s"lm-${pId.id}", paolaTransformed.pointSet.point(pId)))
@@ -159,7 +152,7 @@ val paolaTransformedLandmarkViews = paolaTransformedLandmarks.map(lm => ui.show(
 Given this lists of landmarks, we can use the method ```rigid3DLandmarkRegistration```
 to retrieve the best rigid transformation from the original set of landmarks:
 
-```scala
+```scala mdoc:silent
 import scalismo.registration.LandmarkRegistration
 
 val bestTransform : RigidTransformation[_3D] = LandmarkRegistration.rigid3DLandmarkRegistration(paolaLandmarks, paolaTransformedLandmarks, center = Point(0, 0, 0))
@@ -170,16 +163,20 @@ Best here means, that it minimizes the mean squared error over the landmark poin
 
 Let's now apply it to the original set of landmarks, to see how well they are transformed :
 
-```scala
+```scala mdoc:silent
 val transformedLms = paolaLandmarks.map(lm => lm.transform(bestTransform))
 val landmarkViews = ui.show(paolaGroup, transformedLms, "transformedLMs")
 ```
 
 And finally, we apply the transformation to the entire mesh:
 
-```scala
+```scala mdoc:silent
 val alignedPaola = mesh.transform(bestTransform)
 val alignedPaolaView = ui.show(paolaGroup, alignedPaola, "alignedPaola")
 alignedPaolaView.color = java.awt.Color.RED
 ```
 
+
+```scala mdoc:invisible
+ui.close()
+```

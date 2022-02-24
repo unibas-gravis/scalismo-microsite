@@ -20,7 +20,7 @@ some helpful context for this tutorial:
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
-```scala
+```scala mdoc:silent
 import scalismo.geometry._
 import scalismo.common._
 import scalismo.common.interpolation.TriangleMeshInterpolator3D
@@ -41,8 +41,7 @@ val ui = ScalismoUI()
 
 
 We also load and visualize the face model:
-
-```scala
+```scala mdoc:silent
 val model = StatisticalModelIO.readStatisticalTriangleMeshModel3D(new java.io.File("datasets/bfm.h5")).get
 
 val modelGroup = ui.createGroup("modelGroup")
@@ -61,7 +60,7 @@ To illustrate this process, we simulate some data. We generate
 a deformation vector at the tip of the nose, which corresponds ot a really long
 nose:
 
-```scala
+```scala mdoc:silent
 val idNoseTip = PointId(8156)
 val noseTipReference = model.reference.pointSet.point(idNoseTip)
 val noseTipMean = model.mean.pointSet.point(idNoseTip)
@@ -70,8 +69,7 @@ val noseTipDeformation = (noseTipReference - noseTipMean) * 2.0
 
 To visualize this deformation, we need to define a ```DiscreteField```, which can then be passed to the show
 method of our ```ui``` object.
-
-```scala
+```scala mdoc:silent
 val noseTipDomain = UnstructuredPointsDomain3D(IndexedSeq(noseTipReference))
 val noseTipDeformationField = DiscreteField3D(noseTipDomain,  IndexedSeq(noseTipDeformation))
 
@@ -82,21 +80,18 @@ ui.show(observationGroup, noseTipDeformationField, "noseTip")
 In the next step we set up the regression. The Gaussian process model assumes that the deformation
 is observed only up to some uncertainty,
 which can be modelled using a normal distribution.
-
-```scala
+```scala mdoc:silent
 val noise = MultivariateNormalDistribution(DenseVector.zeros[Double](3), DenseMatrix.eye[Double](3))
 ```
-
 In Scalismo, the data for the regression is specified by a sequence of triples, consisting of the point of the reference, the
-corresponding deformation vector, as well as the noise at that point:
-
-```scala
+ corresponding deformation vector, as well as the noise at that point:
+```scala mdoc:silent
 val regressionData = IndexedSeq((noseTipReference, noseTipDeformation, noise))
 ```
 
 We can now obtain the regression result by feeding this data to the method ```regression``` of the ```GaussianProcess``` object:
 
-```scala
+```scala mdoc:silent
 val gp : LowRankGaussianProcess[_3D, EuclideanVector[_3D]] = model.gp.interpolate(TriangleMeshInterpolator3D())
 val posteriorGP : LowRankGaussianProcess[_3D, EuclideanVector[_3D]] = LowRankGaussianProcess.regression(gp, regressionData)
 ```
@@ -105,13 +100,13 @@ Note that the result of the regression is again a Gaussian process, over the sam
 This construction is very important in Scalismo. Therefore, we have a convenience method defined directly on the Gaussian process object. We could write the same in
 the more succinctly:
 
-```scala
+```scala mdoc:silent
 gp.posterior(regressionData)
 ```
 
 Independently of how you call the method, the returned type is a continuous (low rank) Gaussian Process from which we can now sample deformations at any set of points:
 
-```scala
+```scala mdoc:silent
 val posteriorSample: DiscreteField[_3D, TriangleMesh, EuclideanVector[_3D]] =
     posteriorGP.sampleAtPoints(model.reference)
 val posteriorSampleGroup = ui.createGroup("posteriorSamples")
@@ -125,7 +120,7 @@ for (i <- 0 until 10) {
 
 Given that the StatisticalMeshModel is merely a wrapper around a GP, the same posterior functionality is available for statistical mesh models:
 
-```scala
+```scala mdoc:silent
 val littleNoise = MultivariateNormalDistribution(DenseVector.zeros[Double](3), DenseMatrix.eye[Double](3) * 0.01)
 val pointOnLargeNose = noseTipReference + noseTipDeformation
 val discreteTrainingData = IndexedSeq((PointId(8156), pointOnLargeNose, littleNoise))
@@ -136,7 +131,7 @@ Notice in this case, since we are working with a discrete Gaussian process, the 
 
 Let's visualize the obtained posterior model:
 
-```scala
+```scala mdoc:silent
 val posteriorModelGroup = ui.createGroup("posteriorModel")
 ui.show(posteriorModelGroup, meshModelPosterior, "NoseyModel")
 ```
@@ -162,15 +157,18 @@ To see how this variance influences the posterior, we perform the posterior comp
 this time, a 5 times bigger noise variance.
 
 
-```scala
+```scala mdoc:silent
 val largeNoise = MultivariateNormalDistribution(DenseVector.zeros[Double](3), DenseMatrix.eye[Double](3) * 5.0)
 val discreteTrainingDataLargeNoise = IndexedSeq((PointId(8156), pointOnLargeNose, largeNoise))
 val discretePosteriorLargeNoise = model.posterior(discreteTrainingDataLargeNoise)
 val posteriorGroupLargeNoise = ui.createGroup("posteriorLargeNoise")
 ui.show(posteriorGroupLargeNoise, discretePosteriorLargeNoise, "NoisyNoseyModel")
 ```
-
 We observe, that there is now much more variance left in this posterior process,
 which is a consequence of the larger uncertainty that was associated with the
 observed data.
 
+
+```scala mdoc:invisible
+ui.close
+```

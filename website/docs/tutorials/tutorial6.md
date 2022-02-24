@@ -18,7 +18,7 @@ some helpful context for this tutorial:
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
-```scala
+```scala mdoc:silent
 import scalismo.ui.api._
 
 import scalismo.geometry._
@@ -42,7 +42,7 @@ val ui = ScalismoUI()
 
 Let us load (and visualize) a set of face meshes based on which we would like to model shape variation:
 
-```scala
+```scala mdoc:silent
 val dsGroup = ui.createGroup("datasets")
 
 val meshFiles = new java.io.File("datasets/nonAlignedFaces/").listFiles
@@ -54,7 +54,7 @@ val (meshes, meshViews) = meshFiles.map(meshFile => {
 ```
 
 You immediately see that the meshes are not aligned. What you cannot see, but is
-very important for this tutorial, is
+ very important for this tutorial, is
 that the meshes are **in correspondence**.
 This means that for every point on one of the face meshes
 (corner of eye, tip of nose, ...), we can identify the corresponding point on
@@ -70,7 +70,7 @@ This can be achieved by selecting one of the meshes as a reference,
 to which the rest of the datasets are aligned.
 In this example here, we simply take the first mesh in the list as a reference and align all the others.
 
-```scala
+```scala mdoc:silent
 val reference = meshes.head
 val toAlign : IndexedSeq[TriangleMesh[_3D]] = meshes.tail
 ```
@@ -78,24 +78,23 @@ val toAlign : IndexedSeq[TriangleMesh[_3D]] = meshes.tail
 Given that our dataset is in correspondence, we can specify a set of point
 identifiers, to locate corresponding points on the meshes.
 
-```scala
+```scala mdoc:silent
 val pointIds = IndexedSeq(2214, 6341, 10008, 14129, 8156, 47775)
 val refLandmarks = pointIds.map{id => Landmark(s"L_$id", reference.pointSet.point(PointId(id))) }
 ```
-
 After locating the landmark positions on the reference, we iterate on each remaining data item, identify the corresponding landmark points and then rigidly align the mesh to the reference.
 
-```scala
+```scala mdoc:silent
 val alignedMeshes = toAlign.map { mesh =>
   val landmarks = pointIds.map{id => Landmark("L_"+id, mesh.pointSet.point(PointId(id)))}
   val rigidTrans = LandmarkRegistration.rigid3DLandmarkRegistration(landmarks, refLandmarks, center = Point(0,0,0))
   mesh.transform(rigidTrans)
 }
 ```
-
 Now, the IndexedSeq of triangle meshes *alignedMeshes* contains the faces that are aligned to the reference mesh.
 
 *Exercise: verify visually that at least the first element of the aligned dataset is indeed aligned to the reference.*
+
 
 
 ### Building a discrete Gaussian process from data
@@ -104,7 +103,7 @@ Now that we have a set of meshes, which are in correspondence and aligned
 to our reference, we can turn the dataset into a set of deformation fields,
 from which we then build the model:
 
-```scala
+```scala mdoc:silent
 val defFields = alignedMeshes.map{ m =>
     val deformationVectors = reference.pointSet.pointIds.map{ id : PointId =>
         m.pointSet.point(id) - reference.pointSet.point(id)
@@ -120,7 +119,7 @@ Note that the deformation fields need to be interpolated, such that we are sure 
 all the points of the reference mesh. Once we have the deformation fields, we can build and
 visualize the Point Distribution Model:
 
-```scala
+```scala mdoc:silent
 val continuousFields = defFields.map(f => f.interpolate(TriangleMeshInterpolator3D()) )
 val gp = DiscreteLowRankGaussianProcess.createUsingPCA(reference,
             continuousFields, RelativeTolerance(1e-8)
@@ -157,27 +156,27 @@ in order to make collective operations on such sets easier.
 We can create a *DataCollection* by providing a reference mesh, and
 a sequence of meshes, which are in correspondence with this reference.
 
-```scala
+```scala mdoc:silent
 val dc = DataCollection.fromTriangleMesh3DSequence(reference, alignedMeshes)
 ```
 
 Now that we have our data collection, we can build a shape model as follows:
 
-```scala
+```scala mdoc:silent
 val modelFromDataCollection = PointDistributionModel.createUsingPCA(dc)
 
 val modelGroup2 = ui.createGroup("modelGroup2")
 ui.show(modelGroup2, modelFromDataCollection, "ModelDC")
 ```
 
-There is a technique called *Generalized Procrustes Analysis (GPA)*, which can
+There is a technique called *Generalized Procrustes Analysis (GPA)*, which can 
 improve the alignment of the data even better. It works by computing
 the mean of a set of surfaces in correspondence, aligning all the surfaces rigidly
-to this mean, and then iterating this procedure until the changes in the
+to this mean, and then iterating this procedure until the changes in the 
 computed mean are below a certain threshold. In Scalismo, this alignment
 procedure is defined on data collections. We can use it as follows:
 
-```scala
+```scala mdoc:silent
 val dcWithGPAAlignedShapes = DataCollection.gpa(dc)
 val modelFromDataCollectionGPA = PointDistributionModel.createUsingPCA(dcWithGPAAlignedShapes)
 
@@ -185,3 +184,8 @@ val modelGroup3 = ui.createGroup("modelGroup3")
 ui.show(modelGroup3, modelFromDataCollectionGPA, "ModelDCGPA")
 ```
 
+
+
+```scala mdoc:invisible
+ui.close();
+```

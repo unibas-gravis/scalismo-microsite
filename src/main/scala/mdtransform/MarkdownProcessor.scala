@@ -2,36 +2,30 @@ package mdtransform
 
 import scala.util.matching.Regex
 
-/**
- * represents a markdown document
- */
+/** represents a markdown document
+  */
 case class MarkdownDocument(content: String)
 
-/**
- * represents scala code
- */
+/** represents scala code
+  */
 case class ScalaCLIClass(content: String)
-
 
 object MarkdownProcessor {
 
-  
-   // possible modifiers in a line such as 
-   // ```scala mdoc:modifier
+  // possible modifiers in a line such as
+  // ```scala mdoc:modifier
   enum MDocModifier {
     case Invisible, Silent, None
   }
 
- 
-   // The type of lines we might find when parsing markdown
+  // The type of lines we might find when parsing markdown
   private enum Line {
     case NormalLine extends Line
-    case MDocLine(modifier: MDocModifier) extends Line
+    case MDocLine(modifier: MDocModifier, leadingEmptyLines: Int) extends Line
     case TripleQuoteLine extends Line
   }
 
-
-  // Different states we might be in when going through 
+  // Different states we might be in when going through
   // the document
   private enum ProcessingState {
     case InMarkdown, InSilentScala, InInvisibleScala
@@ -39,14 +33,16 @@ object MarkdownProcessor {
 
   // Represents the lines that were already processed in the processing
   // steps
-  private case class ProcessedLines(markdownLines: Seq[String], scalaLines: Seq[String])
+  private case class ProcessedLines(
+      markdownLines: Seq[String],
+      scalaLines: Seq[String]
+  )
 
-  /**
-   * Processes a given markdown document with blocks of the 
-   * form ```scala mdoc:modifiers```. It produces a markdown
-   * document processed according to the modifiers and a scala
-   * file with the extracted scala code from the code blocks.
-   */ 
+  /** Processes a given markdown document with blocks of the form ```scala
+    * mdoc:modifiers```. It produces a markdown document processed according to
+    * the modifiers and a scala file with the extracted scala code from the code
+    * blocks.
+    */
   def processMarkdown(
       markdownDocument: MarkdownDocument
   ): (MarkdownDocument, ScalaCLIClass) = {
@@ -66,22 +62,33 @@ object MarkdownProcessor {
   }
 
   private def lineType(line: String): Line = {
-    val mdocPattern: Regex = """```\s*scala\s*mdoc\s*.*""".r
-    if (mdocPattern.matches(line)) {
-      if (line.contains(":")) {
-        line.split(":")(1).trim match {
-          case "invisible" => Line.MDocLine(MDocModifier.Invisible)
-          case "silent"    => Line.MDocLine(MDocModifier.Silent)
-        }
-      } else {
-        Line.MDocLine(MDocModifier.None)
-      }
+   if (!line.trim.startsWith("```")) {
+      Line.NormalLine
     } else if (line.trim == "```") {
       Line.TripleQuoteLine
+    } else if (line.startsWith("```scala")) {
+      // tokenize line of type ```scala mdoc:silent emptyLines:5 
+      val tokens = line.replace("```scala", "").split(raw"\s+")
+      val keywordMap = tokens.map(token => {
+        val parts = token.split(":")
+        val modifier = parts.head
+        val value = if (parts.tail.isEmpty) "" else parts.tail.head
+        (modifier, value)
+      }).toMap
+      val mdocModifer = keywordMap.getOrElse("mdoc", "silent")
+      val numEmptyLines = keywordMap.getOrElse("emptyLines", "0")
+      if (mdocModifer == "invisible") {
+        Line.MDocLine(MDocModifier.Invisible, numEmptyLines.toInt)
+      } else {
+        Line.MDocLine(MDocModifier.Silent, numEmptyLines.toInt)
+      }
     } else {
       Line.NormalLine
     }
+    
   }
+
+  
 
   private def processMarkdownInMarkdownState(
       linesToProcess: Seq[String]
@@ -91,13 +98,17 @@ object MarkdownProcessor {
     } else {
       val line = linesToProcess.head
       lineType(linesToProcess.head) match
-        case Line.MDocLine(MDocModifier.Invisible) =>
-          processMarkdownInInvisibleScalaState(linesToProcess.tail)
-        case Line.MDocLine(MDocModifier.Silent) =>
+        case Line.MDocLine(MDocModifier.Invisible, leadingEmptyLines) =>
+          val ProcessedLines(parsedMarkdown, parsedScala) =
+            processMarkdownInInvisibleScalaState(linesToProcess.tail)
+          val emptyLines = Seq.fill(leadingEmptyLines)("\n")
+          ProcessedLines(parsedMarkdown, emptyLines ++ parsedScala)
+        case Line.MDocLine(MDocModifier.Silent, leadingEmptyLines) =>
           val ProcessedLines(parsedMarkdown, parsedScala) =
             processMarkdownInSilentScalaState(linesToProcess.tail)
-          ProcessedLines("```scala" +: parsedMarkdown, parsedScala)
-        case Line.MDocLine(MDocModifier.None) =>
+          val emptyLines = Seq.fill(leadingEmptyLines)("\n")
+          ProcessedLines("```scala" +: parsedMarkdown, emptyLines ++ parsedScala)
+        case Line.MDocLine(MDocModifier.None, _) =>
           val ProcessedLines(parsedMarkdown, parsedScala) =
             processMarkdownInSilentScalaState(linesToProcess.tail)
           ProcessedLines("```scala" +: parsedMarkdown, parsedScala)

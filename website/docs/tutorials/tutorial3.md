@@ -17,7 +17,7 @@ some helpful context for this tutorial:
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
-```scala
+```scala mdoc:silent
 import scalismo.geometry._
 import scalismo.common._
 import scalismo.transformations._
@@ -34,8 +34,7 @@ val ui = ScalismoUI()
 ```
 
 We will also load three meshes and visualize them in Scalismo-ui.
-
-```scala
+```scala mdoc:silent
 import scalismo.io.MeshIO
 
 val dsGroup = ui.createGroup("datasets")
@@ -57,18 +56,16 @@ the same point/region in the mesh.
 
 Let's say *face_0*, is the reference mesh:
 
-```scala
+```scala mdoc:silent
 val reference = meshes.head // face_0 is our reference
 ```
-
 Now any mesh, which is in correspondence with this reference, can be represented as a deformation field.
 The deformation field is defined on this reference mesh; I.e. the points of
 the reference mesh are the domain on which the deformation field is defined.
 
 The deformations can be computed by taking the difference between the corresponding
 point of the mesh and the reference:
-
-```scala
+```scala mdoc:silent
 val deformations : IndexedSeq[EuclideanVector[_3D]] =
     reference.pointSet.pointIds.map {
          id =>  meshes(1).pointSet.point(id) - reference.pointSet.point(id)
@@ -77,33 +74,27 @@ val deformations : IndexedSeq[EuclideanVector[_3D]] =
 
 From these deformations, we can then create a ```DiscreteVectorField```:
 
-```scala
+```scala mdoc:silent
 val deformationField: DiscreteField[_3D, TriangleMesh, EuclideanVector[_3D]] = DiscreteField3D(reference, deformations)
 ```
 
 As for images, the deformation vector associated with a particular point id in a *DiscreteVectorField* can be retrieved via its point id:
 
-```scala
+```scala mdoc
 deformationField(PointId(0))
-// res1: EuclideanVector[_3D] = EuclideanVector3D(
-//   -0.031402587890625,
-//   -0.24579620361328125,
-//   4.780601501464844
-// )
 ```
 
 We can visualize this deformation field in Scalismo-ui using the usual ```show```
 command:
 
-```scala
+```scala mdoc:silent
 val deformationFieldView = ui.show(dsGroup, deformationField, "deformations")
 ```
-
 We can see that the deformation vectors indeed point from the reference to *face_1*.
 To see the effect better we need to remove *face2* from the ui,
 make the reference transparent
 
-```scala
+```scala mdoc:silent
 meshViews(2).remove()
 meshViews(0).opacity = 0.3
 ```
@@ -124,8 +115,7 @@ of interpolation.
 
 To turn our deformation field into a continuous deformation field, we need to define an ```Interpolator``` and call the ```interpolate```
 method:
-
-```scala
+```scala mdoc:silent
 val interpolator = TriangleMeshInterpolator3D[EuclideanVector[_3D]]()
 val continuousDeformationField : Field[_3D, EuclideanVector[_3D]] = deformationField.interpolate(interpolator)
 ```
@@ -135,13 +125,8 @@ point on the surface and uses the corresponding deformation as the deformation a
 surface is in turn obtained by barycentric interpolation of the corresponding vertex points. As a result of the interpolation,
 we obtain a deformation field over the entire real space, which can be evaluated at any 3D Point:
 
-```scala
+```scala mdoc
 continuousDeformationField(Point3D(-100,-100,-100))
-// res4: EuclideanVector[_3D] = EuclideanVector3D(
-//   7.903905081209915,
-//   1.533905050608121,
-//   -6.654507430739976
-// )
 ```
 
 *Remark: This approach is general: Any discrete object in Scalismo can be interpolated.
@@ -158,7 +143,7 @@ This is equivalent to computing the mean deformation $$\overline{u}$$, and to ap
 To compute the mean deformation, we compute for each point in our mesh the sample mean of the
 deformations at this point in the deformation fields:
 
-```scala
+```scala mdoc:silent
 
 val nMeshes = meshes.length
 
@@ -180,22 +165,23 @@ val meanDeformationField = DiscreteField3D(reference, meanDeformations.toIndexed
 We can now apply the deformation to every point of the reference mesh, to obtain the mean mesh.
 To do this, the easiest way is to first genenerate a transformation from the deformation field, which
 we can use to map every point of the reference to its mean:
-
-```scala
+```scala mdoc:silent
 val continuousMeanDeformationField = meanDeformationField.interpolate(TriangleMeshInterpolator3D())
 
 val meanTransformation = Transformation((pt : Point[_3D]) => pt + continuousMeanDeformationField(pt))
 ```
 
 To obtain the mean mesh, we simply apply this transformation to the reference mesh:
-
-```scala
+```scala mdoc:silent
 val meanMesh = reference.transform(meanTransformation)
 ```
 
 Finally, we display the result:
-
-```scala
+```scala mdoc:silent
 ui.show(dsGroup, meanMesh, "mean mesh")
 ```
 
+
+```scala mdoc:invisible
+ui.close()
+```

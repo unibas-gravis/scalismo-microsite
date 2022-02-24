@@ -21,7 +21,7 @@ some helpful context for this tutorial:
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
-```scala
+```scala mdoc:silent
 import scalismo.ui.api._
 import scalismo.geometry._
 import scalismo.common._
@@ -37,6 +37,7 @@ val ui = ScalismoUI()
 ```
 
 
+
 #### Discrete and Continuous Gaussian processes
 
 We have seen in the last tutorial that a Point Distribution Model (PDM)
@@ -47,7 +48,7 @@ To continue our exploration of Gaussian processes, we therefore start
 by loading (and visualizing) an existing PDM and retrieve its underlying
 Gaussian process
 
-```scala
+```scala mdoc:silent
 val model = StatisticalModelIO.readStatisticalTriangleMeshModel3D(new java.io.File("datasets/bfm.h5")).get
 val gp = model.gp
 
@@ -59,7 +60,7 @@ val ssmView = ui.show(modelGroup, model, "model")
 We can retrieve random samples from the Gaussian process by calling ```sample```
 on the ```gp``` object:
 
-```scala
+```scala mdoc:silent
 val sampleDF : DiscreteField[_3D, TriangleMesh, EuclideanVector[_3D]] = model.gp.sample
 
 val sampleGroup = ui.createGroup("sample")
@@ -76,7 +77,7 @@ sample ```sampleDf``` to obtain a continuous version of the deformation field.
 A more convenient approach is, however, to interpolate the
 Gaussian process directly:
 
-```scala
+```scala mdoc:silent
 val interpolator = TriangleMeshInterpolator3D[EuclideanVector[_3D]]()
 val contGP = model.gp.interpolate(interpolator)
 ```
@@ -84,7 +85,7 @@ val contGP = model.gp.interpolate(interpolator)
 When we sample now from the continuous GP, we obtain a vector-valued function,
 which is defined on the entire 3D Space:
 
-```scala
+```scala mdoc:silent
 val contSample: Field[_3D, EuclideanVector[_3D]] = contGP.sample
 ```
 
@@ -101,7 +102,7 @@ according to the needs of our application.
 To illustrate this, we could, for example obtain a sample,
 which is defined on all the points of the original reference mesh.
 
-```scala
+```scala mdoc:silent
 val fullSample = contGP.sampleAtPoints(model.reference)
 val fullSampleView = ui.show(sampleGroup, fullSample, "fullSample")
 ```
@@ -112,7 +113,7 @@ distribution at these points. We can
 obtain this distribution, by calling the method ```marginal```
 on the Gaussian process instance:
 
-```scala
+```scala mdoc:silent
 val referencePointSet = model.reference.pointSet
 val rightEyePt: Point[_3D] = referencePointSet.point(PointId(4281))
 val leftEyePt: Point[_3D] = referencePointSet.point(PointId(11937))
@@ -127,13 +128,12 @@ which takes as an argument a domain and result in a discrete Gaussian Process de
 
 To obtain the Gaussian Process that we started with again, we can call the ```discretize``` method
 with the reference mesh:
-
-```scala
+```scala mdoc:silent
 val discreteGP : DiscreteGaussianProcess[_3D, TriangleMesh, EuclideanVector[_3D]] = contGP.discretize(model.reference)
 ```
-
 This mechanism of interpolation followed by discretization gives us the ability to freely change
 the resolution of the domain on which the Gaussian process is defined.
+
 
 
 ## Changing the reference of a point distribution model
@@ -146,7 +146,7 @@ interpolates the gaussian process and discretizes it with the new reference.
 
 In the following example we use this method to obtain a model which is defined on a low-resolution mesh:
 
-```scala
+```scala mdoc:silent
 val lowresMesh = model.reference.operations.decimate(1000)
 val lowResModel = model.newReference(lowresMesh, TriangleMeshInterpolator3D())
 ```
@@ -161,7 +161,7 @@ This can be done in Scalismo by means of the method ```pdf ```
 and ```StatisticalMeshModel``` respectively.
 
 
-```scala
+```scala mdoc:silent
 val defSample = model.gp.sample
 model.gp.pdf(defSample)
 ```
@@ -169,20 +169,17 @@ model.gp.pdf(defSample)
 The value of the *pdf* is often not interesting as such. But it allows us to compare the likelihood of different instances, by comparing their density value.
 For numerical reasons, we usually work with the log probability:
 
-```scala
+```scala mdoc
 val defSample1 = model.gp.sample
-// defSample1: DiscreteField[_3D, TriangleMesh, EuclideanVector[_3D]] = <function1>
 val defSample2 = model.gp.sample
-// defSample2: DiscreteField[_3D, TriangleMesh, EuclideanVector[_3D]] = <function1>
 
 val logPDF1 = model.gp.logpdf(defSample1)
-// logPDF1: Double = -12.599680420141278
 val logPDF2 = model.gp.logpdf(defSample2)
-// logPDF2: Double = -12.300955026410005
 
 val moreOrLess = if (logPDF1 > logPDF2) "more" else "less"
-// moreOrLess: String = "less"
 println(s"defSample1 is $moreOrLess likely than defSample2")
-// defSample1 is less likely than defSample2
 ```
 
+```scala mdoc:invisible
+ui.close
+```

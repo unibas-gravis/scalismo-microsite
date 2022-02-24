@@ -12,6 +12,11 @@ some helpful context for this tutorial:
 
 - What is Scalismo [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250314)
 
+```scala mdoc:invisible
+
+
+object Tutorial1 extends App {
+```
 
 ## Initializing the system
 
@@ -334,4 +339,8 @@ which we can visualize in in Scalismo-ui, such as images, meshes, pointClouds, e
 
 ```scala mdoc:invisible
 ui.close()
+```
+
+```scala mdoc:invisible
+}
 ```

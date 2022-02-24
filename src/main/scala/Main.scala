@@ -47,17 +47,17 @@ object Main extends zio.ZIOAppDefault {
   def run = {
     val inDir = new File("./docs/mdocs/tutorials")
     val outDir = new File("./tmp/tutorials")
-    val outDirScala = new File(outDir, "scala")
+    val outDirScala = new File(outDir, "/tutorials/scala")
     val outDirMarkdown = new File(outDir, "markdown")
     outDirScala.mkdirs
     outDirMarkdown.mkdirs
-    
+
     val files = inDir.listFiles.filter(f => f.getName.endsWith("tutorial0.md")).toSeq
     
     ZIO.validateDiscard(files)(file => {
       
         val markdownFile = new File(outDirMarkdown, file.getName)
-        val scalaFile = new File(outDirScala, file.getName.replace(".md", ".scala"))
+        val scalaFile = new File(outDirScala, file.getName.replace(".md", ".scala").capitalize)
         for {
           markdownDoc <- readMarkdownFile(file)          
           processedDoc = MarkdownProcessor.processMarkdown(markdownDoc)

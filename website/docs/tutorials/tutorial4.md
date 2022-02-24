@@ -17,7 +17,7 @@ some helpful context for this tutorial:
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
-```scala
+```scala mdoc:silent
 import scalismo.geometry._
 import scalismo.common._
 import scalismo.mesh._
@@ -32,11 +32,12 @@ val ui = ScalismoUI()
 ```
 
 
+
 ## Gaussian Processes and Point Distribution Models
 
 We start by loading and visualizing a shape model (or PDM) of faces :
 
-```scala
+```scala mdoc:silent
 val faceModel : PointDistributionModel[_3D, TriangleMesh] = StatisticalModelIO.readStatisticalTriangleMeshModel3D(new java.io.File("datasets/bfm.h5")).get
 val modelGroup = ui.createGroup("model")
 ```
@@ -44,18 +45,15 @@ val modelGroup = ui.createGroup("model")
 This model represents a **probability distribution of face meshes**.
 
 While we cannot visualize this distribution directly, we can obtain
-and visualize the mean shape:
-
-```scala
+ and visualize the mean shape:
+```scala mdoc:silent
 val sampleGroup = ui.createGroup("samples")
 
 val meanFace : TriangleMesh[_3D] = faceModel.mean
 ui.show(sampleGroup, meanFace, "meanFace")
 ```
-
 or we can obtain concrete face meshes by sampling from it:
-
-```scala
+```scala mdoc:silent
 val sampledFace : TriangleMesh[_3D] = faceModel.sample
 ui.show(sampleGroup, sampledFace, "randomFace")
 ```
@@ -66,7 +64,7 @@ ui.show(sampleGroup, sampledFace, "randomFace")
 In Scalismo, a PDM is represented as a triangle mesh (called the reference mesh)
 on which a Gaussian Process over deformation fields is defined:
 
-```scala
+```scala mdoc:silent
 val reference : TriangleMesh[_3D] = faceModel.reference
 val faceGP : DiscreteLowRankGaussianProcess[_3D, TriangleMesh, EuclideanVector[_3D]] = faceModel.gp
 ```
@@ -84,14 +82,13 @@ The type signature tells us that:
 Consequently, when we draw samples or obtain the mean from the Gaussian process, we expect to obtain functions with a matching
 signature. This is indeed the case
 
-```scala
+```scala mdoc:silent
 val meanDeformation : DiscreteField[_3D, TriangleMesh, EuclideanVector[_3D]] = faceGP.mean
 val sampleDeformation : DiscreteField[_3D, TriangleMesh, EuclideanVector[_3D]] = faceGP.sample
 ```
 
 Let's visualize the mean deformation:
-
-```scala
+```scala mdoc:silent
 ui.show(sampleGroup, meanDeformation, "meanField")
 ```
 
@@ -100,7 +97,6 @@ ui.show(sampleGroup, meanDeformation, "meanField")
 As you hopefully see, all the tips of the mean deformation vectors end on points of the mean face.
 
 To find out where they start from, let's display the face model's reference mesh :
-
 ```tut:silent
 ui.show(modelGroup, referenceFace, "referenceFace")
 ```
@@ -114,7 +110,7 @@ Hence when calling *faceModel.mean*, what is really happening is
 
 1. the mean deformation field is obtained (by calling *faceModel.gp.mean*)
 2. the mean deformation field is then used to deform the reference mesh (*faceModel.referenceMesh*)
-   into the triangle Mesh representing the mean face
+into the triangle Mesh representing the mean face
 
 The same is happening when randomly sampling from the face model :
 
@@ -124,3 +120,6 @@ The same is happening when randomly sampling from the face model :
 
 *Exercise : Perform the 2 steps above in order to sample a random face (that is sample a random deformation first, then use it to warp the reference mesh).*
 
+```scala mdoc:invisible
+ui.close
+```

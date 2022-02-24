@@ -3,129 +3,69 @@ id: ide
 title: Using Scalismo in an IDE
 ---
 
-In this article we describe how to set up Scalismo such that it can be used to program shape modelling applications from an Integrated Development Environment (IDE).
-For this, we need to set up a Scala development environment (including JDK, a Scala Compiler and a build tool) the source control management system *git* as well as
-the IDE. As an IDE we use of *Intellij IDEA*.
+In this article we describe how to set up Scalismo such that it can be used to program shape modelling applications from *IntelliJ IDEA*.
 
-## Setting up Scala
-
-To setup a Scala environment, we will use the tool [Coursier](https://get-coursier.io/), which will set up an appropriate JDK, the Scala compiler as well as the Scala build tool (sbt) for us.
-
-On MacOS and Linux, use the following commands to download and install coursier:
-
-```
-$ curl -fLo cs https://git.io/coursier-cli-"$(uname | tr LD ld)"
-$ chmod +x cs
-$ ./cs setup
-$ rm -f cs
-```
-
-On Windows, open a terminal (cmd.exe not powershell), *navigate to a folder where you have write permissions* and issue the following commands
-
-```
-> bitsadmin /transfer cs-cli https://git.io/coursier-cli-windows-exe "%cd%\cs.exe"
-> .\cs setup
-> del cs.exe
-```
-
-*Note, after the setup of coursier you might need to open a new terminal for the ```cs``` command to be found on your system.*
-
-When coursier finds a valid JVM on the system, it will use that. Most JVM versions should work fine, but we recommend to use either Java 8 or Java 11. There is also a known bug in many JVM implementations, which causes Scalismo-ui to crash on startup on MacOS. On MacOS we therefore strongly suggest to use the the Zulu JVM. It can be installed using Coursier as follows:
-
-```
-cs java --jvm zulu:1.11.0-9 --setup
-```
-
-To see which java version is used by your system, type
-
-```bash
-cs java -version
-```
-
-*In case this command does not report the right version, you might need to open a new terminal.*
-
-Finally, you may want to know the location, where Coursier installed the JVM. You can find this out by
-typing
-
-```
-cs java --jvm zulu:1.11.0-9  --env
-```
-
-
-More details on how to work with *coursier* and how to manage JVM versions can be found on the [Coursier Webpage](https://get-coursier.io/docs/cli-overview) and in
-this [blog post](https://get-coursier.io/docs/cli-setup).
-
-## Installing Git
-
-In addition to the Scala environment, we will need the *git* source control management system and also an integrated development environment.
-To install Git, please go to the [Git website](https://git-scm.com/downloads) and following the download and installation instructions there.
-
-## Getting and building the seed project
-
-In this step we provide you with a small "Hello World" example project.
-We download the project  run it from the command line and set up the IDE for the later usage.
-
-To get the project, use the follow command
-
-```bash
-sbt new unibas-gravis/scalismo-seed.g8
-```
-
-*Note: On Windows this command might report the error, that it was not able to delete some resources. You can ignore this error.*
-
-On the following prompt, enter a name for your project. The seed project will now be available in the subdirectory
-with the corresponding name. Change to this directory.
-
-```
-cd NAME_OF_YOUR_PROJECT
-```
-
-We will now run the project. This will trigger the project to be built by sbt.
-Note that the initial build will download some dependencies specific to the project. This may take a while.
-The command to run the project is:
-
-```bash
-sbt run
-```
-
-A successful run should display a Scalismo UI with a pink mean face.
-
-> We have now a working setup of Scalismo and could use any editor to work on the code.
-> However, we strongly recommend to use an IDE when working with Scala. Our recommendation
-> is to use [IntelliJ idea](https://www.jetbrains.com/idea/).
-
-
-## Using Scalismo from IntelliJ Idea
-
-In this last step, we will set up Scalismo such that we can use it from the IDE IntelliJ Idea.
-To install IntelliJ, go to the [IntelliJ Idea download page](https://www.jetbrains.com/idea/download/#section=windows), download the *Community edition* and follow the installation instructions. Once we have installed IntelliJ, we will to install the Scala plugin. This is
+To install IntelliJ, go to the [IntelliJ Idea download page](https://www.jetbrains.com/idea/download/#section=windows), download the *Community edition* and follow the installation instructions. Once we have installed IntelliJ, we will to install the Scala plugin. This is 
 installed and enabled from within IntelliJ, as described [here](https://www.jetbrains.com/help/idea/discover-intellij-idea-for-scala.html#).
 
 
-After the Scala plugin has been installed and you see the welcome screen, choose *File->New->Project From Existing Sources*.
-Then navigate to the folder containing the seed project directory. In the next dialog select the option: *Import project from external model* and select *sbt* as a model (see screenshots below).
+### MacOS only: Install an older version of the JDK
+On MacOS, there is a bug in some of the base libraries that Scalismo-UI is using for visualization, which causes Scalismo-UI to crash on startup. To successfully run Scalismo-UI for visualization, we therefore have to install an older version of the JVM. 
+The Zulu JDK 11.0.9 is known to work on both M1 and intel versions of Macs. An installable package for MacOS can be downloaded from [here](https://cdn.azul.com/zulu/bin/zulu11.43.21-ca-fx-jdk11.0.9-macosx_x64.dmg). Please install this JVM and make sure you use it for all the future steps. You can test if the correct JVM is used by typing 
+```
+java -version
+```
+in a terminal, which should show a line like:
+```
+openjdk version "11.0.9"2020-10-20 LTS"
+```
+If another version is shown, you might have to set the environment variables ```PATH``` and ```JAVA_HOME``` accordingly. 
 
-In the next dialog you need to choose the right *Project JDK*. If your system required you to use the Zulu JDK in the previous step, go to *Project JDK*, choose Download JDK and select
-*Version 11* and as Vendor *Azul Zulu Community* and then press the *Download* button.
+### Create your first scalismo project
+
+After the Scala plugin has been installed and you see the welcome screen, choose *File->New->Project*.
+Choose *Scala*  and *sbt* in the following dialog and press the next button. 
+![intellij-new-project](images/intellij-new-project.png)
+
+In the following dialog, enter a project name and location. If you are on MacOS, 
+choose the JDK you have installed in the previous step. For all the other options, 
+you can keep the proposed default values. 
+![intellij-new-project](images/intellij-new-project-options.png)
 
 Then continue by clicking onto the *Finish* button.
 
-![ide](images/project-import-intellij.png)
+Now the IDE should set up the project. When you start the IDE for the first time,
+there is a lot of processing that is done in the background and it might take a few minutes before the project is ready for use. In the bottom right you can spot an indication for the ongoing work.
 
-Now the IDE should import the project. When you start the IDE for the first time,
-there is a lot of processing that is done in the background and it might take a few minutes
-before the project is ready for use. In the bottom right you can spot an indication for the ongoing work.
+Once all the importing is done, you should then be able to navigate through the project folder and find a file called ```build.sbt```.
+Add the following line to the ```settings``` section
+```
+libraryDependencies += "ch.unibas.cs.gravis" %% "scalismo-ui" % "0.90.0"
+```
+and then choose *Reload all sbt projects* on the sbt tab on the right:
+![intellij-build-sbt](images/intellij-build-sbt.png)
 
-Once all the importing is done, you should then be able to navigate through the project folder to
-```src/main/scala/com/example/``` and double-click *ExampleApp*.
-This will open the code of the application we have already executed before from the console using sbt.
+This should now add the scalismo library to your project. 
 
-To execute the file from within the IDE right-click the source file and click *Run*.
+We are now ready to write our first Scalismo program:  Navigate to the folder
+*src/main/scala/* right click on it and choose *new scala class*. 
+![new scala class](images/intellij-new-scala-class.png)
 
-![ide](images/project-in-intellij.png)
+Give it an appropriate name (such as *HelloScalismo*) and choose *Object* in the list below. This will create a new Scala File, which you can change as follows:
+```
+import scalismo.ui.api.ScalismoUI
+
+object HelloScalismo extends App {
+
+  val ui = ScalismoUI()
+}
+```
+
+By choosing run, using for example the green arrow next to the object, you can start 
+the program:
+![intellij-run](images/intellij-run-projet.png)
 
 ### Troubleshooting
-
 If you have problems running Scalismo from IntelliJ but not from the command line, have a look at the [blog post](https://scalismo.org/blog/java-on-osx-problem).
 
 ### Other Ressources

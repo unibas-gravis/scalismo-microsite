@@ -18,7 +18,7 @@ some helpful context for this tutorial:
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
-```scala
+```scala mdoc:silent
 import scalismo.geometry._
 import scalismo.common._
 import scalismo.mesh._
@@ -42,7 +42,7 @@ val ui = ScalismoUI()
 Let's load and visualize a target mesh; I.e. a mesh, which we want to fit with our model, as well as
 a statistical shape model.
 
-```scala
+```scala mdoc:silent
 val targetMesh = MeshIO.readMesh(new java.io.File("datasets/target.ply")).get
 val model = StatisticalModelIO.readStatisticalTriangleMeshModel3D(new java.io.File("datasets/bfm.h5")).get
 
@@ -76,23 +76,22 @@ Gaussian process regression.
 
 
 We start by first selecting the points for which we want to find the correspondences. We choose uniformly distributed
-points on the surface, which we can obtain as follows:
+ points on the surface, which we can obtain as follows:
 
-```scala
+```scala mdoc:silent
 val sampler = UniformMeshSampler3D(model.reference, numberOfPoints = 5000)
 val points : Seq[Point[_3D]] = sampler.sample.map(pointWithProbability => pointWithProbability._1) // we only want the points
 ```
 
 Instead of working directly with the points, it is easier to work with the point ids of the sampled points:
-
-```scala
+```scala mdoc:silent
 val ptIds = points.map(point => model.reference.pointSet.findClosestPoint(point).id)
 ```
 
 As in the previous tutorial, we write the method ```attributeCorrespondences```, which finds for each
 point of interest the closest point on the target.
 
-```scala
+```scala mdoc:silent
 def attributeCorrespondences(movingMesh: TriangleMesh[_3D], ptIds : Seq[PointId]) : Seq[(PointId, Point[_3D])] = {
   ptIds.map{ id : PointId =>
     val pt = movingMesh.pointSet.point(id)
@@ -104,7 +103,7 @@ def attributeCorrespondences(movingMesh: TriangleMesh[_3D], ptIds : Seq[PointId]
 
 We can now use the correspondences we found to compute a Gaussian process regression.
 
-```scala
+```scala mdoc:silent
 
 val correspondences = attributeCorrespondences(model.mean, ptIds)
 
@@ -126,7 +125,7 @@ val fitResultView = ui.show(resultGroup, fit, "fit")
 While this one fitting iteration does not bring the points where we would like them to have, we are already
 a step closer. As in the Rigid ICP case, we now iterate the procedure.
 
-```scala
+```scala mdoc
 def nonrigidICP(movingMesh: TriangleMesh[_3D], ptIds : Seq[PointId], numberOfIterations : Int) : TriangleMesh[_3D] = {
   if (numberOfIterations == 0) movingMesh
   else {
@@ -139,10 +138,12 @@ def nonrigidICP(movingMesh: TriangleMesh[_3D], ptIds : Seq[PointId], numberOfIte
 ```
 
 Repeating the fitting steps iteratively for 20 times results in a good fit of our model
-
-```scala
+```scala mdoc:silent
 val finalFit = nonrigidICP( model.mean, ptIds, 20)
 
 ui.show(resultGroup, finalFit, "final fit")
 ```
 
+```scala mdoc:invisible
+ui.close()
+```

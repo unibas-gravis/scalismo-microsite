@@ -245,7 +245,12 @@ val generator = MixtureProposal.fromProposalsWithTransition[Sample](
     (0.2, largeStepProposal)
     )
 ```
-
+```scala mdoc:silent
+val generator = MixtureProposal.fromProposalsWithTransition[Sample](
+    (0.8, smallStepProposal),
+    (0.2, largeStepProposal)
+    )
+```
 
 #### Building the Markov Chain
 
