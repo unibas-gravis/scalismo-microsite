@@ -19,7 +19,7 @@ some helpful context for this tutorial:
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
-```scala mdoc:silent
+```scala
 import scalismo.ui.api._
 import scalismo.geometry._
 import scalismo.common._
@@ -39,7 +39,7 @@ val ui = ScalismoUI()
 
 We start by loading and visualizing two meshes
 
-```scala mdoc:silent
+```scala
 val mesh1 = MeshIO.readMesh(new java.io.File("datasets/Paola.ply")).get
 val group1 = ui.createGroup("Dataset 1")
 val mesh1View = ui.show(group1, mesh1, "mesh1")
@@ -63,7 +63,7 @@ the mesh.
 
 Let's select a few points from the mesh.
 
-```scala mdoc:silent
+```scala
 val ptIds = (0 until mesh1.pointSet.numberOfPoints by 50).map(i => PointId(i))
 ui.show(group1, ptIds.map(id => mesh1.pointSet.point(id)), "selected")
 ```
@@ -73,7 +73,7 @@ uniformly distributed over the surface.
 
 In the next step, we find the corresponding points in the other mesh:
 
-```scala mdoc:silent
+```scala
 def attributeCorrespondences(movingMesh: TriangleMesh[_3D], ptIds : Seq[PointId]) : Seq[(Point[_3D], Point[_3D])] = {
   ptIds.map{ id : PointId =>
     val pt = movingMesh.pointSet.point(id)
@@ -87,7 +87,7 @@ which we called the ```MovingMesh```. The reason is, that this will later be ite
 
 Let us now visualize the the chosen correspondences:
 
-```scala mdoc:silent
+```scala
 val correspondences = attributeCorrespondences(mesh1, ptIds)
 val targetPoints = correspondences.map(pointPair => pointPair._2)
 ui.show(group2, targetPoints.toIndexedSeq, "correspondences")
@@ -97,7 +97,7 @@ As expected, the obtained correspondences are clearly not good, as they tend to 
 Nevertheless, we can apply Procrustes analysis based on these correspondences and
 retrieve a rigid transformation, which brings us closer to the target.
 
-```scala mdoc:silent
+```scala
 val rigidTrans =  LandmarkRegistration.rigid3DLandmarkRegistration(correspondences, center = Point3D(0, 0, 0))
 val transformed = mesh1.transform(rigidTrans)
 val alignedMeshView = ui.show(group1, transformed, "aligned?")
@@ -110,7 +110,7 @@ This said, when considering where we started from, that is the original position
 The second important idea of the ICP algorithm comes is now to **iterate** this steps in the hope that it will converge.
 Let's try it out:
 
-```scala mdoc:silent
+```scala
 val newCorrespondences = attributeCorrespondences(transformed, ptIds)
 val newClosestPoints = newCorrespondences.map(pointPair => pointPair._2)
 ui.show(group2, newClosestPoints.toIndexedSeq, "newCandidateCorr")
@@ -129,7 +129,7 @@ Also the resulting rigid transformation seems to bring our mesh a bit closer to 
 Finally, we change our implementation such that we can perform an arbitrary number of iterations:
 
 
-```scala mdoc:silent
+```scala
 def ICPRigidAlign(movingMesh: TriangleMesh[_3D], ptIds : Seq[PointId], numberOfIterations : Int) : TriangleMesh[_3D] = {
   if (numberOfIterations == 0) movingMesh
   else {
@@ -144,7 +144,7 @@ def ICPRigidAlign(movingMesh: TriangleMesh[_3D], ptIds : Seq[PointId], numberOfI
 
 Let's now run it with 150 iterations:
 
-```scala mdoc:silent
+```scala
 
 val rigidfit = ICPRigidAlign(mesh1, ptIds, 150)
 val rigidFitView = ui.show(group1, rigidfit, "ICP_rigid_fit")
@@ -155,7 +155,3 @@ As you can see here, the quality of the candidate correspondences did indeed res
 **automatic** rigid alignment of Paola to the target. One should not forget, however, that the ICP method is
 very sensitive to the initial position, and might easily get stuck in a local minimum.
 
-
-```scala mdoc:invisible
-ui.close
-```

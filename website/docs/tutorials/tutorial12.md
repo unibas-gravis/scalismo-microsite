@@ -25,7 +25,7 @@ some helpful context for this tutorial:
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
-```scala mdoc:silent
+```scala
 import scalismo.geometry._
 import scalismo.common._
 import scalismo.common.interpolation._
@@ -52,7 +52,7 @@ val ui = ScalismoUI()
 We start by loading and visualizing the reference mesh, which we will later use as the
 domain for our Gaussian Process model.
 
-```scala mdoc:silent
+```scala
 val referenceMesh = MeshIO.readMesh(new java.io.File("datasets/quickstart/facemesh.ply")).get
 
 
@@ -67,7 +67,7 @@ We assume that our reference surface represents an approximately average face.
 This justifies the use of a zero-mean Gaussian process. As a covariance function we use a Gaussian kernel and choose to treat the x,y,z component
 of the vector field to be uncorrelated (indicated by the use of the ```DiagonalKernel```).
 
-```scala mdoc:silent
+```scala
 val zeroMean = Field(EuclideanSpace3D, (_: Point[_3D]) => EuclideanVector.zeros[_3D])
 val kernel = DiagonalKernel3D(GaussianKernel3D(sigma = 70) * 50.0, outputDim = 3)
 val gp = GaussianProcess(zeroMean, kernel)
@@ -76,7 +76,7 @@ val gp = GaussianProcess(zeroMean, kernel)
 We then perform a low-rank approximation, to get a parametric representation of the
 Gaussian process:
 
-```scala mdoc:silent
+```scala
 val interpolator = TriangleMeshInterpolator3D[EuclideanVector[_3D]]()
 val lowRankGP = LowRankGaussianProcess.approximateGPCholesky(
     referenceMesh,
@@ -87,7 +87,7 @@ val lowRankGP = LowRankGaussianProcess.approximateGPCholesky(
 
 To visualize the effect of this Gaussian process, we add it to the
 model group as a transformation.
-```scala mdoc:silent
+```scala
 val gpView = ui.addTransformation(modelGroup, lowRankGP, "gp")
 ```
 
@@ -112,7 +112,7 @@ with the deformations that are modelled.
 In the next step we perform the registration to a target mesh.
 We start by loading the target mesh and displaying it.
 
-```scala mdoc:silent
+```scala
 val targetGroup = ui.createGroup("target")
 val targetMesh = MeshIO.readMesh(new java.io.File("datasets/quickstart/face-2.ply")).get
 val targetMeshView = ui.show(targetGroup, targetMesh, "targetMesh")
@@ -129,7 +129,7 @@ To define a registration, we need to define four things:
 For non-rigid registration we usually model the possible transformations using a Gaussian process. We use the Gaussian process that
 we have defined above to define the transformation space.
 
-```scala mdoc:silent
+```scala
 val transformationSpace = GaussianProcessTransformationSpace(lowRankGP)
 ```
 
@@ -139,7 +139,7 @@ In addition to the images, the metric also needs to know the possible transforma
 a sampler. The sampler determines the points where the metric is evaluated. In our case we choose uniformely sampled points on the
 reference mesh.
 
-```scala mdoc:silent
+```scala
 val fixedImage = referenceMesh.operations.toDistanceImage
 val movingImage = targetMesh.operations.toDistanceImage
 val sampler = FixedPointsUniformMeshSampler3D(referenceMesh, numberOfPoints = 1000)
@@ -148,26 +148,26 @@ val metric = MeanSquaresMetric(fixedImage, movingImage, transformationSpace, sam
 
 As an optimizer, we choose an LBFGS Optimizer
 
-```scala mdoc:silent
+```scala
 val optimizer = LBFGSOptimizer(maxNumberOfIterations = 100)
 ```
 
 and for regularization we choose to penalize the L2 norm using the `L2Regularizer`:
 
-```scala mdoc:silent
+```scala
 val regularizer = L2Regularizer(transformationSpace)
 ```
 
 We are now ready to define Scalismo's registration object.
 
-```scala mdoc:silent
+```scala
 val registration = Registration(metric, regularizer, regularizationWeight = 1e-5, optimizer)
 ```
 
 Registration is an iterative process. Consequently, we work with the registration using an iterator. We obtain an iterator by
 calling the `iterator` method, where we also provide a starting position for the iteration (which is in this case the zero vector):
 
-```scala mdoc:silent
+```scala
 val initialCoefficients = DenseVector.zeros[Double](lowRankGP.rank)
 val registrationIterator = registration.iterator(initialCoefficients)
 ```
@@ -175,7 +175,7 @@ val registrationIterator = registration.iterator(initialCoefficients)
 Before running the registration, we change the iterator such that it prints in each iteration to current objective value,
 and updates the visualization. This lets us visually inspect the progress of the registration procedure.
 
-```scala mdoc:silent
+```scala
 val visualizingRegistrationIterator = for ((it, itnum) <- registrationIterator.zipWithIndex) yield {
   println(s"object value in iteration $itnum is ${it.value}")
   gpView.coefficients = it.parameters
@@ -188,7 +188,7 @@ the original iteration with visualization. The actual registration is executed o
 This can, for example be achieved by converting it to a sequence. The resulting sequence holds all the intermediate
 states of the registration. We are usually only interested in the last one:
 
-```scala mdoc:silent
+```scala
 val registrationResult = visualizingRegistrationIterator.toSeq.last
 ```
 
@@ -197,7 +197,7 @@ You should see in the graphical user interface, how the face mesh slowly adapts 
 The final mesh representation can be obtained by obtaining the transform corresponding to the parameters and to
 warp the reference mesh with this tranform:
 
-```scala mdoc:silent
+```scala
 val registrationTransformation = transformationSpace.transformationForParameters(registrationResult.parameters)
 val fittedMesh = referenceMesh.transform(registrationTransformation)
 ```
@@ -207,7 +207,7 @@ val fittedMesh = referenceMesh.transform(registrationTransformation)
 The fittedMesh that we obtained above is a surface that approximates the target surface.  It corresponds to the best representation of the target in the model. For most tasks, this approximation is sufficient.
 However, sometimes, we need an exact representation of the target mesh. This can be achieved by defining a projection function, which projects each point onto its closest point on the target.
 
-```scala mdoc:silent
+```scala
 val targetMeshOperations = targetMesh.operations
 val projection = (pt: Point[_3D]) => {
     targetMeshOperations.closestPointOnSurface(pt).point
@@ -216,13 +216,13 @@ val projection = (pt: Point[_3D]) => {
 
 Composing the result of the registration with this projection, will give us a mapping that identifies for each point of the reference mesh the corresponding point of the target mesh.
 
-```scala mdoc:silent
+```scala
 val finalTransformation = registrationTransformation.andThen(projection)
 ```
 
 To check this last point, we warp the reference mesh with the finalTransform and visualize it. Note that the projected target now coincides with the target mesh..
 
-```scala mdoc:silent
+```scala
 val projectedMesh = referenceMesh.transform(finalTransformation)
 val resultGroup = ui.createGroup("result")
 val projectionView = ui.show(resultGroup, projectedMesh, "projection")
@@ -237,13 +237,13 @@ result in folds and bad correspondences. In such cases it has proven extremely u
 with decreasing regularization weights. In the following we illustrate this procedure. We start by defining a case class, which
 collects all relevant parameters:
 
-```scala mdoc:silent
+```scala
 case class RegistrationParameters(regularizationWeight: Double, numberOfIterations: Int, numberOfSampledPoints: Int)
 ```
 
 We put all the registration code into a function, which takes (among others) the registration parameters as an argument.
 
-```scala mdoc:silent
+```scala
 def doRegistration(
     lowRankGP: LowRankGaussianProcess[_3D, EuclideanVector[_3D]],
     referenceMesh: TriangleMesh[_3D],
@@ -285,7 +285,7 @@ def doRegistration(
 Finally, we define the parameters and run the registration. Note that for large regularization weights, we sample fewer points on the surface to save some computation time.
 This is justified as, a strongly regularized model will not be able to adapt to fine details and hence it is not necessary to have a very accurate sampling of the surface.
 
-```scala mdoc:silent
+```scala
 val registrationParameters = Seq(
     RegistrationParameters(regularizationWeight = 1e-1, numberOfIterations = 20, numberOfSampledPoints = 1000),
     RegistrationParameters(regularizationWeight = 1e-2, numberOfIterations = 30, numberOfSampledPoints = 1000),
@@ -301,6 +301,3 @@ val finalCoefficients = registrationParameters.foldLeft(initialCoefficients)((mo
 ```
 
 From this point we use the procedure described above to work with the registration result.
-```scala mdoc:invisible
-ui.close()
-```

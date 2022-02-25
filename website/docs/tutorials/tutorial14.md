@@ -67,7 +67,7 @@ uses this ratio as a basis for rejecting or accepting the new sample.
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
 
-```scala mdoc:silent
+```scala
  import scalismo.sampling.algorithms.MetropolisHastings
  import scalismo.sampling.evaluators.ProductEvaluator
  import scalismo.sampling.loggers.AcceptRejectLogger
@@ -82,7 +82,7 @@ As in the previous tutorials, we start by importing some commonly used objects a
 To make the setup simple, we generate artificial data, which follows exactly our assumptions. In this way we will be able to see
 how well we estimated the parameters.
 
-```scala mdoc:silent
+```scala
   
       val a = 0.2
       val b = 3
@@ -96,14 +96,14 @@ how well we estimated the parameters.
 
 Before we discuss the two main components, the *Evaluator* and *Proposal generator* in detail, we first define a class for representing
 the parameters $$\theta = (a, b, \sigma^2)$$:
-```scala mdoc:silent
+```scala
 case class Parameters(a : Double, b:  Double, sigma2 : Double)
 ```
 
 We introduce a further class to represent a sample from the chain. A sample is
 simply a set of parameters together with a tag, which helps us to keep track later
 on, which proposal generator generated the sample:
-```scala mdoc:silent
+```scala
 case class Sample(parameters : Parameters, generatedBy : String)
 ```
 
@@ -127,7 +127,7 @@ In our case, we will define separate evaluators for the prior distribution $$p(\
 
 The likelihood function, defined above, can be implemented as follows:
 
-```scala mdoc:silent
+```scala
 case class LikelihoodEvaluator(data : Seq[(Double, Double)]) extends DistributionEvaluator[Sample] {
 
     override def logValue(theta: Sample): Double = {
@@ -146,7 +146,7 @@ Notice that we work in Scalismo with log probabilities, and hence the product in
 becomes a sum.
 
 In a similar way, we encode the prior distribution:
-```scala mdoc:silent
+```scala
 
 object PriorEvaluator extends DistributionEvaluator[Sample] {
 
@@ -163,7 +163,7 @@ object PriorEvaluator extends DistributionEvaluator[Sample] {
 
 The target density (i.e. the posterior distribution) can be computed by
 taking the product of the prior and the likelihood.
-```scala mdoc:silent
+```scala
   val posteriorEvaluator = ProductEvaluator(PriorEvaluator, LikelihoodEvaluator(data))
 ```
 Note that the posteriorEvaluator represents the unnormalized posterior, as we did
@@ -194,7 +194,7 @@ We use here one of the simples possible proposals, namely a *random walk proposa
 which updates the current state by taking a step of random length in a random direction. For simplicity, 
 we update all three parameters together:
 
-```scala mdoc:silent
+```scala
   case class RandomWalkProposal(stepLengthA: Double, stepLengthB : Double, stepLengthSigma2 : Double)(implicit rng : scalismo.utils.Random)
     extends ProposalGenerator[Sample] with TransitionProbability[Sample] {
 
@@ -228,7 +228,7 @@ by seeding this random generator at the beginning of our program.*
 
 Let's define two random walk proposals with different step length:
 
-```scala mdoc:silent
+```scala
 val smallStepProposal = RandomWalkProposal(0.01, 0.01, 0.01)
 val largeStepProposal = RandomWalkProposal(0.1, 0.1, 0.1)
 ```
@@ -239,13 +239,13 @@ landscape, and sometimes smaller steps, to explore a local environment. We can c
 probability. Here We choose to take the large step 20% of the time, and the smaller
 steps 80% of the time:
 
-```scala mdoc:silent
+```scala
 val generator = MixtureProposal.fromProposalsWithTransition[Sample](
     (0.8, smallStepProposal),
     (0.2, largeStepProposal)
     )
 ```
-```scala mdoc:silent
+```scala
 val generator = MixtureProposal.fromProposalsWithTransition[Sample](
     (0.8, smallStepProposal),
     (0.2, largeStepProposal)
@@ -255,7 +255,7 @@ val generator = MixtureProposal.fromProposalsWithTransition[Sample](
 #### Building the Markov Chain
 
 Now that we have all the components set up, we can assemble the Markov Chain.
-```scala mdoc:silent
+```scala
 val chain = MetropolisHastings(generator, posteriorEvaluator)
 ```
 
@@ -263,7 +263,7 @@ To run the chain, we obtain an iterator,
 which we then consume to drive the sampling generation. To obtain the iterator, we need to specify the initial
 sample:
 
-```scala mdoc:silent
+```scala
 val initialSample = Sample(Parameters(0.0, 0.0, 1.0), generatedBy="initial")
 val mhIterator = chain.iterator(initialSample)
 ```
@@ -272,13 +272,13 @@ Our initial parameters might be far away from a high-probability area of our tar
 density. Therefore it might take a few hundred or even a few thousand iterations before the produced samples
 start to follow the required distribution. We therefore have to drop the
 samples in this burn-in phase, before we use the samples:
-```scala mdoc:silent
+```scala
 val samples = mhIterator.drop(5000).take(15000).toIndexedSeq
 ```
 As we have generated synthetic data, we can check if the expected value, computed
 from this samples, really corresponds to the parameters from which we sampled
 our data:
-```scala mdoc:silent
+```scala
 val meanAndVarianceA = meanAndVariance(samples.map(_.parameters.a))
 println(s"Estimates for parameter a: mean = ${meanAndVarianceA.mean}, var = ${meanAndVarianceA.variance}")
 val meanAndVarianceB = meanAndVariance(samples.map(_.parameters.b))
@@ -318,7 +318,7 @@ The following, very simple logger counts all the accepted and rejected samples a
 computes the acceptance ratio. This acceptance ratio is a simple, but already useful
 indicator to diagnose if all proposal generators function as expected.
 
-```scala mdoc:silent
+```scala
   class Logger extends AcceptRejectLogger[Sample] {
     private val numAccepted = collection.mutable.Map[String, Int]()
     private val numRejected = collection.mutable.Map[String, Int]()
@@ -356,7 +356,7 @@ indicator to diagnose if all proposal generators function as expected.
 
 To use the logger, we simply rerun the chain, but pass the logger now as
     a second argument to the ```iterator``` method:
-```scala mdoc:silent
+```scala
   val logger = new Logger()
   val mhIteratorWithLogging = chain.iterator(initialSample, logger)
 
@@ -364,7 +364,7 @@ To use the logger, we simply rerun the chain, but pass the logger now as
 ```
 
 We can now check how often the individual samples got accepted.
-```scala mdoc
+```scala
   println("acceptance ratio is " +logger.acceptanceRatios())
 ```
 We see that the acceptance ratio of the random walk proposal, which takes the
