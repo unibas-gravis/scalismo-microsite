@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkwebsite=self.webpackChunkwebsite||[]).push([[7641],{8379:function(s){s.exports=JSON.parse('{"allTagsPath":"/blog/tags","slug":"/blog/tags/scalismo","name":"scalismo","count":3,"permalink":"/blog/tags/scalismo"}')}}]);
