@@ -13,7 +13,15 @@ some helpful context for this tutorial:
 
 - Learning a model from example data [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250329)
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial04.scala](./Tutorial04.scala)
+
 ##### Preparation
+
+```scala mdoc:invisible
+//> using scala "2.13"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+```
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
@@ -24,7 +32,13 @@ import scalismo.mesh._
 import scalismo.io.{StatismoIO, StatisticalModelIO}
 import scalismo.statisticalmodel._
 import scalismo.ui.api._
+```
 
+```scala mdoc:invisible emptyLines:2
+object Tutorial4 extends App {
+```
+
+```scala mdoc:silent emptyLines:2
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 
@@ -121,5 +135,10 @@ The same is happening when randomly sampling from the face model :
 *Exercise : Perform the 2 steps above in order to sample a random face (that is sample a random deformation first, then use it to warp the reference mesh).*
 
 ```scala mdoc:invisible
-ui.close
+ui.close()
+```
+
+
+```scala mdoc:invisible emptyLines:2
+}
 ```

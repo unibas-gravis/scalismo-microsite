@@ -20,6 +20,10 @@ some helpful context for this tutorial:
 
 - Model-fitting and correspondence [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250371)
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial12.scala](./Tutorial12.scala)
+
+
 
 ##### Preparation
 
@@ -40,7 +44,11 @@ import breeze.linalg.DenseVector
 import scalismo.ui.api._
 
 import breeze.linalg.{DenseVector}
+```
 
+
+
+```scala
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 

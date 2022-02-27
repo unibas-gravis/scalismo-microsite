@@ -14,6 +14,11 @@ some helpful context for this tutorial:
 - Model-fitting and correspondence [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250371)
 - Model-fitting and the registration problem [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250372)
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial11.scala](./Tutorial11.scala)
+
+
+
 ##### Preparation
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
@@ -29,7 +34,10 @@ import scalismo.io.{MeshIO, StatisticalModelIO, LandmarkIO}
 import scalismo.ui.api._
 
 import breeze.linalg.{DenseMatrix, DenseVector}
+```
 
+
+```scala
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 
@@ -143,3 +151,4 @@ val finalFit = nonrigidICP( model.mean, ptIds, 20)
 
 ui.show(resultGroup, finalFit, "final fit")
 ```
+

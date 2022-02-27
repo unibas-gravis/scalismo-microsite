@@ -14,7 +14,16 @@ some helpful context for this tutorial:
 
 - Learning a model from example data [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250329)
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial06.scala](./Tutorial06.scala)
+
+
 ##### Preparation
+
+```scala mdoc:invisible
+//> using scala "2.13"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+```
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
@@ -30,8 +39,13 @@ import scalismo.statisticalmodel._
 import scalismo.registration._
 import scalismo.statisticalmodel.dataset._
 import scalismo.numerics.PivotedCholesky.RelativeTolerance
+```
 
+```scala mdoc:invisible emptyLines:2
+object Tutorial6 extends App {
+```
 
+```scala mdoc:silent
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 
@@ -42,7 +56,7 @@ val ui = ScalismoUI()
 
 Let us load (and visualize) a set of face meshes based on which we would like to model shape variation:
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val dsGroup = ui.createGroup("datasets")
 
 val meshFiles = new java.io.File("datasets/nonAlignedFaces/").listFiles
@@ -70,7 +84,7 @@ This can be achieved by selecting one of the meshes as a reference,
 to which the rest of the datasets are aligned.
 In this example here, we simply take the first mesh in the list as a reference and align all the others.
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val reference = meshes.head
 val toAlign : IndexedSeq[TriangleMesh[_3D]] = meshes.tail
 ```
@@ -78,13 +92,13 @@ val toAlign : IndexedSeq[TriangleMesh[_3D]] = meshes.tail
 Given that our dataset is in correspondence, we can specify a set of point
 identifiers, to locate corresponding points on the meshes.
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val pointIds = IndexedSeq(2214, 6341, 10008, 14129, 8156, 47775)
 val refLandmarks = pointIds.map{id => Landmark(s"L_$id", reference.pointSet.point(PointId(id))) }
 ```
 After locating the landmark positions on the reference, we iterate on each remaining data item, identify the corresponding landmark points and then rigidly align the mesh to the reference.
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val alignedMeshes = toAlign.map { mesh =>
   val landmarks = pointIds.map{id => Landmark("L_"+id, mesh.pointSet.point(PointId(id)))}
   val rigidTrans = LandmarkRegistration.rigid3DLandmarkRegistration(landmarks, refLandmarks, center = Point(0,0,0))
@@ -103,7 +117,7 @@ Now that we have a set of meshes, which are in correspondence and aligned
 to our reference, we can turn the dataset into a set of deformation fields,
 from which we then build the model:
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val defFields = alignedMeshes.map{ m =>
     val deformationVectors = reference.pointSet.pointIds.map{ id : PointId =>
         m.pointSet.point(id) - reference.pointSet.point(id)
@@ -119,7 +133,7 @@ Note that the deformation fields need to be interpolated, such that we are sure 
 all the points of the reference mesh. Once we have the deformation fields, we can build and
 visualize the Point Distribution Model:
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val continuousFields = defFields.map(f => f.interpolate(TriangleMeshInterpolator3D()) )
 val gp = DiscreteLowRankGaussianProcess.createUsingPCA(reference,
             continuousFields, RelativeTolerance(1e-8)
@@ -156,13 +170,13 @@ in order to make collective operations on such sets easier.
 We can create a *DataCollection* by providing a reference mesh, and
 a sequence of meshes, which are in correspondence with this reference.
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val dc = DataCollection.fromTriangleMesh3DSequence(reference, alignedMeshes)
 ```
 
 Now that we have our data collection, we can build a shape model as follows:
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val modelFromDataCollection = PointDistributionModel.createUsingPCA(dc)
 
 val modelGroup2 = ui.createGroup("modelGroup2")
@@ -176,7 +190,7 @@ to this mean, and then iterating this procedure until the changes in the
 computed mean are below a certain threshold. In Scalismo, this alignment
 procedure is defined on data collections. We can use it as follows:
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val dcWithGPAAlignedShapes = DataCollection.gpa(dc)
 val modelFromDataCollectionGPA = PointDistributionModel.createUsingPCA(dcWithGPAAlignedShapes)
 
@@ -188,4 +202,8 @@ ui.show(modelGroup3, modelFromDataCollectionGPA, "ModelDCGPA")
 
 ```scala mdoc:invisible
 ui.close();
+```
+
+```scala mdoc:invisible
+}
 ```

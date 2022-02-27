@@ -15,8 +15,8 @@ provide some theoretical background.
 There are different developement environment that you can use to program with Scala. For beginners we recommend to use *scala-cli* together with Visual Studio Code. If you are an experienced developer, who is already familiar with build systems and integrated development environments, you may want to use Scalismo from within *IntelliJ IDEA* instead.
 
 The following guides will help you to get started with setting up your first project:
-* [Using Scalismo with Scala-cli and VSCode](Setup/vscode)
-* [Using Scalismo with IntelliJ IDEA (article)](Setup/ide)
+* [Using Scalismo with Scala-cli and VSCode](Setup/vscode.md)
+* [Using Scalismo with IntelliJ IDEA (article)](Setup/ide.md)
 * [Getting started with Scalismo in IntelliJ IDEA (Video tutorial)](https://www.youtube.com/watch?v=E3br5-Yr-h8)
 
 
@@ -25,23 +25,23 @@ The following guides will help you to get started with setting up your first pro
 You will also need to [download](https://drive.switch.ch/index.php/s/zOJDpqh2ZGxzJJH) the datasets used in the tutorials and unzip them into your project folder.
 
 
-* [Tutorial 1](Tutorials/tutorial01): Hello Scalismo
-* [Tutorial 2](Tutorials/tutorial02): Rigid alignment
-* [Tutorial 3](Tutorials/tutorial03): From meshes to deformation fields
-* [Tutorial 4](Tutorials/tutorial04): Gaussian processes and Point Distribution Models
-* [Tutorial 5](Tutorials/tutorial05): Gaussian processes, sampling and marginalization
-* [Tutorial 6](Tutorials/tutorial06): Building a shape model from data
-* [Tutorial 7](Tutorials/tutorial07): Shape modelling with Gaussian processes and kernels
-* [Tutorial 8](Tutorials/tutorial08): Posterior Shape Models
-* [Tutorial 9](Tutorials/tutorial09): Shape completion using Gaussian process regression
-* [Tutorial 10](Tutorials/tutorial10): Iterative Closest Points for rigid alignment
-* [Tutorial 11](Tutorials/tutorial11): Model fitting with Iterative Closest Points
-* [Tutorial 12](Tutorials/tutorial12): Parametric, non-rigid registration
-* [Tutorial 13](Tutorials/tutorial13): Active Shape Models
-* [Tutorial 14](Tutorials/tutorial14): Model fitting using MCMC - The basic framework
-* [Tutorial 15](Tutorials/tutorial15): Model fitting using MCMC - Fitting a shape model
+* [Tutorial 1](Tutorials/tutorial01.md): Hello Scalismo
+* [Tutorial 2](Tutorials/tutorial02.md): Rigid alignment
+* [Tutorial 3](Tutorials/tutorial03.md): From meshes to deformation fields
+* [Tutorial 4](Tutorials/tutorial04.md): Gaussian processes and Point Distribution Models
+* [Tutorial 5](Tutorials/tutorial05.md): Gaussian processes, sampling and marginalization
+* [Tutorial 6](Tutorials/tutorial06.md): Building a shape model from data
+* [Tutorial 7](Tutorials/tutorial07.md): Shape modelling with Gaussian processes and kernels
+* [Tutorial 8](Tutorials/tutorial08.md): Posterior Shape Models
+* [Tutorial 9](Tutorials/tutorial09.md): Shape completion using Gaussian process regression
+* [Tutorial 10](Tutorials/tutorial10.md): Iterative Closest Points for rigid alignment
+* [Tutorial 11](Tutorials/tutorial11.md): Model fitting with Iterative Closest Points
+* [Tutorial 12](Tutorials/tutorial12.md): Parametric, non-rigid registration
+* [Tutorial 13](Tutorials/tutorial13.md): Active Shape Models
+* [Tutorial 14](Tutorials/tutorial14.md): Model fitting using MCMC - The basic framework
+* [Tutorial 15](Tutorials/tutorial15.md): Model fitting using MCMC - Fitting a shape model
 
 
 ### Other guides
 
-* [Visualizing with *Scalismo-ui*](scalismo-ui-introduction)
+* [Visualizing with *Scalismo-ui*](scalismo-ui-introduction.md)

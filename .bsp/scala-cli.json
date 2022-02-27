@@ -1,0 +1,16 @@
+{
+  "name": "scala-cli",
+  "argv": [
+    "C:\\Program Files\\scala-cli-x86_64-pc-win32\\scala-cli.exe",
+    "bsp",
+    "--json-options",
+    "C:\\Users\\marce\\workspaces\\scalismo\\scalismo-microsite\\.scala-build\\ide-options.json",
+    "C:\\Users\\marce\\workspaces\\scalismo\\scalismo-microsite\\"
+  ],
+  "version": "0.1.0",
+  "bspVersion": "2.0.0",
+  "languages": [
+    "scala",
+    "java"
+  ]
+}

@@ -12,17 +12,52 @@ some helpful context for this tutorial:
 
 - What is Scalismo [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250314)
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial01.scala](./Tutorial01.scala)
+
+## Imports and Scalismo initialization
+
 ```scala mdoc:invisible
+//> using scala "2.13"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+```
 
+Before we start with writing actual Scalismo code, we import all 
+objects from the Scalismo library, which we will need in this tutorial. 
 
+```scala mdoc:silent
+
+// Basic geometric primitives
+import scalismo.geometry.{_3D, Point, Point3D}
+import scalismo.geometry.{EuclideanVector}
+import scalismo.geometry.{IntVector, IntVector3D} 
+import scalismo.geometry.Landmark
+
+import scalismo.common.PointId
+
+// Geometric objects
+import scalismo.mesh.TriangleMesh
+import scalismo.mesh.TriangleId
+import scalismo.image.{DiscreteImage, DiscreteImage3D}
+import scalismo.statisticalmodel.PointDistributionModel 
+
+// IO Methods
+import scalismo.io.ImageIO; 
+import scalismo.io.StatisticalModelIO
+import scalismo.io.{MeshIO, StatisticalModelIO}
+
+// Visualization
+import scalismo.ui.api.ScalismoUI
+import scalismo.ui.api.LandmarkView
+```
+
+```scala mdoc:invisible emptyLines:2
 object Tutorial1 extends App {
 ```
 
-## Initializing the system
 
-Before we start, we need to initialize Scalismo by calling:
-
-```scala mdoc:silent
+Before we can start working with Scalismo objects, we need to initialize Scalismo. 
+```scala mdoc:silent emptyLines:2
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 ```
@@ -34,31 +69,16 @@ of randomness to use and at the same time seeds the random number generator appr
 Later on we would like to visualize the objects we create. This is done using [Scalismo-ui](https://github.com/unibas-gravis/scalismo-ui) - the visualization library accompanying scalismo.
 We can load an instance of the GUI, which we name here simply ```ui``` as follows:
 
-```scala mdoc:silent
-import scalismo.ui.api.ScalismoUI
-
+```scala mdoc:silent emptyLines:2
 val ui = ScalismoUI()
 ```
-
 
 ## Meshes (surface data)
 
 The first fundamental data structure we discuss is the triangle mesh,
 which is defined in the package ```scalismo.mesh```.
-In the following we will need access to the following object, which we
-now import:
-```scala mdoc:silent
-import scalismo.mesh.TriangleMesh
-import scalismo.io.{MeshIO, StatisticalModelIO}
-import scalismo.common.PointId
-import scalismo.mesh.TriangleId
-import scalismo.geometry.{_3D, Point3D}
-import scalismo.image.{DiscreteImage, DiscreteImage3D}
-import scalismo.statisticalmodel.PointDistributionModel // indicates that we work in 3D space
-```
-
 Meshes can be read from a file using the method ```readMesh``` from the ```MeshIO```:
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val mesh: TriangleMesh[_3D] = MeshIO.readMesh(new java.io.File("datasets/Paola.ply")).get
 ```
 To visualize any object in Scalismo, we can use the ```show``` method of the ```ui``` object.
@@ -66,7 +86,7 @@ We often want to organize different visualizations of an object in a group.
 We start directly with this practice and
 first create a new group, to which we then add the visualization of the mesh:
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val paolaGroup = ui.createGroup("paola")
 val meshView = ui.show(paolaGroup, mesh, "Paola")
 ```
@@ -85,13 +105,13 @@ A 3D triangle mesh in scalismo consists of a ```pointSet```, which maintains a c
 list of triangle cells. We can access individual points using their point id.
 Here we show how we can access the first point in the mesh:
 
-```scala mdoc
+```scala mdoc:silent emptyLines:2
 println("first point " + mesh.pointSet.point(PointId(0)))
 ```
 
 Similarly, we can access the first triangles as follows:
 
-```scala mdoc
+```scala mdoc:silent
 println("first cell " + mesh.triangulation.triangle(TriangleId(0)))
 ```
 
@@ -119,19 +139,15 @@ pointCloudView.remove()
 
 We are very often interested in modelling transformations of point sets. Therefore we need to learn how to manipulate point positions.
 The two fundamental classes in this context are ```Point``` and ```EuclideanVector```:
-```scala mdoc:silent
-import scalismo.geometry.{Point}
-import scalismo.geometry.{EuclideanVector}
-```
 
 We define points by specifying their coordinates:
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val p1: Point[_3D] = Point3D(4.0, 5.0, 6.0)
 val p2: Point[_3D] = Point3D(1.0, 2.0, 3.0)
 ```
 The difference between two points is a ```EuclideanVector```
 
-```scala mdoc:silent
+```scala mdoc:silent 
 val v1: EuclideanVector[_3D] = Point3D(4.0, 5.0, 6.0) - Point3D(1.0, 2.0, 3.0)
 ```
 
@@ -148,7 +164,10 @@ and vice versa:
 val v3: Point[_3D] = v1.toPoint
 ```
 
-*Remark: Observe that the type of the expression is a parametric type ```Point[_3D]```, where the type parameter ```_3D``` encodes the dimensionality. This pattern holds true for most types in Scalismo. It allows us to write generic code, which is independent of the dimensionality of the space.*
+*Remark: Observe that the type of the expression is a parametric type ```Point[_3D]```, where the type parameter ```_3D``` encodes the dimensionality. 
+The following pattern holds throughout Scalismo. In the object constructor, the dimesionality is given as part of the name (such as ```Point3D, TriangleMesh3D```). 
+The corresponding Type that is returned, is the parametric type (such as ```Point[_3D]``` or ```TriangleMesh[_3D]```).
+This pattern allows us to write generic code, which is independent of the dimensionality in which the objects live.
 
 We put these concepts in practice, and illustrate how we can compute the center of mass, given a sequence of points:
 
@@ -182,15 +201,10 @@ val center = centerV.toPoint
 The next important data structure is the (scalar-) image.
 A *discrete* scalar image (e.g. gray level image) in Scalismo is simply a function from a discrete domain of points to a scalar value.
 
-We will need the following imports:
-```scala mdoc:silent
-import scalismo.io.ImageIO; // to read images
-import scalismo.geometry.{IntVector, IntVector3D} // represent image indices
-```
 
 Let's read and display a 3D image (MRI of a human):
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val image: DiscreteImage[_3D, Short] = ImageIO.read3DScalarImage[Short](new java.io.File("datasets/PaolaMRI.vtk")).get
 val imageView = ui.show(paolaGroup, image, "mri")
 ```
@@ -207,7 +221,7 @@ You can also change the way of visualizing the 3D scene under the
 
 Let's inspect the domain of the image :
 
-```scala mdoc
+```scala mdoc emptyLines:2
 val origin: Point[_3D] = image.domain.origin
 val spacing: EuclideanVector[_3D] = image.domain.spacing
 val size: IntVector[_3D] = image.domain.size
@@ -227,7 +241,7 @@ val gridPointsView = ui.show(paolaGroup, imagePoints.toIndexedSeq, "imagePoints"
 
 The other important part of a discrete image are the values associated with the domain points
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val values : Iterator[Short] = image.values
 ```
 This is an iterator of scalar values of type ```Short``` as encoded in the read image.
@@ -260,7 +274,7 @@ Here we create a new image defined on the same domain of points with artificiall
 all the values above 300 are replaced with 0.
 
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val threshValues = image.values.map { v: Short => if (v <= 300) v else 0.toShort }
 val thresholdedImage: DiscreteImage[_3D, Short] = DiscreteImage3D[Short](image.domain, threshValues.toIndexedSeq)
 ui show(paolaGroup, thresholdedImage, "thresh")
@@ -280,8 +294,7 @@ Finally, we look at Statistical Shape Models.
 
 Statistical models can be read by calling ```readStatisticalMeshModel```
 
-```scala mdoc:silent
-import scalismo.io.StatisticalModelIO // to read statistical shape models
+```scala mdoc:silent emptyLines:2
 val faceModel: PointDistributionModel[_3D, TriangleMesh] = StatisticalModelIO.readStatisticalTriangleMeshModel3D(new java.io.File("datasets/bfm.h5")).get
 val faceModelView = ui.show(faceModel, "faceModel")
 ```
@@ -299,7 +312,7 @@ As you can see, a new instance of the face model is displayed each time along wi
 
 Sampling in the ui is useful for getting a visual impression of the variability of a model. But more often we want to
 sample from a model programmatically. We can obtain a sample from the model, by calling the ```sample method```:
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val randomFace: TriangleMesh[_3D] = faceModel.sample
 ```
 #### Exercise: Visualize a few randomly generated meshes in the ui.
@@ -313,9 +326,6 @@ programs.
 To achieve this we can use the ```filter``` method of the ui object. It works as follows:
 
 ```scala mdoc:silent
-import scalismo.ui.api.LandmarkView
-import scalismo.geometry.Landmark
-
 val matchingLandmarkViews : Seq[LandmarkView] = ui.filter[LandmarkView](paolaGroup, (l : LandmarkView) => l.name == "noseLM")
 val matchingLandmarks : Seq[Landmark[_3D]] = matchingLandmarkViews.map(lmView => lmView.landmark)
 ```
@@ -344,3 +354,7 @@ ui.close()
 ```scala mdoc:invisible
 }
 ```
+
+##### Related resources:
+
+* [Scala-code for this tutorial](Tutorial01.scala)

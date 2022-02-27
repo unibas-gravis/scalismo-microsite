@@ -12,6 +12,9 @@ to focus on the main components of the framework instead of technical details, w
 
 Week 2 of our [online course](https://shapemodelling.cs.unibas.ch/probabilistic-fitting-course/) on shape model fitting may provide some helpful context for this tutorial.
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial14.scala](./Tutorial14.scala)
+
 
 ### Problem setting
 
@@ -64,6 +67,7 @@ uses this ratio as a basis for rejecting or accepting the new sample.
 
 ##### Preparation
 
+
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
 
@@ -75,7 +79,11 @@ As in the previous tutorials, we start by importing some commonly used objects a
  import scalismo.sampling.{DistributionEvaluator, ProposalGenerator, TransitionProbability}
  import breeze.stats.distributions.Gaussian
  import breeze.stats.meanAndVariance
+```
 
+
+
+```scala
  scalismo.initialize()
  implicit val rng = scalismo.utils.Random(42)
 ```
@@ -245,12 +253,7 @@ val generator = MixtureProposal.fromProposalsWithTransition[Sample](
     (0.2, largeStepProposal)
     )
 ```
-```scala
-val generator = MixtureProposal.fromProposalsWithTransition[Sample](
-    (0.8, smallStepProposal),
-    (0.2, largeStepProposal)
-    )
-```
+
 
 #### Building the Markov Chain
 
@@ -374,3 +377,4 @@ rejected is not very efficient.
 
 In more complicated applications, this type of debugging is crucial for obtaining
 efficient fitting algorithms.
+

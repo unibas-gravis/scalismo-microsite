@@ -3,8 +3,13 @@ id: tutorial09
 title: Shape completion using GP regression
 ---
 
-
 In this tutorial we will show how GP regression can be used to predict missing parts of a shape.
+
+##### Related resources
+
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial09.scala](./Tutorial09.scala)
+
 
 ##### Preparation
 
@@ -22,7 +27,10 @@ import scalismo.kernels._
 import breeze.linalg.{DenseMatrix, DenseVector}
 
 import scalismo.ui.api._
+```
 
+
+```scala
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 
@@ -138,3 +146,4 @@ ui.show(posteriorGroup, posterior, "posterior")
 ```
 
 With this posterior model, we get a normal distribution of faces satisfying our observations by having the selected characteristic points at the indicated positions.
+

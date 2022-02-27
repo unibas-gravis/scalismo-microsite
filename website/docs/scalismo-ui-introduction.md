@@ -6,6 +6,11 @@ title: Introduction to Scalismo-ui
 The goal of this tutorial is to give a practical introduction to visualizing with
 *Scalismo-ui*.
 
+To run the code from this tutorial, download the following Scala file:
+- [ScalismoUIIntroduction.scala](./ScalismoUiIntroduction.scala)
+
+
+
 To get it out of the way, we import the following:
 ```scala
 // api functions for scalismo-ui
@@ -27,6 +32,8 @@ import breeze.stats.distributions.Gaussian
 
 
 ## Starting Scalismo-ui and creating groups
+
+
 
 The first step is to create a ```ui``` object, with which we interact. This can be done by calling
 
@@ -145,7 +152,6 @@ the ```ssmView``` object.
  ssmView.referenceView
  ssmView.shapeModelTransformationView.shapeTransformationView
  ssmView.shapeModelTransformationView.poseTransformationView
-
 ```
 
 The pose transformation and shape transformation are parametric transformations, and to change
@@ -186,3 +192,4 @@ Here is, howe we would visualize a 3D image:
  * Triangle mesh (```TriangleMesh[_3D]```)
  * Scalar mesh field(```ScalarMeshField[_]```)
  * Line mesh (```LineMesh[_3D]```)
+

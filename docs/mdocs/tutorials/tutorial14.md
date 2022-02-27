@@ -12,6 +12,13 @@ to focus on the main components of the framework instead of technical details, w
 
 Week 2 of our [online course](https://shapemodelling.cs.unibas.ch/probabilistic-fitting-course/) on shape model fitting may provide some helpful context for this tutorial.
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial14.scala](./Tutorial14.scala)
+
+```scala mdoc:invisible
+//> using scala "2.13"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+```
 
 ### Problem setting
 
@@ -64,10 +71,11 @@ uses this ratio as a basis for rejecting or accepting the new sample.
 
 ##### Preparation
 
+
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
  import scalismo.sampling.algorithms.MetropolisHastings
  import scalismo.sampling.evaluators.ProductEvaluator
  import scalismo.sampling.loggers.AcceptRejectLogger
@@ -75,14 +83,21 @@ As in the previous tutorials, we start by importing some commonly used objects a
  import scalismo.sampling.{DistributionEvaluator, ProposalGenerator, TransitionProbability}
  import breeze.stats.distributions.Gaussian
  import breeze.stats.meanAndVariance
+```
 
+```scala mdoc:invisible emptyLines:2
+object Tutorial14 extends App {
+```
+
+
+```scala mdoc:silent emptyLines:2
  scalismo.initialize()
  implicit val rng = scalismo.utils.Random(42)
 ```
 To make the setup simple, we generate artificial data, which follows exactly our assumptions. In this way we will be able to see
 how well we estimated the parameters.
 
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
   
       val a = 0.2
       val b = 3
@@ -96,14 +111,14 @@ how well we estimated the parameters.
 
 Before we discuss the two main components, the *Evaluator* and *Proposal generator* in detail, we first define a class for representing
 the parameters $$\theta = (a, b, \sigma^2)$$:
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
 case class Parameters(a : Double, b:  Double, sigma2 : Double)
 ```
 
 We introduce a further class to represent a sample from the chain. A sample is
 simply a set of parameters together with a tag, which helps us to keep track later
 on, which proposal generator generated the sample:
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
 case class Sample(parameters : Parameters, generatedBy : String)
 ```
 
@@ -127,7 +142,7 @@ In our case, we will define separate evaluators for the prior distribution $$p(\
 
 The likelihood function, defined above, can be implemented as follows:
 
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
 case class LikelihoodEvaluator(data : Seq[(Double, Double)]) extends DistributionEvaluator[Sample] {
 
     override def logValue(theta: Sample): Double = {
@@ -146,7 +161,7 @@ Notice that we work in Scalismo with log probabilities, and hence the product in
 becomes a sum.
 
 In a similar way, we encode the prior distribution:
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
 
 object PriorEvaluator extends DistributionEvaluator[Sample] {
 
@@ -194,7 +209,7 @@ We use here one of the simples possible proposals, namely a *random walk proposa
 which updates the current state by taking a step of random length in a random direction. For simplicity, 
 we update all three parameters together:
 
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
   case class RandomWalkProposal(stepLengthA: Double, stepLengthB : Double, stepLengthSigma2 : Double)(implicit rng : scalismo.utils.Random)
     extends ProposalGenerator[Sample] with TransitionProbability[Sample] {
 
@@ -228,7 +243,7 @@ by seeding this random generator at the beginning of our program.*
 
 Let's define two random walk proposals with different step length:
 
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
 val smallStepProposal = RandomWalkProposal(0.01, 0.01, 0.01)
 val largeStepProposal = RandomWalkProposal(0.1, 0.1, 0.1)
 ```
@@ -239,23 +254,18 @@ landscape, and sometimes smaller steps, to explore a local environment. We can c
 probability. Here We choose to take the large step 20% of the time, and the smaller
 steps 80% of the time:
 
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
 val generator = MixtureProposal.fromProposalsWithTransition[Sample](
     (0.8, smallStepProposal),
     (0.2, largeStepProposal)
     )
 ```
-```scala mdoc:silent
-val generator = MixtureProposal.fromProposalsWithTransition[Sample](
-    (0.8, smallStepProposal),
-    (0.2, largeStepProposal)
-    )
-```
+
 
 #### Building the Markov Chain
 
 Now that we have all the components set up, we can assemble the Markov Chain.
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
 val chain = MetropolisHastings(generator, posteriorEvaluator)
 ```
 
@@ -263,7 +273,7 @@ To run the chain, we obtain an iterator,
 which we then consume to drive the sampling generation. To obtain the iterator, we need to specify the initial
 sample:
 
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
 val initialSample = Sample(Parameters(0.0, 0.0, 1.0), generatedBy="initial")
 val mhIterator = chain.iterator(initialSample)
 ```
@@ -278,7 +288,7 @@ val samples = mhIterator.drop(5000).take(15000).toIndexedSeq
 As we have generated synthetic data, we can check if the expected value, computed
 from this samples, really corresponds to the parameters from which we sampled
 our data:
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
 val meanAndVarianceA = meanAndVariance(samples.map(_.parameters.a))
 println(s"Estimates for parameter a: mean = ${meanAndVarianceA.mean}, var = ${meanAndVarianceA.variance}")
 val meanAndVarianceB = meanAndVariance(samples.map(_.parameters.b))
@@ -318,7 +328,7 @@ The following, very simple logger counts all the accepted and rejected samples a
 computes the acceptance ratio. This acceptance ratio is a simple, but already useful
 indicator to diagnose if all proposal generators function as expected.
 
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
   class Logger extends AcceptRejectLogger[Sample] {
     private val numAccepted = collection.mutable.Map[String, Int]()
     private val numRejected = collection.mutable.Map[String, Int]()
@@ -356,7 +366,7 @@ indicator to diagnose if all proposal generators function as expected.
 
 To use the logger, we simply rerun the chain, but pass the logger now as
     a second argument to the ```iterator``` method:
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
   val logger = new Logger()
   val mhIteratorWithLogging = chain.iterator(initialSample, logger)
 
@@ -374,3 +384,8 @@ rejected is not very efficient.
 
 In more complicated applications, this type of debugging is crucial for obtaining
 efficient fitting algorithms.
+
+
+```scala mdoc:invisible
+}
+```

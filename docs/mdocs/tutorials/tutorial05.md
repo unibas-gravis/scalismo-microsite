@@ -16,8 +16,16 @@ some helpful context for this tutorial:
 - The marginalization property [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250339)
 - Sampling from a shape model [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250340)
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial05.scala](./Tutorial05.scala)
 
 ##### Preparation
+
+
+```scala mdoc:invisible
+//> using scala "2.13"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+```
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
@@ -29,7 +37,14 @@ import scalismo.common.interpolation.TriangleMeshInterpolator3D
 import scalismo.mesh._
 import scalismo.io.StatisticalModelIO
 import scalismo.statisticalmodel._
+```
 
+
+```scala mdoc:invisible emptyLines:2
+object Tutorial5 extends App {
+```
+
+```scala mdoc:silent emptyLines:2
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 
@@ -48,7 +63,7 @@ To continue our exploration of Gaussian processes, we therefore start
 by loading (and visualizing) an existing PDM and retrieve its underlying
 Gaussian process
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val model = StatisticalModelIO.readStatisticalTriangleMeshModel3D(new java.io.File("datasets/bfm.h5")).get
 val gp = model.gp
 
@@ -60,7 +75,7 @@ val ssmView = ui.show(modelGroup, model, "model")
 We can retrieve random samples from the Gaussian process by calling ```sample```
 on the ```gp``` object:
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val sampleDF : DiscreteField[_3D, TriangleMesh, EuclideanVector[_3D]] = model.gp.sample
 
 val sampleGroup = ui.createGroup("sample")
@@ -77,7 +92,7 @@ sample ```sampleDf``` to obtain a continuous version of the deformation field.
 A more convenient approach is, however, to interpolate the
 Gaussian process directly:
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val interpolator = TriangleMeshInterpolator3D[EuclideanVector[_3D]]()
 val contGP = model.gp.interpolate(interpolator)
 ```
@@ -85,7 +100,7 @@ val contGP = model.gp.interpolate(interpolator)
 When we sample now from the continuous GP, we obtain a vector-valued function,
 which is defined on the entire 3D Space:
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val contSample: Field[_3D, EuclideanVector[_3D]] = contGP.sample
 ```
 
@@ -102,7 +117,7 @@ according to the needs of our application.
 To illustrate this, we could, for example obtain a sample,
 which is defined on all the points of the original reference mesh.
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val fullSample = contGP.sampleAtPoints(model.reference)
 val fullSampleView = ui.show(sampleGroup, fullSample, "fullSample")
 ```
@@ -113,7 +128,7 @@ distribution at these points. We can
 obtain this distribution, by calling the method ```marginal```
 on the Gaussian process instance:
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val referencePointSet = model.reference.pointSet
 val rightEyePt: Point[_3D] = referencePointSet.point(PointId(4281))
 val leftEyePt: Point[_3D] = referencePointSet.point(PointId(11937))
@@ -146,7 +161,7 @@ interpolates the gaussian process and discretizes it with the new reference.
 
 In the following example we use this method to obtain a model which is defined on a low-resolution mesh:
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val lowresMesh = model.reference.operations.decimate(1000)
 val lowResModel = model.newReference(lowresMesh, TriangleMeshInterpolator3D())
 ```
@@ -161,7 +176,7 @@ This can be done in Scalismo by means of the method ```pdf ```
 and ```StatisticalMeshModel``` respectively.
 
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val defSample = model.gp.sample
 model.gp.pdf(defSample)
 ```
@@ -169,7 +184,7 @@ model.gp.pdf(defSample)
 The value of the *pdf* is often not interesting as such. But it allows us to compare the likelihood of different instances, by comparing their density value.
 For numerical reasons, we usually work with the log probability:
 
-```scala mdoc
+```scala mdoc emptyLines:2
 val defSample1 = model.gp.sample
 val defSample2 = model.gp.sample
 
@@ -181,5 +196,11 @@ println(s"defSample1 is $moreOrLess likely than defSample2")
 ```
 
 ```scala mdoc:invisible
-ui.close
+ui.close()
 ```
+
+
+```scala mdoc:invisible emptyLines:2
+}
+```
+

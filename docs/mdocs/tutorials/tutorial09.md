@@ -3,8 +3,17 @@ id: tutorial09
 title: Shape completion using GP regression
 ---
 
-
 In this tutorial we will show how GP regression can be used to predict missing parts of a shape.
+
+##### Related resources
+
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial09.scala](./Tutorial09.scala)
+
+```scala mdoc:invisible
+//> using scala "2.13"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+```
 
 ##### Preparation
 
@@ -22,7 +31,13 @@ import scalismo.kernels._
 import breeze.linalg.{DenseMatrix, DenseVector}
 
 import scalismo.ui.api._
+```
 
+```scala mdoc:invisible emptyLines:2
+object Tutorial9 extends App {
+```
+
+```scala mdoc:silent emptyLines:2
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 
@@ -31,7 +46,7 @@ val ui = ScalismoUI()
 
 We also load a dataset that we want to reconstruct. In this case, it is a face without nose:
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val noseless = MeshIO.readMesh(new java.io.File("datasets/noseless.ply")).get
 
 val targetGroup = ui.createGroup("target")
@@ -39,7 +54,7 @@ ui.show(targetGroup, noseless,"noseless")
 ```
 
 Finally, we also load the face model.
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val smallModel = StatisticalModelIO.readStatisticalTriangleMeshModel3D(new java.io.File("datasets/model.h5")).get
 ```
 
@@ -51,7 +66,7 @@ reconstruct the missing nose properly are rather slim.
 To increase the shape variability of the model, we add smooth some additional smooth shape deformations,
  modelled by a GP with symmetric Gaussian kernel. The code should be familiar from the previous tutorials.
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val scalarValuedKernel = GaussianKernel3D(70) * 10.0
 
 case class XmirroredKernel(kernel: PDKernel[_3D]) extends PDKernel[_3D] {
@@ -97,7 +112,7 @@ As we saw previously, to perform GP regression we need observations of the defor
 We will discussed in [Tutorial 10](./tutorial10) how such observations can be obtained fully automatically.
 Here, we have done this already in a separate step and saved 200 corresponding points as landmarks, which we will now load and visualize:
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val referenceLandmarks = LandmarkIO.readLandmarksJson3D(new java.io.File("datasets/modelLandmarks.json")).get
 val referencePoints : Seq[Point[_3D]] = referenceLandmarks.map(lm => lm.point)
 val referenceLandmarkViews = referenceLandmarks.map(lm => ui.show(modelGroup, lm, s"lm-${lm.id}"))
@@ -114,7 +129,7 @@ In other words, we **observed** a few deformation vectors at
 the selected model points. We use these deformation vectors and build
 a deformation field:
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val domain = UnstructuredPointsDomain3D(referencePoints.toIndexedSeq)
 val deformations = (0 until referencePoints.size).map(i => noselessPoints(i) - referencePoints(i) )
 val defField = DiscreteField3D(domain, deformations)
@@ -123,7 +138,7 @@ ui.show(modelGroup, defField, "partial_Field")
 
 We can now perform GP regression and retrieve the rest of the deformations fitting our observations:
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val littleNoise = MultivariateNormalDistribution(DenseVector.zeros[Double](3), DenseMatrix.eye[Double](3) * 0.5)
 
 val regressionData = for ((refPoint, noselessPoint) <- referencePoints zip noselessPoints) yield {
@@ -140,5 +155,9 @@ ui.show(posteriorGroup, posterior, "posterior")
 With this posterior model, we get a normal distribution of faces satisfying our observations by having the selected characteristic points at the indicated positions.
 
 ```scala mdoc:invisible
-ui.close
+ui.close()
+```
+
+```scala mdoc:invisible
+}
 ```

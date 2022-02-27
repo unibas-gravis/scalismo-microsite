@@ -13,6 +13,11 @@ some helpful context for this tutorial:
 - Learning a model from example data [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250329)
 - Superimposing shapes [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250330)
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial02.scala](./Tutorial02.scala)
+
+
+
 ##### Preparation
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
@@ -20,9 +25,14 @@ As in the previous tutorials, we start by importing some commonly used objects a
 import scalismo.geometry._
 import scalismo.common._
 import scalismo.mesh.TriangleMesh
+import scalismo.transformations._
 import scalismo.io.MeshIO
 import scalismo.ui.api._
+```
 
+
+
+```scala
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 ```
@@ -34,6 +44,7 @@ Let's start by loading and showing Paola's mesh again:
 ```scala
 val ui = ScalismoUI()
 val paolaGroup = ui.createGroup("paola")
+
 val mesh: TriangleMesh[_3D] = MeshIO.readMesh(new java.io.File("datasets/Paola.ply")).get
 val meshView = ui.show(paolaGroup, mesh, "Paola")
 ```
@@ -41,12 +52,6 @@ val meshView = ui.show(paolaGroup, mesh, "Paola")
 Scalismo allows us to perform geometric transformations on meshes.
 
 Transformations are *functions* that map a given point, into a new *transformed* point.
-Let's import the classes in this package
-```scala
-import scalismo.transformations._
-```
-
-
 The most general way to define a transformation is by specifying the transformation function
 explicitly. The following example illustrates this by defining a transformation,
 which flips the point along the x axis.
@@ -133,7 +138,7 @@ Rigid alignment is easiest if we already know some corresponding points in both 
 have identified a few corresponding points and marked them using landmarks. We can then apply *Procrustes Analysis*.
 Usually, these landmarks would need to be clicked manually in a GUI, saved to disk and then loaded in Scalismo using the 
 methods in ``` LandmarksIO```:
-```scala
+```scala  emptyLines:2 
 val landmarks : Seq[Landmark[_3D]] = LandmarkIO.readLandmarksJson3D(new java.io.File("landmarks.json")).get
 ``` 
 
@@ -175,4 +180,5 @@ val alignedPaola = mesh.transform(bestTransform)
 val alignedPaolaView = ui.show(paolaGroup, alignedPaola, "alignedPaola")
 alignedPaolaView.color = java.awt.Color.RED
 ```
+
 

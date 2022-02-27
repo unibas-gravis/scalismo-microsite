@@ -65,7 +65,9 @@ object MarkdownProcessor {
    if (!line.trim.startsWith("```")) {
       Line.NormalLine
     } else if (line.trim == "```") {
-      Line.TripleQuoteLine
+      Line.TripleQuoteLine 
+    } else if (line.startsWith("```") && !line.contains("mdoc")) {
+      Line.TripleQuoteLine 
     } else if (line.startsWith("```scala")) {
       // tokenize line of type ```scala mdoc:silent emptyLines:5 
       val tokens = line.replace("```scala", "").split(raw"\s+")
@@ -75,12 +77,14 @@ object MarkdownProcessor {
         val value = if (parts.tail.isEmpty) "" else parts.tail.head
         (modifier, value)
       }).toMap
-      val mdocModifer = keywordMap.getOrElse("mdoc", "silent")
+      val mdocModifer = keywordMap.getOrElse("mdoc", "")
       val numEmptyLines = keywordMap.getOrElse("emptyLines", "0")
       if (mdocModifer == "invisible") {
         Line.MDocLine(MDocModifier.Invisible, numEmptyLines.toInt)
-      } else {
+      } else if (mdocModifer == "silent") {
         Line.MDocLine(MDocModifier.Silent, numEmptyLines.toInt)
+      } else {
+        Line.MDocLine(MDocModifier.None, 0)
       }
     } else {
       Line.NormalLine

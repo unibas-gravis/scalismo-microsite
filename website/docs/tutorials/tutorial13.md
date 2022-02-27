@@ -12,6 +12,10 @@ some helpful context for this tutorial:
 
 - Fitting models to images [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250379)
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial13.scala](./Tutorial13.scala)
+
+
 ##### Preparation
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
@@ -26,7 +30,10 @@ import scalismo.io.{ActiveShapeModelIO, ImageIO}
 
 import scalismo.ui.api._
 import breeze.linalg.{DenseVector}
+```
 
+
+```scala
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 
@@ -228,3 +235,4 @@ println("Likelihood for mesh 2 = " + likelihoodForMesh(asm, sampleMesh2, preproc
 
 This information is all that is need to write probabilistic fitting methods methods using Markov Chain Monte Carlo
 methods, which will be discussed in a later tutorial.
+

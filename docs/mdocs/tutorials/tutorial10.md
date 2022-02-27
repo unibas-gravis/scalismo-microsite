@@ -15,6 +15,14 @@ some helpful context for this tutorial:
 - Superimposing shapes [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250330)
 - Model-fitting and correspondence [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250371)
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial10.scala](./Tutorial10.scala)
+
+```scala mdoc:invisible
+//> using scala "2.13"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+```
+
 ##### Preparation
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
@@ -28,7 +36,14 @@ import scalismo.registration.LandmarkRegistration
 import scalismo.io.{MeshIO}
 import scalismo.numerics.UniformMeshSampler3D
 import breeze.linalg.{DenseMatrix, DenseVector}
+```
 
+
+```scala mdoc:invisible emptyLines:2
+object Tutorial10 extends App {
+```
+
+```scala mdoc:silent empytLines:2
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 
@@ -39,7 +54,7 @@ val ui = ScalismoUI()
 
 We start by loading and visualizing two meshes
 
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
 val mesh1 = MeshIO.readMesh(new java.io.File("datasets/Paola.ply")).get
 val group1 = ui.createGroup("Dataset 1")
 val mesh1View = ui.show(group1, mesh1, "mesh1")
@@ -63,7 +78,7 @@ the mesh.
 
 Let's select a few points from the mesh.
 
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
 val ptIds = (0 until mesh1.pointSet.numberOfPoints by 50).map(i => PointId(i))
 ui.show(group1, ptIds.map(id => mesh1.pointSet.point(id)), "selected")
 ```
@@ -73,7 +88,7 @@ uniformly distributed over the surface.
 
 In the next step, we find the corresponding points in the other mesh:
 
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
 def attributeCorrespondences(movingMesh: TriangleMesh[_3D], ptIds : Seq[PointId]) : Seq[(Point[_3D], Point[_3D])] = {
   ptIds.map{ id : PointId =>
     val pt = movingMesh.pointSet.point(id)
@@ -87,7 +102,7 @@ which we called the ```MovingMesh```. The reason is, that this will later be ite
 
 Let us now visualize the the chosen correspondences:
 
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
 val correspondences = attributeCorrespondences(mesh1, ptIds)
 val targetPoints = correspondences.map(pointPair => pointPair._2)
 ui.show(group2, targetPoints.toIndexedSeq, "correspondences")
@@ -97,7 +112,7 @@ As expected, the obtained correspondences are clearly not good, as they tend to 
 Nevertheless, we can apply Procrustes analysis based on these correspondences and
 retrieve a rigid transformation, which brings us closer to the target.
 
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
 val rigidTrans =  LandmarkRegistration.rigid3DLandmarkRegistration(correspondences, center = Point3D(0, 0, 0))
 val transformed = mesh1.transform(rigidTrans)
 val alignedMeshView = ui.show(group1, transformed, "aligned?")
@@ -110,7 +125,7 @@ This said, when considering where we started from, that is the original position
 The second important idea of the ICP algorithm comes is now to **iterate** this steps in the hope that it will converge.
 Let's try it out:
 
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
 val newCorrespondences = attributeCorrespondences(transformed, ptIds)
 val newClosestPoints = newCorrespondences.map(pointPair => pointPair._2)
 ui.show(group2, newClosestPoints.toIndexedSeq, "newCandidateCorr")
@@ -129,7 +144,7 @@ Also the resulting rigid transformation seems to bring our mesh a bit closer to 
 Finally, we change our implementation such that we can perform an arbitrary number of iterations:
 
 
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
 def ICPRigidAlign(movingMesh: TriangleMesh[_3D], ptIds : Seq[PointId], numberOfIterations : Int) : TriangleMesh[_3D] = {
   if (numberOfIterations == 0) movingMesh
   else {
@@ -144,7 +159,7 @@ def ICPRigidAlign(movingMesh: TriangleMesh[_3D], ptIds : Seq[PointId], numberOfI
 
 Let's now run it with 150 iterations:
 
-```scala mdoc:silent
+```scala mdoc:silent empytLines:2
 
 val rigidfit = ICPRigidAlign(mesh1, ptIds, 150)
 val rigidFitView = ui.show(group1, rigidfit, "ICP_rigid_fit")
@@ -157,5 +172,9 @@ very sensitive to the initial position, and might easily get stuck in a local mi
 
 
 ```scala mdoc:invisible
-ui.close
+ui.close()
+```
+
+```scala mdoc:invisible
+}
 ```

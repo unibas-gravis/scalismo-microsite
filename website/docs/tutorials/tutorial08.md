@@ -16,7 +16,12 @@ some helpful context for this tutorial:
 - Gaussian process regression [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250361)
 - Posterior models for different kernels [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250362)
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial08.scala](./Tutorial08.scala)
+
+
 ##### Preparation
+
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
@@ -32,7 +37,11 @@ import scalismo.kernels._
 
 import scalismo.ui.api._
 import breeze.linalg.{DenseMatrix, DenseVector}
+```
 
+
+
+```scala
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 
@@ -167,4 +176,5 @@ ui.show(posteriorGroupLargeNoise, discretePosteriorLargeNoise, "NoisyNoseyModel"
 We observe, that there is now much more variance left in this posterior process,
 which is a consequence of the larger uncertainty that was associated with the
 observed data.
+
 

@@ -14,6 +14,15 @@ some helpful context for this tutorial:
 - Model-fitting and correspondence [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250371)
 - Model-fitting and the registration problem [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250372)
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial11.scala](./Tutorial11.scala)
+
+```scala mdoc:invisible
+//> using scala "2.13"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+```
+
+
 ##### Preparation
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
@@ -29,7 +38,13 @@ import scalismo.io.{MeshIO, StatisticalModelIO, LandmarkIO}
 import scalismo.ui.api._
 
 import breeze.linalg.{DenseMatrix, DenseVector}
+```
 
+```scala mdoc:invisible emptyLines:2
+object Tutorial11 extends App {
+```
+
+```scala mdoc:silent
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 
@@ -42,7 +57,7 @@ val ui = ScalismoUI()
 Let's load and visualize a target mesh; I.e. a mesh, which we want to fit with our model, as well as
 a statistical shape model.
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val targetMesh = MeshIO.readMesh(new java.io.File("datasets/target.ply")).get
 val model = StatisticalModelIO.readStatisticalTriangleMeshModel3D(new java.io.File("datasets/bfm.h5")).get
 
@@ -78,7 +93,7 @@ Gaussian process regression.
 We start by first selecting the points for which we want to find the correspondences. We choose uniformly distributed
  points on the surface, which we can obtain as follows:
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 val sampler = UniformMeshSampler3D(model.reference, numberOfPoints = 5000)
 val points : Seq[Point[_3D]] = sampler.sample.map(pointWithProbability => pointWithProbability._1) // we only want the points
 ```
@@ -91,7 +106,7 @@ val ptIds = points.map(point => model.reference.pointSet.findClosestPoint(point)
 As in the previous tutorial, we write the method ```attributeCorrespondences```, which finds for each
 point of interest the closest point on the target.
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 def attributeCorrespondences(movingMesh: TriangleMesh[_3D], ptIds : Seq[PointId]) : Seq[(PointId, Point[_3D])] = {
   ptIds.map{ id : PointId =>
     val pt = movingMesh.pointSet.point(id)
@@ -103,7 +118,7 @@ def attributeCorrespondences(movingMesh: TriangleMesh[_3D], ptIds : Seq[PointId]
 
 We can now use the correspondences we found to compute a Gaussian process regression.
 
-```scala mdoc:silent
+```scala mdoc:silent emptyLines:2
 
 val correspondences = attributeCorrespondences(model.mean, ptIds)
 
@@ -125,7 +140,7 @@ val fitResultView = ui.show(resultGroup, fit, "fit")
 While this one fitting iteration does not bring the points where we would like them to have, we are already
 a step closer. As in the Rigid ICP case, we now iterate the procedure.
 
-```scala mdoc
+```scala mdoc emptyLines:2
 def nonrigidICP(movingMesh: TriangleMesh[_3D], ptIds : Seq[PointId], numberOfIterations : Int) : TriangleMesh[_3D] = {
   if (numberOfIterations == 0) movingMesh
   else {
@@ -146,4 +161,8 @@ ui.show(resultGroup, finalFit, "final fit")
 
 ```scala mdoc:invisible
 ui.close()
+```
+
+```scala mdoc:invisible
+}
 ```

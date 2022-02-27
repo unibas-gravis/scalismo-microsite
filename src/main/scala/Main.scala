@@ -11,6 +11,8 @@ import java.nio.file.Files
 
 object Main extends zio.ZIOAppDefault {
 
+  private final val scalafmtConfig = Paths.get(".scalafmt-mdoc.conf")
+
   def readMarkdownFile(file: File): zio.Task[MarkdownDocument] = {
     ZIO.attempt(MarkdownDocument(Source.fromFile(file).getLines.mkString("\n")))
   }
@@ -26,20 +28,19 @@ object Main extends zio.ZIOAppDefault {
 
   private def formatAndWriteScalaFile(
       scalaCode: String,
-      file: File
+      fileToFormat: File
   ): zio.Task[Unit] = {
 
     import java.nio.file._
     import org.scalafmt.interfaces.Scalafmt
 
     val scalafmt = Scalafmt.create(this.getClass.getClassLoader)
-    val config = Paths.get(".scalafmt.conf")
 
     for {
       formattedSource <- ZIO.attempt(
-        scalafmt.format(config, file.toPath, scalaCode)
+        scalafmt.format(scalafmtConfig, fileToFormat.toPath, scalaCode)
       )
-      _ <- writeTextFile(formattedSource, file)
+      _ <- writeTextFile(formattedSource, fileToFormat)
     } yield ()
 
   }
@@ -58,7 +59,11 @@ object Main extends zio.ZIOAppDefault {
 
   def processMarkdownFile(inFile: File, outDir: File): zio.Task[Unit] = {
     val outFile = new File(outDir, inFile.getName)
-    val scalaFile = new File(outDir, outFile.getName.replace(".md", ".scala").capitalize)
+    val outFileName = outFile.getName.replace(".md", ".scala")
+      .split("-")
+      .map(_.capitalize)
+      .mkString("")
+    val scalaFile = new File(outDir, outFileName)
     for {
       markdownDoc <- readMarkdownFile(inFile)
       processedDoc = MarkdownProcessor.processMarkdown(markdownDoc)

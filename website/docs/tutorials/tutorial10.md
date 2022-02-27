@@ -15,6 +15,10 @@ some helpful context for this tutorial:
 - Superimposing shapes [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250330)
 - Model-fitting and correspondence [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250371)
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial10.scala](./Tutorial10.scala)
+
+
 ##### Preparation
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
@@ -28,7 +32,11 @@ import scalismo.registration.LandmarkRegistration
 import scalismo.io.{MeshIO}
 import scalismo.numerics.UniformMeshSampler3D
 import breeze.linalg.{DenseMatrix, DenseVector}
+```
 
+
+
+```scala
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 
@@ -154,4 +162,5 @@ rigidFitView.color = java.awt.Color.YELLOW
 As you can see here, the quality of the candidate correspondences did indeed result in a proper
 **automatic** rigid alignment of Paola to the target. One should not forget, however, that the ICP method is
 very sensitive to the initial position, and might easily get stuck in a local minimum.
+
 

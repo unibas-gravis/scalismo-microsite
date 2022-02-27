@@ -10,13 +10,13 @@ const config = {
   tagline: 'Scalable Image Analysis and Shape Modelling',
   url: 'https://scalismo.org',
   baseUrl: '/',
-  trailingSlash: true,
+  trailingSlash: false,
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
   organizationName: 'unibas-gravis', // Usually your GitHub org/user name.
   projectName: 'scalismo-microsite', // Usually your repo name.
-
+  staticDirectories: ['static'],
   presets: [
     [
       'classic',

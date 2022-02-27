@@ -22,8 +22,12 @@ estimates.
 
 Week 3 of our [online course](https://shapemodelling.cs.unibas.ch/probabilistic-fitting-course/) on shape model fitting may provide some helpful context for this tutorial.
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial15.scala](./Tutorial15.scala)
+
 
 ##### Preparation
+
 
 As in the previous tutorials, we start by importing some commonly used objects and
 initializing the system.
@@ -51,12 +55,15 @@ import scalismo.utils.Memoize
 
 import scalismo.ui.api.ScalismoUI
 import breeze.linalg.{DenseMatrix, DenseVector}
+```
 
+
+
+```scala
 implicit val rng = scalismo.utils.Random(42)
 scalismo.initialize()
 
 val ui = ScalismoUI()
-
 ```
 
 ### Loading and visualizing the data
@@ -182,7 +189,7 @@ the distance to their target position is computed. This distance is what was
 modelled by the uncertainty of the observations. We can therefore directly use
 the modelled uncertainty to compute the likelihood of our model given the data:
 
-``` scala mdoc:silent
+``` scala mdoc:silent emptyLines:2
 case class SimpleCorrespondenceEvaluator(model: PointDistributionModel[_3D, TriangleMesh],
                                          correspondences: Seq[(PointId, Point[_3D])])
     extends DistributionEvaluator[Sample] {
@@ -590,3 +597,5 @@ For more complicated use-cases of this method in image analysis , we refer the i
 and references therein:
 
 * Schönborn, Sandro, et al. "Markov chain monte carlo for automated face image analysis." International Journal of Computer Vision 123.2 (2017): 160-183.
+
+

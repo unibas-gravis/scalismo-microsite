@@ -86,4 +86,4 @@ the project.
 *On MacOS it might happen that the program crashes when starting it using the run 
 buttons. In this case the JVM is not correctly configured. An easy workaround is 
 to open a terminal (from within VS Code) and use 
-```scala
+```scala-cli run --jvm system``` as above to run the code. All the other editing features of VSCode (like autocompletion, refactoring, showing syntax errors, etc.) should work with any JVM*

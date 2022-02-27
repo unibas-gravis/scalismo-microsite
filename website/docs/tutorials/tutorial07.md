@@ -16,7 +16,12 @@ some helpful context for this tutorial:
 - Constructing kernels for shape modelling [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250351)
 - Enlarging the flexibility of statistical shape models [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250357)
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial07.scala](./Tutorial07.scala)
+
+
 ##### Preparation
+
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
@@ -33,7 +38,10 @@ import scalismo.kernels._
 import scalismo.ui.api._
 
 import breeze.linalg.{DenseMatrix, DenseVector}
+```
 
+
+```scala
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 
@@ -178,11 +186,13 @@ Using this low rank Gaussian process, we can now directly sample continuous defo
 val  defField : Field[_3D, EuclideanVector[_3D]]= lowRankGP.sample
 ```
 These in turn, can be used to warp a reference mesh, as discussed above:
+
 ```scala
 referenceMesh.transform((p : Point[_3D]) => p + defField(p))
 ```
 
 More conveniently, we can visualize the sampled meshes by building again a Point Distribution Model:
+
 ```scala
 val pdm = PointDistributionModel3D(referenceMesh, lowRankGP)
 ```
@@ -316,3 +326,5 @@ val sampleGpSym =  gpSym.sampleAtPoints(referenceMesh)
 
 ui.show(sampleGroup, sampleGpSym, "ChangePointKernelGP_sample")
 ```
+
+

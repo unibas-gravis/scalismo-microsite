@@ -14,7 +14,12 @@ some helpful context for this tutorial:
 
 - Learning a model from example data [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250329)
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial06.scala](./Tutorial06.scala)
+
+
 ##### Preparation
+
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
@@ -30,8 +35,10 @@ import scalismo.statisticalmodel._
 import scalismo.registration._
 import scalismo.statisticalmodel.dataset._
 import scalismo.numerics.PivotedCholesky.RelativeTolerance
+```
 
 
+```scala
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 
@@ -183,5 +190,6 @@ val modelFromDataCollectionGPA = PointDistributionModel.createUsingPCA(dcWithGPA
 val modelGroup3 = ui.createGroup("modelGroup3")
 ui.show(modelGroup3, modelFromDataCollectionGPA, "ModelDCGPA")
 ```
+
 
 

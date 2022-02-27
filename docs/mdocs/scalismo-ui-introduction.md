@@ -6,6 +6,15 @@ title: Introduction to Scalismo-ui
 The goal of this tutorial is to give a practical introduction to visualizing with
 *Scalismo-ui*.
 
+To run the code from this tutorial, download the following Scala file:
+- [ScalismoUIIntroduction.scala](./ScalismoUiIntroduction.scala)
+
+```scala mdoc:invisible
+//> using scala "2.13"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+```
+
+
 To get it out of the way, we import the following:
 ```scala mdoc:silent
 // api functions for scalismo-ui
@@ -27,6 +36,11 @@ import breeze.stats.distributions.Gaussian
 
 
 ## Starting Scalismo-ui and creating groups
+
+```scala mdoc:invisible emptyLines:2
+object Tutorial14 extends App {
+```
+
 
 The first step is to create a ```ui``` object, with which we interact. This can be done by calling
 
@@ -145,7 +159,6 @@ the ```ssmView``` object.
  ssmView.referenceView
  ssmView.shapeModelTransformationView.shapeTransformationView
  ssmView.shapeModelTransformationView.poseTransformationView
-
 ```
 
 The pose transformation and shape transformation are parametric transformations, and to change
@@ -189,4 +202,8 @@ Here is, howe we would visualize a 3D image:
 
 ```scala mdoc:invisible
 ui.close()
+```
+
+```scala mdoc:invisible
+}
 ```

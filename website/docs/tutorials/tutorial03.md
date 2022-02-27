@@ -12,8 +12,11 @@ some helpful context for this tutorial:
 
 - Modelling Shape Deformations [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250326)
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial03.scala](./Tutorial03.scala)
 
 ##### Preparation
+
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
@@ -26,7 +29,10 @@ import scalismo.mesh.TriangleMesh
 import scalismo.common.interpolation._
 import scalismo.common.interpolation.TriangleMeshInterpolator3D
 import scalismo.ui.api._
+```
 
+
+```scala
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 
@@ -180,4 +186,5 @@ Finally, we display the result:
 ```scala
 ui.show(dsGroup, meanMesh, "mean mesh")
 ```
+
 

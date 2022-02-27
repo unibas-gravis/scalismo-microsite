@@ -13,7 +13,11 @@ some helpful context for this tutorial:
 
 - Learning a model from example data [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250329)
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial04.scala](./Tutorial04.scala)
+
 ##### Preparation
+
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
@@ -24,7 +28,10 @@ import scalismo.mesh._
 import scalismo.io.{StatismoIO, StatisticalModelIO}
 import scalismo.statisticalmodel._
 import scalismo.ui.api._
+```
 
+
+```scala
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 
@@ -119,3 +126,5 @@ The same is happening when randomly sampling from the face model :
 
 
 *Exercise : Perform the 2 steps above in order to sample a random face (that is sample a random deformation first, then use it to warp the reference mesh).*
+
+

@@ -16,8 +16,12 @@ some helpful context for this tutorial:
 - The marginalization property [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250339)
 - Sampling from a shape model [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250340)
 
+To run the code from this tutorial, download the following Scala file:
+- [Tutorial05.scala](./Tutorial05.scala)
 
 ##### Preparation
+
+
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
@@ -29,7 +33,11 @@ import scalismo.common.interpolation.TriangleMeshInterpolator3D
 import scalismo.mesh._
 import scalismo.io.StatisticalModelIO
 import scalismo.statisticalmodel._
+```
 
+
+
+```scala
 scalismo.initialize()
 implicit val rng = scalismo.utils.Random(42)
 
@@ -179,3 +187,5 @@ val logPDF2 = model.gp.logpdf(defSample2)
 val moreOrLess = if (logPDF1 > logPDF2) "more" else "less"
 println(s"defSample1 is $moreOrLess likely than defSample2")
 ```
+
+
