@@ -23,6 +23,9 @@ libraryDependencies  ++= Seq(
             ("org.scalameta" %% "scalafmt-dynamic" % "3.4.3").cross(CrossVersion.for3Use2_13)
 )
 
+dependencyOverrides ++= Seq(
+     "ch.unibas.cs.gravis" %% "scalismo" % "develop-fc2a6c18993446ca6200f3b580db0f6d3f14efb7-SNAPSHOT", 
+)
 lazy val root = (project in file("."))
 
   

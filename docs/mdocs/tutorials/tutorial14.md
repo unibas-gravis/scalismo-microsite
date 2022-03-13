@@ -76,13 +76,18 @@ As in the previous tutorials, we start by importing some commonly used objects a
 
 
 ```scala mdoc:silent emptyLines:2
- import scalismo.sampling.algorithms.MetropolisHastings
- import scalismo.sampling.evaluators.ProductEvaluator
- import scalismo.sampling.loggers.AcceptRejectLogger
- import scalismo.sampling.proposals.MixtureProposal
- import scalismo.sampling.{DistributionEvaluator, ProposalGenerator, TransitionProbability}
- import breeze.stats.distributions.Gaussian
- import breeze.stats.meanAndVariance
+import scalismo.sampling.MHSample
+import scalismo.sampling.MHDistributionEvaluator
+import scalismo.sampling.evaluators.ProductEvaluator
+import scalismo.sampling.MHProposalGenerator
+import scalismo.sampling.proposals.GaussianRandomWalkProposal
+import scalismo.sampling.proposals.MHProductProposal
+import scalismo.sampling.ParameterConversion
+import scalismo.sampling.algorithms.MetropolisHastings
+import scalismo.sampling.loggers.MHSampleLogger
+import scalismo.sampling.proposals.MHMixtureProposal
+import scalismo.sampling.proposals.MHIdentityProposal
+import breeze.stats.meanAndVariance
 ```
 
 ```scala mdoc:invisible emptyLines:2
@@ -92,7 +97,10 @@ object Tutorial14 extends App {
 
 ```scala mdoc:silent emptyLines:2
  scalismo.initialize()
- implicit val rng = scalismo.utils.Random(42)
+ implicit val rng : scalismo.utils.Random = scalismo.utils.Random(42)
+
+// We need this line to seed breeze's random number generator
+implicit val randBasisBreeze : breeze.stats.distributions.RandBasis = rng.breezeRandBasis
 ```
 To make the setup simple, we generate artificial data, which follows exactly our assumptions. In this way we will be able to see
 how well we estimated the parameters.
@@ -102,7 +110,7 @@ how well we estimated the parameters.
       val a = 0.2
       val b = 3
       val sigma2 = 0.5
-      val errorDist = breeze.stats.distributions.Gaussian(0, sigma2)
+      val errorDist = breeze.stats.distributions.Gaussian(0, sigma2)(rng.breezeRandBasis)
       val data = for (x <- 0 until 100) yield {
         (x.toDouble, a * x + b + errorDist.draw())
       }
@@ -114,12 +122,14 @@ the parameters $$\theta = (a, b, \sigma^2)$$:
 ```scala mdoc:silent empytLines:2
 case class Parameters(a : Double, b:  Double, sigma2 : Double)
 ```
+To be able to make use of the proposal generators that Scalismo provides, we will also need to define a conversion object, which 
+tells Scalismo how our parameters can be converted to a tuple and back. 
 
-We introduce a further class to represent a sample from the chain. A sample is
-simply a set of parameters together with a tag, which helps us to keep track later
-on, which proposal generator generated the sample:
-```scala mdoc:silent empytLines:2
-case class Sample(parameters : Parameters, generatedBy : String)
+```scala mdoc:silent emptyLines:2
+implicit object tuple3ParameterConversion extends ParameterConversion[Tuple3[Double, Double, Double], Parameters] {
+    def from(p: Parameters): Tuple3[Double, Double, Double] = (p.a, p.b, p.sigma2)
+    def to(t: Tuple3[Double, Double, Double]): Parameters = Parameters(a = t._1, b = t._2, sigma2 = t._3)
+  }
 ```
 
 #### Evaluators: Modelling the target density
@@ -143,13 +153,16 @@ In our case, we will define separate evaluators for the prior distribution $$p(\
 The likelihood function, defined above, can be implemented as follows:
 
 ```scala mdoc:silent empytLines:2
-case class LikelihoodEvaluator(data : Seq[(Double, Double)]) extends DistributionEvaluator[Sample] {
+  case class LikelihoodEvaluator(data: Seq[(Double, Double)])
+      extends MHDistributionEvaluator[Parameters] {
 
-    override def logValue(theta: Sample): Double = {
+    override def logValue(theta: MHSample[Parameters]): Double = {
 
       val likelihoods = for ((x, y) <- data) yield {
         val likelihood = breeze.stats.distributions.Gaussian(
-          theta.parameters.a * x + theta.parameters.b, theta.parameters.sigma2)
+          theta.parameters.a * x + theta.parameters.b,
+          theta.parameters.sigma2
+        )
 
         likelihood.logPdf(y)
       }
@@ -163,17 +176,18 @@ becomes a sum.
 In a similar way, we encode the prior distribution:
 ```scala mdoc:silent empytLines:2
 
-object PriorEvaluator extends DistributionEvaluator[Sample] {
+  object PriorEvaluator extends MHDistributionEvaluator[Parameters] {
 
-  val priorDistA = breeze.stats.distributions.Gaussian(0, 1)
-  val priorDistB = breeze.stats.distributions.Gaussian(0, 10)
-  val priorDistSigma = breeze.stats.distributions.LogNormal(0, 0.25)
-  override def logValue(theta: Sample): Double = {
-    priorDistA.logPdf(theta.parameters.a)
-    + priorDistB.logPdf(theta.parameters.b)
-    + priorDistSigma.logPdf(theta.parameters.sigma2)
+    val priorDistA = breeze.stats.distributions.Gaussian(0, 1)
+    val priorDistB = breeze.stats.distributions.Gaussian(0, 10)
+    val priorDistSigma = breeze.stats.distributions.LogNormal(0, 0.25)
+
+    override def logValue(theta: MHSample[Parameters]): Double = {
+      priorDistA.logPdf(theta.parameters.a)
+        + priorDistB.logPdf(theta.parameters.b)
+        + priorDistSigma.logPdf(theta.parameters.sigma2)
+    }
   }
-}
 ```
 
 The target density (i.e. the posterior distribution) can be computed by
@@ -186,96 +200,76 @@ not normalize by the probability of the data $$p(y)$$.
 
 #### The proposal generator
 
-In Scalismo, a proposal generator is defined by extending the trait
-*ProposalGenerator*, which is defined as follows
+Now that the evaluators are in place, our next task is to set up the proposal distributions. 
+In Scalismo, we can define a proposal distribution by implementing concrete subclasses, of the 
+following class 
 ```scala
-trait ProposalGenerator[A] {
-  /** draw a sample from this proposal distribution, may depend on current state */
-  def propose(current: A): A
+abstract class MHProposalGenerator[A]  {
+   def propose(current: A): A
+   def logTransitionProbability(from: A, to: A): Double
 }
 ```
+The type ```A``` refers to the type of the parameters that we are using. The `propose` method takes the current
+parameters and, based on their values, proposes a new one. The method `logTransitionProbability` yields the 
+logProbability of transitioning from the state represented by the parameter values ```from``` to the state represented
+by the parameter values in ```to```. 
 
-In order to be able to use a proposal generator in the Metropolis-Hastings algorithm,
-we also need to implement the trait ```TransitionProbability```:
-```scala
-trait TransitionProbability[A] extends TransitionRatio[A] {
-  /** rate of transition from to (log value) */
-  def logTransitionProbability(from: A, to: A): Double
-}
+Fortunately, we usually do not have to implement these methods by ourselves. Scalismo already provides some proposal generators, 
+which can be flexibly combined to build up more powerful generators. 
+
+The most generic one is the `GaussianRandomWalkProposal`, which takes the given parameters and perturbs them by adding an increment from a 
+zero-mean Gaussian with given standard deviation. The following codes defines a proposal for each of our parameter vectors.
+```scala mdoc:silent emptyLines:2
+  val genA = GaussianRandomWalkProposal(0.01, "rw-a-0.1").forType[Double]
+  val genB = GaussianRandomWalkProposal(0.05, "rw-b-0.5").forType[Double]
+  val genSigma = GaussianRandomWalkProposal(0.01, "rw-sigma-0.01").forType[Double]
 ```
-*Note: The above traits are already defined in Scalismo, don't paste them into your code.*
+As we expect the distribution to have more variability in the value of $b$ than $a$, we choose the values for the step size (standard deviation)
+accordingly. We also provide a tag when defining a proposal generator. This is helpful for debugging and optimizing the chain. 
+Finally, note also that we explicitly specified a type (here `Double`) of the specified sample. 
 
-We use here one of the simples possible proposals, namely a *random walk proposal*. This is a proposal
-which updates the current state by taking a step of random length in a random direction. For simplicity, 
-we update all three parameters together:
+We can now combine these individual proposal generators to a proposal generator for our Parameter class as follows:
+```scala mdoc:silent emptyLines:2
+ val parameterGenerator = MHProductProposal(genA, genB, genSigma).forType[Parameters]
+``` 
 
-```scala mdoc:silent empytLines:2
-  case class RandomWalkProposal(stepLengthA: Double, stepLengthB : Double, stepLengthSigma2 : Double)(implicit rng : scalismo.utils.Random)
-    extends ProposalGenerator[Sample] with TransitionProbability[Sample] {
-
-    override def propose(sample: Sample): Sample = {
-      val newParameters = Parameters(
-        a = sample.parameters.a + rng.breezeRandBasis.gaussian(0, stepLengthA).draw(),
-        b = sample.parameters.b + rng.breezeRandBasis.gaussian(0, stepLengthB).draw(),
-        sigma2 = sample.parameters.sigma2 + rng.breezeRandBasis.gaussian(0, stepLengthSigma2).draw(),
-      )
-
-      Sample(newParameters, s"randomWalkProposal ($stepLengthA, $stepLengthB)")
-    }
-
-    override def logTransitionProbability(from: Sample, to: Sample) : Double = {
-
-      val stepDistA = breeze.stats.distributions.Gaussian(0, stepLengthA)
-      val stepDistB = breeze.stats.distributions.Gaussian(0, stepLengthB)
-      val stepDistSigma2 = breeze.stats.distributions.Gaussian(0, stepLengthSigma2)
-      val residualA = to.parameters.a - from.parameters.a
-      val residualB = to.parameters.b - from.parameters.b
-      val residualSigma2 = to.parameters.sigma2 - from.parameters.sigma2
-      stepDistA.logPdf(residualA)  + stepDistB.logPdf(residualB) + stepDistSigma2.logPdf(residualSigma2)
-    }
-  }
-
-```
-*Remark: the second constructor argument ```implicit rng : scalismo.utils.Random```
-is used to automatically pass the globally defined random generator object to the
-class. If we always use this random generator to generate our random numbers, we can obtain reproducible runs,
-by seeding this random generator at the beginning of our program.*
-
-Let's define two random walk proposals with different step length:
-
-```scala mdoc:silent empytLines:2
-val smallStepProposal = RandomWalkProposal(0.01, 0.01, 0.01)
-val largeStepProposal = RandomWalkProposal(0.1, 0.1, 0.1)
+It might also be a good idea to sometimes only vary the noise ```genSigma``` but not the other parameters. To achieve this, we introduce another proposal, 
+the ```MHIdentityProposal```. As the name suggests, it does not do anything, but simply returns the same parameters it gets passed. 
+While this does not sound very useful by itself, by combining it with other proposals we can achieve our goal:
+```scala mdoc:silent emptyLines:2
+  val identProposal = MHIdentityProposal.forType[Double]
+  val noiseOnlyGenerator = MHProductProposal(identProposal, identProposal, genSigma).forType[Parameters]
 ```
 
-Varying the step length allow us to sometimes take large step, in order to explore the global
-landscape, and sometimes smaller steps, to explore a local environment. We can combine these proposal into a
-```MixtureProposal```, which chooses the individual proposals with a given
-probability. Here We choose to take the large step 20% of the time, and the smaller
-steps 80% of the time:
-
-```scala mdoc:silent empytLines:2
-val generator = MixtureProposal.fromProposalsWithTransition[Sample](
-    (0.8, smallStepProposal),
-    (0.2, largeStepProposal)
-    )
+We have now two different generators, which generate new parameters given a current set of parameter values. A good strategy is to sometimes vary all the parameters, and sometimes only the noise. This can be done using a ```MHMixtureProposal```:
+```scala mdoc:silent emptyLines:2
+  val mixtureGenerator = MHMixtureProposal((0.1, noiseOnlyGenerator), (0.9, parameterGenerator))
 ```
-
+In this case we use the `noiseOnlyGenerator` 10% of the times and the ```parameterGenerator``` 90% of the times. 
 
 #### Building the Markov Chain
 
 Now that we have all the components set up, we can assemble the Markov Chain.
 ```scala mdoc:silent empytLines:2
-val chain = MetropolisHastings(generator, posteriorEvaluator)
+val chain = MetropolisHastings(mixtureGenerator, posteriorEvaluator)
+```
+ 
+To be able to diagnose the chain, in case of problems, we also instantiate a logger, which logs all the 
+accepted and rejected samples. 
+```scala mdoc:silent emptyLines:2
+val logger = MHSampleLogger[Parameters]()
 ```
 
-To run the chain, we obtain an iterator,
-which we then consume to drive the sampling generation. To obtain the iterator, we need to specify the initial
-sample:
+The Markov chain has to start somewhere. We define the starting point by defining an initial sample.
 
 ```scala mdoc:silent empytLines:2
-val initialSample = Sample(Parameters(0.0, 0.0, 1.0), generatedBy="initial")
-val mhIterator = chain.iterator(initialSample)
+val initialSample = MHSample(Parameters(0.0, 0.0, 1.0), generatedBy="initial")
+```
+To drive the sampling generation, we define an interator, which we initialize with the initial sample. 
+We also provide the logger as an argument. 
+
+```scala mdoc:silent emptyLines:2
+val mhIterator = chain.iterator(initialSample, logger)
 ```
 
 Our initial parameters might be far away from a high-probability area of our target
@@ -283,7 +277,7 @@ density. Therefore it might take a few hundred or even a few thousand iterations
 start to follow the required distribution. We therefore have to drop the
 samples in this burn-in phase, before we use the samples:
 ```scala mdoc:silent
-val samples = mhIterator.drop(5000).take(15000).toIndexedSeq
+val samples = mhIterator.drop(1000).take(5000).toIndexedSeq
 ```
 As we have generated synthetic data, we can check if the expected value, computed
 from this samples, really corresponds to the parameters from which we sampled
@@ -305,86 +299,26 @@ see a practical example.
 
 #### Debugging the Markov chain
 
+The logger that we defined for the chain stored all the accepted and rejected samples. We can use this
+to get interesting diagnostics. 
 
-Sometimes a chain does not work as expected. The reason is usually that our proposals
-are not suitable for the target distribution. To diagnose the
-behaviour of the chain we can introduce a logger. To write a logger, we need to extend
- the trait ```AcceptRejectLogger```, which is defined as follows:
-
-```scala
-trait AcceptRejectLogger[A] {
-  def accept(current: A, sample: A, generator: ProposalGenerator[A], evaluator: DistributionEvaluator[A]): Unit
-
-  def reject(current: A, sample: A, generator: ProposalGenerator[A], evaluator: DistributionEvaluator[A]): Unit
-}
+For example, we can check how often the individual samples got accepted.
+```scala mdoc:silent empytLines:2
+  println("Acceptance ratios: " +logger.samples.acceptanceRatios)
 ```
-*Note: This trait is already defined in Scalismo, don't paste it into your code.*
 
-The two methods, ```accept``` and ```reject``` are called whenever a sample is
-accepted or rejected. We can overwrite these methods to implement our debugging code.
+When running this code we see that the acceptance ratio of the proposal where we vary all the parameters, is around 0.12. 
+The proposal, which only changes the noise value has, as expected, a much higher acceptance ratio of aroun 0.75. 
 
-
-The following, very simple logger counts all the accepted and rejected samples and
-computes the acceptance ratio. This acceptance ratio is a simple, but already useful
-indicator to diagnose if all proposal generators function as expected.
+Sometimes it happens that a chain is efficient in the early stages (the burn-in phase), but many samples get rejected in later stages. 
+To diagnose such situations, we can compute the acceptance ratios also only for the last $n$ samples:
 
 ```scala mdoc:silent empytLines:2
-  class Logger extends AcceptRejectLogger[Sample] {
-    private val numAccepted = collection.mutable.Map[String, Int]()
-    private val numRejected = collection.mutable.Map[String, Int]()
-
-    override def accept(current: Sample,
-                        sample: Sample,
-                        generator: ProposalGenerator[Sample],
-                        evaluator: DistributionEvaluator[Sample]
-                       ): Unit = {
-      val numAcceptedSoFar = numAccepted.getOrElseUpdate(sample.generatedBy, 0)
-      numAccepted.update(sample.generatedBy, numAcceptedSoFar + 1)
-    }
-
-    override def reject(current: Sample,
-                          sample: Sample,
-                          generator: ProposalGenerator[Sample],
-                          evaluator: DistributionEvaluator[Sample]
-                         ): Unit = {
-      val numRejectedSoFar = numRejected.getOrElseUpdate(sample.generatedBy, 0)
-      numRejected.update(sample.generatedBy, numRejectedSoFar + 1)
-    }
-
-
-    def acceptanceRatios() : Map[String, Double] = {
-      val generatorNames = numRejected.keys.toSet.union(numAccepted.keys.toSet)
-      val acceptanceRatios = for (generatorName <- generatorNames ) yield {
-        val total = (numAccepted.getOrElse(generatorName, 0)
-                     + numRejected.getOrElse(generatorName, 0)).toDouble
-        (generatorName, numAccepted.getOrElse(generatorName, 0) / total)
-      }
-      acceptanceRatios.toMap
-    }
-  }
+println("acceptance ratios over the last 100 samples: " +logger.samples.takeLast(100).acceptanceRatios)
 ```
 
-To use the logger, we simply rerun the chain, but pass the logger now as
-    a second argument to the ```iterator``` method:
-```scala mdoc:silent empytLines:2
-  val logger = new Logger()
-  val mhIteratorWithLogging = chain.iterator(initialSample, logger)
-
-  val samples2 = mhIteratorWithLogging.drop(5000).take(15000).toIndexedSeq
-```
-
-We can now check how often the individual samples got accepted.
-```scala mdoc
-  println("acceptance ratio is " +logger.acceptanceRatios())
-```
-We see that the acceptance ratio of the random walk proposal, which takes the
-smaller step is quite high, but that the larger step is often rejected. We might
-therefore want to reduce this step size slightly, as a proposal that is so often
-rejected is not very efficient.
-
-In more complicated applications, this type of debugging is crucial for obtaining
-efficient fitting algorithms.
-
+Such diagnostics helps us to spot when a proposal is not effective and gives us an indication how to tune our sampler
+to achieve optimal performance. 
 
 ```scala mdoc:invisible
 }
