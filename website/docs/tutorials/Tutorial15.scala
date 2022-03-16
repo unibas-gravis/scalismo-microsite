@@ -1,5 +1,5 @@
 //> using scala "2.13"
-//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91-RC1"
 
 import scalismo.io.StatisticalModelIO
 import scalismo.io.LandmarkIO
@@ -24,7 +24,6 @@ import scalismo.sampling.evaluators._
 import scalismo.sampling.loggers.MHSampleLogger
 import scalismo.sampling.algorithms.MetropolisHastings
 
-import scalismo.sampling.parameters.StandardFittingParameters
 import breeze.linalg.DenseVector
 import breeze.linalg.DenseMatrix
 
@@ -115,8 +114,52 @@ object Tutorial15 extends App {
     }
   }
 
-  val likelihoodEvaluator = CorrespondenceEvaluator(model, correspondences)
-  val priorEvaluator = CachedEvaluator(PriorEvaluator(model))
+  case class CorrespondenceEvaluator(
+      model: PointDistributionModel[_3D, TriangleMesh],
+      rotationCenter: Point[_3D],
+      correspondences: Seq[(Point[_3D], Point[_3D])]
+  ) extends MHDistributionEvaluator[Parameters] {
+
+    // we extract the points and build a model from only the points
+    val (refPoints, targetPoints) = correspondences.unzip
+
+    val newDomain = UnstructuredPointsDomain3D(refPoints.toIndexedSeq)
+    val modelOnLandmarkPoints = model.newReference(newDomain, NearestNeighborInterpolator3D())
+
+    override def logValue(sample: MHSample[Parameters]): Double = {
+
+      val poseTransformation = Parameters.poseTransformationForParameters(
+        sample.parameters.poseAndShapeParameters.translationParameters,
+        sample.parameters.poseAndShapeParameters.rotationParameters,
+        rotationCenter
+      )
+
+      val modelCoefficients = sample.parameters.poseAndShapeParameters.shapeParameters.coefficients
+      val currentModelInstance =
+        modelOnLandmarkPoints.instance(modelCoefficients).transform(poseTransformation)
+
+      val lmUncertainty = MultivariateNormalDistribution(
+        DenseVector.zeros[Double](3),
+        DenseMatrix.eye[Double](3) * sample.parameters.noiseStddev
+      )
+
+      val likelihoods =
+        for (
+          (pointOnInstance, targetPoint) <- currentModelInstance.pointSet.points.zip(targetPoints)
+        ) yield {
+
+          val observedDeformation = targetPoint - pointOnInstance
+
+          lmUncertainty.logpdf(observedDeformation.toBreezeVector)
+        }
+
+      val loglikelihood = likelihoods.sum
+      loglikelihood
+    }
+  }
+
+  val likelihoodEvaluator = CorrespondenceEvaluator(model, rotationCenter, correspondences)
+  val priorEvaluator = PriorEvaluator(model).cached
 
   val posteriorEvaluator = ProductEvaluator(priorEvaluator, likelihoodEvaluator)
 
@@ -198,51 +241,6 @@ object Tutorial15 extends App {
     (0.1, noiseOnlyProposal)
   )
 
-  val identTranslationProposal = MHIdentityProposal.forType[TranslationParameters]
-  val identRotationProposal = MHIdentityProposal.forType[RotationParameters]
-  val identShapeProposal = MHIdentityProposal.forType[ShapeParameters]
-
-  val poseAndShapeTranslationOnlyProposal =
-    MHProductProposal(identTranslationProposal, identRotationProposal, identShapeProposal)
-      .forType[PoseAndShapeParameters]
-  val poseAndShapeRotationOnlyProposal =
-    MHProductProposal(identTranslationProposal, rotationProposal, identShapeProposal)
-      .forType[PoseAndShapeParameters]
-  val poseAndShapeShapeOnlyProposal =
-    MHProductProposal(identTranslationProposal, identRotationProposal, shapeProposal)
-      .forType[PoseAndShapeParameters]
-
-  val mixturePoseAndShapeProposal = MHMixtureProposal(
-    (0.2, poseAndShapeTranslationOnlyProposal),
-    (0.2, poseAndShapeRotationOnlyProposal),
-    (0.6, poseAndShapeShapeOnlyProposal)
-  )
-
-  val noiseProposal = GaussianRandomWalkProposal(0.1, "noise").forType[Double]
-  val identNoiseProposal = MHIdentityProposal.forType[Double]
-  val identPoseAndShapeProposal = MHIdentityProposal.forType[PoseAndShapeParameters]
-
-  val noiseOnlyProposal =
-    MHProductProposal(identPoseAndShapeProposal, noiseProposal).forType[Parameters]
-  val poseAndShapeOnlyProposal =
-    MHProductProposal(mixturePoseAndShapeProposal, identNoiseProposal).forType[Parameters]
-  val fullproposal = MHMixtureProposal(
-    (0.9, poseAndShapeOnlyProposal),
-    (0.1, noiseOnlyProposal)
-  )
-
-  val shapeUpdateProposal = ShapeUpdateProposal(model.rank, 0.1)
-  val rotationUpdateProposal = RotationUpdateProposal(0.01)
-  val translationUpdateProposal = TranslationUpdateProposal(1.0)
-  val noiseStddevUpdateProposal = NoiseStddevUpdateProposal(0.1)
-
-  val generator = MixtureProposal.fromProposalsWithTransition(
-    (0.5, shapeUpdateProposal),
-    (0.2, rotationUpdateProposal),
-    (0.2, translationUpdateProposal),
-    (0.1, noiseStddevUpdateProposal)
-  )
-
   val logger = MHSampleLogger[Parameters]()
   val chain = MetropolisHastings(fullproposal, posteriorEvaluator)
 
@@ -260,10 +258,17 @@ object Tutorial15 extends App {
   val samplingIterator = for ((sample, iteration) <- mhIterator.zipWithIndex) yield {
     println("iteration " + iteration)
     if (iteration % 500 == 0) {
+      val poseAndShapeParameters = sample.parameters.poseAndShapeParameters
+      val poseTransformation = Parameters.poseTransformationForParameters(
+        poseAndShapeParameters.translationParameters,
+        poseAndShapeParameters.rotationParameters,
+        rotationCenter
+      )
       modelView.shapeModelTransformationView.shapeTransformationView.coefficients =
-        sample.parameters.modelCoefficients
+        poseAndShapeParameters.shapeParameters.coefficients
       modelView.shapeModelTransformationView.poseTransformationView.transformation =
-        sample.poseTransformation
+        poseTransformation
+
     }
     sample
   }
@@ -273,17 +278,18 @@ object Tutorial15 extends App {
 
   val bestSample = samples.maxBy(posteriorEvaluator.logValue)
 
-  val bestPoseAndShapeParameter = bestSample.parameters.poseAndShapeParameters
-  val bestTransformation = StandardFittingParameters.poseAndShapeTransformationForParameters(
-    bestPoseAndShapeParameter.translationParameters,
-    bestPoseAndShapeParameter.rotationParameters,
-    rotationCenter,
-    bestPoseAndShapeParameter.shapeParameters,
-    model.gp.interpolate(TriangleMeshInterpolator3D())
+  val bestPoseAndShapeParameters = bestSample.parameters.poseAndShapeParameters
+  val bestPoseTransformation = Parameters.poseTransformationForParameters(
+    bestPoseAndShapeParameters.translationParameters,
+    bestPoseAndShapeParameters.rotationParameters,
+    rotationCenter
   )
 
-  val bestFit = model.reference.transform(bestTransformation)
+  val bestFit = model
+    .instance(bestPoseAndShapeParameters.shapeParameters.coefficients)
+    .transform(bestPoseTransformation)
   val resultGroup = ui.createGroup("result")
+
   ui.show(resultGroup, bestFit, "best fit")
   ui.close()
 }

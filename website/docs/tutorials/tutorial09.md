@@ -32,7 +32,7 @@ import scalismo.ui.api._
 
 ```scala
 scalismo.initialize()
-implicit val rng = scalismo.utils.Random(42)
+implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 
 val ui = ScalismoUI()
 ```

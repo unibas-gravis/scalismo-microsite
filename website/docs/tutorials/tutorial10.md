@@ -38,7 +38,7 @@ import breeze.linalg.{DenseMatrix, DenseVector}
 
 ```scala
 scalismo.initialize()
-implicit val rng = scalismo.utils.Random(42)
+implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 
 val ui = ScalismoUI()
 ```
@@ -83,7 +83,7 @@ In the next step, we find the corresponding points in the other mesh:
 
 ```scala
 def attributeCorrespondences(movingMesh: TriangleMesh[_3D], ptIds : Seq[PointId]) : Seq[(Point[_3D], Point[_3D])] = {
-  ptIds.map{ id : PointId =>
+  ptIds.map{ (id : PointId) =>
     val pt = movingMesh.pointSet.point(id)
     val closestPointOnMesh2 = mesh2.pointSet.findClosestPoint(pt).point
     (pt, closestPointOnMesh2)

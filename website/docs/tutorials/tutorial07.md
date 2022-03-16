@@ -43,7 +43,7 @@ import breeze.linalg.{DenseMatrix, DenseVector}
 
 ```scala
 scalismo.initialize()
-implicit val rng = scalismo.utils.Random(42)
+implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 
 val ui = ScalismoUI()
 ```
@@ -183,7 +183,7 @@ process, approximated on the points of the reference Mesh).
 Using this low rank Gaussian process, we can now directly sample continuous deformation fields:
 
 ```scala
-val  defField : Field[_3D, EuclideanVector[_3D]]= lowRankGP.sample
+val  defField : Field[_3D, EuclideanVector[_3D]]= lowRankGP.sample()
 ```
 These in turn, can be used to warp a reference mesh, as discussed above:
 

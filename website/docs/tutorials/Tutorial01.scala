@@ -1,5 +1,5 @@
 //> using scala "2.13"
-//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91-RC1"
 
 // Basic geometric primitives
 import scalismo.geometry.{_3D, Point, Point3D}
@@ -27,7 +27,7 @@ import scalismo.ui.api.LandmarkView
 object Tutorial1 extends App {
 
   scalismo.initialize()
-  implicit val rng = scalismo.utils.Random(42)
+  implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 
   val ui = ScalismoUI()
 
@@ -54,7 +54,9 @@ object Tutorial1 extends App {
     Point3D(7.0, 8.0, 9.0),
     Point3D(10.0, 11.0, 12.0)
   )
-  val vectors = pointList.map { p: Point[_3D] => p.toVector } // use map to turn points into vectors
+  val vectors = pointList.map { (p: Point[_3D]) =>
+    p.toVector
+  } // use map to turn points into vectors
   val vectorSum = vectors.reduce { (v1, v2) => v1 + v2 } // sum up all vectors in the collection
   val centerV: EuclideanVector[_3D] =
     vectorSum * (1.0 / pointList.length) // divide the sum by the number of points
@@ -71,10 +73,10 @@ object Tutorial1 extends App {
 
   val values: Iterator[Short] = image.values
   image.values.next
-  image(IntVector(0, 0, 0))
+  image(IntVector3D(0, 0, 0))
   image.values.size == image.domain.pointSet.numberOfPoints
 
-  val threshValues = image.values.map { v: Short => if (v <= 300) v else 0.toShort }
+  val threshValues = image.values.map { (v: Short) => if (v <= 300) v else 0.toShort }
   val thresholdedImage: DiscreteImage[_3D, Short] =
     DiscreteImage3D[Short](image.domain, threshValues.toIndexedSeq)
   ui show (paolaGroup, thresholdedImage, "thresh")
@@ -84,7 +86,7 @@ object Tutorial1 extends App {
     StatisticalModelIO.readStatisticalTriangleMeshModel3D(new java.io.File("datasets/bfm.h5")).get
   val faceModelView = ui.show(faceModel, "faceModel")
 
-  val randomFace: TriangleMesh[_3D] = faceModel.sample
+  val randomFace: TriangleMesh[_3D] = faceModel.sample()
   val matchingLandmarkViews: Seq[LandmarkView] =
     ui.filter[LandmarkView](paolaGroup, (l: LandmarkView) => l.name == "noseLM")
   val matchingLandmarks: Seq[Landmark[_3D]] = matchingLandmarkViews.map(lmView => lmView.landmark)

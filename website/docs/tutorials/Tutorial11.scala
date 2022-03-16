@@ -1,5 +1,5 @@
 //> using scala "2.13"
-//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91-RC1"
 import scalismo.geometry._
 import scalismo.common._
 import scalismo.mesh._
@@ -13,7 +13,7 @@ import breeze.linalg.{DenseMatrix, DenseVector}
 
 object Tutorial11 extends App {
   scalismo.initialize()
-  implicit val rng = scalismo.utils.Random(42)
+  implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 
   val ui = ScalismoUI()
 
@@ -29,14 +29,14 @@ object Tutorial11 extends App {
 
   val sampler = UniformMeshSampler3D(model.reference, numberOfPoints = 5000)
   val points: Seq[Point[_3D]] =
-    sampler.sample.map(pointWithProbability => pointWithProbability._1) // we only want the points
+    sampler.sample().map(pointWithProbability => pointWithProbability._1) // we only want the points
   val ptIds = points.map(point => model.reference.pointSet.findClosestPoint(point).id)
 
   def attributeCorrespondences(
       movingMesh: TriangleMesh[_3D],
       ptIds: Seq[PointId]
   ): Seq[(PointId, Point[_3D])] = {
-    ptIds.map { id: PointId =>
+    ptIds.map { (id: PointId) =>
       val pt = movingMesh.pointSet.point(id)
       val closestPointOnMesh2 = targetMesh.pointSet.findClosestPoint(pt).point
       (id, closestPointOnMesh2)

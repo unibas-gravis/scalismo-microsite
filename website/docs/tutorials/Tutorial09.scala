@@ -1,5 +1,5 @@
 //> using scala "2.13"
-//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91-RC1"
 import scalismo.geometry._
 import scalismo.common._
 import scalismo.common.interpolation.TriangleMeshInterpolator3D
@@ -15,7 +15,7 @@ import scalismo.ui.api._
 object Tutorial9 extends App {
 
   scalismo.initialize()
-  implicit val rng = scalismo.utils.Random(42)
+  implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 
   val ui = ScalismoUI()
 

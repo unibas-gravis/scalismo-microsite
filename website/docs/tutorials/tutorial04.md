@@ -33,7 +33,7 @@ import scalismo.ui.api._
 
 ```scala
 scalismo.initialize()
-implicit val rng = scalismo.utils.Random(42)
+implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 
 val ui = ScalismoUI()
 ```
@@ -61,7 +61,7 @@ ui.show(sampleGroup, meanFace, "meanFace")
 ```
 or we can obtain concrete face meshes by sampling from it:
 ```scala
-val sampledFace : TriangleMesh[_3D] = faceModel.sample
+val sampledFace : TriangleMesh[_3D] = faceModel.sample()
 ui.show(sampleGroup, sampledFace, "randomFace")
 ```
 
@@ -91,7 +91,7 @@ signature. This is indeed the case
 
 ```scala
 val meanDeformation : DiscreteField[_3D, TriangleMesh, EuclideanVector[_3D]] = faceGP.mean
-val sampleDeformation : DiscreteField[_3D, TriangleMesh, EuclideanVector[_3D]] = faceGP.sample
+val sampleDeformation : DiscreteField[_3D, TriangleMesh, EuclideanVector[_3D]] = faceGP.sample()
 ```
 
 Let's visualize the mean deformation:

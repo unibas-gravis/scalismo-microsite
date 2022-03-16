@@ -19,7 +19,7 @@ To run the code from this tutorial, download the following Scala file:
 
 ```scala mdoc:invisible
 //> using scala "2.13"
-//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91-RC1"
 ```
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
@@ -41,7 +41,7 @@ object Tutorial3 extends App {
 
 ```scala mdoc:silent emptyLines:2
 scalismo.initialize()
-implicit val rng = scalismo.utils.Random(42)
+implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 
 val ui = ScalismoUI()
 ```

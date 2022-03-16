@@ -1,5 +1,5 @@
 //> using scala "2.13"
-//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91-RC1"
 import scalismo.ui.api._
 
 import scalismo.geometry._
@@ -14,7 +14,7 @@ import scalismo.numerics.PivotedCholesky.RelativeTolerance
 
 object Tutorial6 extends App {
   scalismo.initialize()
-  implicit val rng = scalismo.utils.Random(42)
+  implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 
   val ui = ScalismoUI()
 
@@ -48,7 +48,7 @@ object Tutorial6 extends App {
   }
 
   val defFields = alignedMeshes.map { m =>
-    val deformationVectors = reference.pointSet.pointIds.map { id: PointId =>
+    val deformationVectors = reference.pointSet.pointIds.map { (id: PointId) =>
       m.pointSet.point(id) - reference.pointSet.point(id)
     }.toIndexedSeq
     DiscreteField3D(reference, deformationVectors)

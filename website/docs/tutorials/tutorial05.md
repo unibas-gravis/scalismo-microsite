@@ -39,7 +39,7 @@ import scalismo.statisticalmodel._
 
 ```scala
 scalismo.initialize()
-implicit val rng = scalismo.utils.Random(42)
+implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 
 val ui = ScalismoUI()
 ```
@@ -69,7 +69,7 @@ We can retrieve random samples from the Gaussian process by calling ```sample```
 on the ```gp``` object:
 
 ```scala
-val sampleDF : DiscreteField[_3D, TriangleMesh, EuclideanVector[_3D]] = model.gp.sample
+val sampleDF : DiscreteField[_3D, TriangleMesh, EuclideanVector[_3D]] = model.gp.sample()
 
 val sampleGroup = ui.createGroup("sample")
 ui.show(sampleGroup, sampleDF, "discreteSample")
@@ -94,7 +94,7 @@ When we sample now from the continuous GP, we obtain a vector-valued function,
 which is defined on the entire 3D Space:
 
 ```scala
-val contSample: Field[_3D, EuclideanVector[_3D]] = contGP.sample
+val contSample: Field[_3D, EuclideanVector[_3D]] = contGP.sample()
 ```
 
 *Attention: While the interpolated Gaussian process is now defined on the entire 3D Space, the interpolation really only makes sense close to the mesh points*.
@@ -170,7 +170,7 @@ and ```StatisticalMeshModel``` respectively.
 
 
 ```scala
-val defSample = model.gp.sample
+val defSample = model.gp.sample()
 model.gp.pdf(defSample)
 ```
 
@@ -178,8 +178,8 @@ The value of the *pdf* is often not interesting as such. But it allows us to com
 For numerical reasons, we usually work with the log probability:
 
 ```scala
-val defSample1 = model.gp.sample
-val defSample2 = model.gp.sample
+val defSample1 = model.gp.sample()
+val defSample2 = model.gp.sample()
 
 val logPDF1 = model.gp.logpdf(defSample1)
 val logPDF2 = model.gp.logpdf(defSample2)

@@ -27,7 +27,7 @@ To run the code from this tutorial, download the following Scala file:
 
 ```scala mdoc:invisible
 //> using scala "2.13"
-//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91-RC1"
 ```
 
 ##### Preparation
@@ -61,7 +61,6 @@ import scalismo.sampling.evaluators._
 import scalismo.sampling.loggers.MHSampleLogger
 import scalismo.sampling.algorithms.MetropolisHastings
 
-import scalismo.sampling.parameters.StandardFittingParameters
 import breeze.linalg.DenseVector
 import breeze.linalg.DenseMatrix
 ```
@@ -224,7 +223,7 @@ As we only need to map the landmark points, it is computationally more
 efficient to restrict the model to these points first, and then only 
 to deform these points rather than all the points of the model. 
 
-``` scala mdoc:silent emptyLines:2
+```scala mdoc:silent emptyLines:2
  
   case class CorrespondenceEvaluator(
       model: PointDistributionModel[_3D, TriangleMesh],
@@ -277,8 +276,8 @@ Given these evaluators, we can now build the computationally efficient version o
 our target density $$p(\theta | D)$$
 
 ```scala mdoc:silent emptyLines:2
-val likelihoodEvaluator = CorrespondenceEvaluator(model, correspondences)
-val priorEvaluator = CachedEvaluator(PriorEvaluator(model))
+val likelihoodEvaluator = CorrespondenceEvaluator(model, rotationCenter, correspondences)
+val priorEvaluator = PriorEvaluator(model).cached
 
 val posteriorEvaluator = ProductEvaluator(priorEvaluator, likelihoodEvaluator)
 ```
@@ -395,58 +394,6 @@ val noiseProposal = GaussianRandomWalkProposal(0.1, "noise").forType[Double]
   )
 ```
 
-```scala mdoc:silent emptyLines:2
-
-  val identTranslationProposal = MHIdentityProposal.forType[TranslationParameters]
-  val identRotationProposal = MHIdentityProposal.forType[RotationParameters]
-  val identShapeProposal = MHIdentityProposal.forType[ShapeParameters]
-
-  val poseAndShapeTranslationOnlyProposal =
-    MHProductProposal(identTranslationProposal, identRotationProposal, identShapeProposal)
-      .forType[PoseAndShapeParameters]
-  val poseAndShapeRotationOnlyProposal =
-    MHProductProposal(identTranslationProposal, rotationProposal, identShapeProposal)
-      .forType[PoseAndShapeParameters]
-  val poseAndShapeShapeOnlyProposal =
-    MHProductProposal(identTranslationProposal, identRotationProposal, shapeProposal)
-      .forType[PoseAndShapeParameters]
-
-  val mixturePoseAndShapeProposal = MHMixtureProposal(
-    (0.2, poseAndShapeTranslationOnlyProposal),
-    (0.2, poseAndShapeRotationOnlyProposal),
-    (0.6, poseAndShapeShapeOnlyProposal)
-  )
-
-  val noiseProposal = GaussianRandomWalkProposal(0.1, "noise").forType[Double]
-  val identNoiseProposal = MHIdentityProposal.forType[Double]
-  val identPoseAndShapeProposal = MHIdentityProposal.forType[PoseAndShapeParameters]
-
-  val noiseOnlyProposal =
-    MHProductProposal(identPoseAndShapeProposal, noiseProposal).forType[Parameters]
-  val poseAndShapeOnlyProposal =
-    MHProductProposal(mixturePoseAndShapeProposal, identNoiseProposal).forType[Parameters]
-  val fullproposal = MHMixtureProposal(
-    (0.9, poseAndShapeOnlyProposal),
-    (0.1, noiseOnlyProposal)
-  )
-```
-The final proposal is a mixture of the  proposals we defined above.
-We choose to update the shape more often than the translation and rotation parameters,
-as we expect most changes to be shape changes.
-```scala mdoc:silent emptyLines:2
-val shapeUpdateProposal = ShapeUpdateProposal(model.rank, 0.1)
-val rotationUpdateProposal = RotationUpdateProposal(0.01)
-val translationUpdateProposal = TranslationUpdateProposal(1.0)
-val noiseStddevUpdateProposal = NoiseStddevUpdateProposal(0.1)
-
-val generator = MixtureProposal.fromProposalsWithTransition(
-  (0.5, shapeUpdateProposal),
-  (0.2, rotationUpdateProposal),
-  (0.2, translationUpdateProposal),
-  (0.1, noiseStddevUpdateProposal)
-)
-```
-
 
 #### Building the Markov Chain
 
@@ -472,8 +419,12 @@ by augmenting the iterator with visualization code:
 val samplingIterator = for ((sample, iteration) <- mhIterator.zipWithIndex) yield {
     println("iteration " + iteration)
     if (iteration % 500 == 0) {
-      modelView.shapeModelTransformationView.shapeTransformationView.coefficients = sample.parameters.modelCoefficients
-      modelView.shapeModelTransformationView.poseTransformationView.transformation = sample.poseTransformation
+      val poseAndShapeParameters = sample.parameters.poseAndShapeParameters
+      val poseTransformation = Parameters.poseTransformationForParameters(poseAndShapeParameters.translationParameters, poseAndShapeParameters.rotationParameters, rotationCenter)
+      modelView.shapeModelTransformationView.shapeTransformationView.coefficients =
+        poseAndShapeParameters.shapeParameters.coefficients
+      modelView.shapeModelTransformationView.poseTransformationView.transformation = poseTransformation
+
     }
     sample
 }
@@ -498,18 +449,16 @@ For example, we can select the best fit from these samples and visualize it
 ```scala mdoc:silent emptyLines:2
 val bestSample = samples.maxBy(posteriorEvaluator.logValue)
   
-  val bestPoseAndShapeParameter = bestSample.parameters.poseAndShapeParameters
-  val bestTransformation = StandardFittingParameters.poseAndShapeTransformationForParameters(
-          bestPoseAndShapeParameter.translationParameters,
-          bestPoseAndShapeParameter.rotationParameters,
-          rotationCenter,
-          bestPoseAndShapeParameter.shapeParameters,
-          model.gp.interpolate(TriangleMeshInterpolator3D())
-        )
+val bestPoseAndShapeParameters = bestSample.parameters.poseAndShapeParameters
+val bestPoseTransformation = Parameters.poseTransformationForParameters(
+    bestPoseAndShapeParameters.translationParameters,
+    bestPoseAndShapeParameters.rotationParameters,
+    rotationCenter)    
+  
 
-
-  val bestFit = model.reference.transform(bestTransformation)
+  val bestFit = model.instance(bestPoseAndShapeParameters.shapeParameters.coefficients).transform(bestPoseTransformation)
   val resultGroup = ui.createGroup("result")
+
   ui.show(resultGroup, bestFit, "best fit")
 ```
 

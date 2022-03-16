@@ -52,7 +52,7 @@ import scalismo.ui.api.LandmarkView
 Before we can start working with Scalismo objects, we need to initialize Scalismo. 
 ```scala
 scalismo.initialize()
-implicit val rng = scalismo.utils.Random(42)
+implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 ```
 
 The call to ```scalismo.initialize``` loads all the dependencies to native C++ libraries (such as e.g. [vtk](https://www.vtk.org) or [hdf5](https://www.hdf-group.org)).
@@ -176,7 +176,7 @@ val pointList = Seq(
 
 In a first step, we treat all the points as displacement vectors (the displacement of the points from the origin)
 ```scala
-val vectors = pointList.map { p: Point[_3D] => p.toVector } // use map to turn points into vectors
+val vectors = pointList.map { (p: Point[_3D]) => p.toVector } // use map to turn points into vectors
 ```
 The average displacement can be easily computed by averaging all the vectors.
 ```scala
@@ -247,7 +247,7 @@ image.values.next
 
 The point *origin* corresponds to the grid point with index (0,0,0). Hence, the same value can be obtained by accessing the image at this index :
 ```scala
-image(IntVector(0,0,0))
+image(IntVector3D(0,0,0))
 ```
 
 Naturally, the number of scalar values should be equal to the number of points
@@ -268,7 +268,7 @@ all the values above 300 are replaced with 0.
 
 
 ```scala
-val threshValues = image.values.map { v: Short => if (v <= 300) v else 0.toShort }
+val threshValues = image.values.map { (v: Short) => if (v <= 300) v else 0.toShort }
 val thresholdedImage: DiscreteImage[_3D, Short] = DiscreteImage3D[Short](image.domain, threshValues.toIndexedSeq)
 ui show(paolaGroup, thresholdedImage, "thresh")
 ```
@@ -306,7 +306,7 @@ As you can see, a new instance of the face model is displayed each time along wi
 Sampling in the ui is useful for getting a visual impression of the variability of a model. But more often we want to
 sample from a model programmatically. We can obtain a sample from the model, by calling the ```sample method```:
 ```scala
-val randomFace: TriangleMesh[_3D] = faceModel.sample
+val randomFace: TriangleMesh[_3D] = faceModel.sample()
 ```
 #### Exercise: Visualize a few randomly generated meshes in the ui.
 

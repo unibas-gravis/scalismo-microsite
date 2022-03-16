@@ -57,7 +57,6 @@ import scalismo.sampling.evaluators._
 import scalismo.sampling.loggers.MHSampleLogger
 import scalismo.sampling.algorithms.MetropolisHastings
 
-import scalismo.sampling.parameters.StandardFittingParameters
 import breeze.linalg.DenseVector
 import breeze.linalg.DenseMatrix
 ```
@@ -217,7 +216,7 @@ As we only need to map the landmark points, it is computationally more
 efficient to restrict the model to these points first, and then only 
 to deform these points rather than all the points of the model. 
 
-``` scala mdoc:silent emptyLines:2
+```scala
  
   case class CorrespondenceEvaluator(
       model: PointDistributionModel[_3D, TriangleMesh],
@@ -238,7 +237,11 @@ to deform these points rather than all the points of the model.
         sample.parameters.poseAndShapeParameters.rotationParameters,
         rotationCenter
       )
-      val currentModelInstance = modelOnLandmarkPoints.reference.transform(poseTransformation)
+      
+      val modelCoefficients = sample.parameters.poseAndShapeParameters.shapeParameters.coefficients
+      val currentModelInstance =
+        modelOnLandmarkPoints.instance(modelCoefficients).transform(poseTransformation)
+
       
       val lmUncertainty = MultivariateNormalDistribution(
         DenseVector.zeros[Double](3),
@@ -266,8 +269,8 @@ Given these evaluators, we can now build the computationally efficient version o
 our target density $$p(\theta | D)$$
 
 ```scala
-val likelihoodEvaluator = CorrespondenceEvaluator(model, correspondences)
-val priorEvaluator = CachedEvaluator(PriorEvaluator(model))
+val likelihoodEvaluator = CorrespondenceEvaluator(model, rotationCenter, correspondences)
+val priorEvaluator = PriorEvaluator(model).cached
 
 val posteriorEvaluator = ProductEvaluator(priorEvaluator, likelihoodEvaluator)
 ```
@@ -384,58 +387,6 @@ val noiseProposal = GaussianRandomWalkProposal(0.1, "noise").forType[Double]
   )
 ```
 
-```scala
-
-  val identTranslationProposal = MHIdentityProposal.forType[TranslationParameters]
-  val identRotationProposal = MHIdentityProposal.forType[RotationParameters]
-  val identShapeProposal = MHIdentityProposal.forType[ShapeParameters]
-
-  val poseAndShapeTranslationOnlyProposal =
-    MHProductProposal(identTranslationProposal, identRotationProposal, identShapeProposal)
-      .forType[PoseAndShapeParameters]
-  val poseAndShapeRotationOnlyProposal =
-    MHProductProposal(identTranslationProposal, rotationProposal, identShapeProposal)
-      .forType[PoseAndShapeParameters]
-  val poseAndShapeShapeOnlyProposal =
-    MHProductProposal(identTranslationProposal, identRotationProposal, shapeProposal)
-      .forType[PoseAndShapeParameters]
-
-  val mixturePoseAndShapeProposal = MHMixtureProposal(
-    (0.2, poseAndShapeTranslationOnlyProposal),
-    (0.2, poseAndShapeRotationOnlyProposal),
-    (0.6, poseAndShapeShapeOnlyProposal)
-  )
-
-  val noiseProposal = GaussianRandomWalkProposal(0.1, "noise").forType[Double]
-  val identNoiseProposal = MHIdentityProposal.forType[Double]
-  val identPoseAndShapeProposal = MHIdentityProposal.forType[PoseAndShapeParameters]
-
-  val noiseOnlyProposal =
-    MHProductProposal(identPoseAndShapeProposal, noiseProposal).forType[Parameters]
-  val poseAndShapeOnlyProposal =
-    MHProductProposal(mixturePoseAndShapeProposal, identNoiseProposal).forType[Parameters]
-  val fullproposal = MHMixtureProposal(
-    (0.9, poseAndShapeOnlyProposal),
-    (0.1, noiseOnlyProposal)
-  )
-```
-The final proposal is a mixture of the  proposals we defined above.
-We choose to update the shape more often than the translation and rotation parameters,
-as we expect most changes to be shape changes.
-```scala
-val shapeUpdateProposal = ShapeUpdateProposal(model.rank, 0.1)
-val rotationUpdateProposal = RotationUpdateProposal(0.01)
-val translationUpdateProposal = TranslationUpdateProposal(1.0)
-val noiseStddevUpdateProposal = NoiseStddevUpdateProposal(0.1)
-
-val generator = MixtureProposal.fromProposalsWithTransition(
-  (0.5, shapeUpdateProposal),
-  (0.2, rotationUpdateProposal),
-  (0.2, translationUpdateProposal),
-  (0.1, noiseStddevUpdateProposal)
-)
-```
-
 
 #### Building the Markov Chain
 
@@ -461,8 +412,12 @@ by augmenting the iterator with visualization code:
 val samplingIterator = for ((sample, iteration) <- mhIterator.zipWithIndex) yield {
     println("iteration " + iteration)
     if (iteration % 500 == 0) {
-      modelView.shapeModelTransformationView.shapeTransformationView.coefficients = sample.parameters.modelCoefficients
-      modelView.shapeModelTransformationView.poseTransformationView.transformation = sample.poseTransformation
+      val poseAndShapeParameters = sample.parameters.poseAndShapeParameters
+      val poseTransformation = Parameters.poseTransformationForParameters(poseAndShapeParameters.translationParameters, poseAndShapeParameters.rotationParameters, rotationCenter)
+      modelView.shapeModelTransformationView.shapeTransformationView.coefficients =
+        poseAndShapeParameters.shapeParameters.coefficients
+      modelView.shapeModelTransformationView.poseTransformationView.transformation = poseTransformation
+
     }
     sample
 }
@@ -487,18 +442,16 @@ For example, we can select the best fit from these samples and visualize it
 ```scala
 val bestSample = samples.maxBy(posteriorEvaluator.logValue)
   
-  val bestPoseAndShapeParameter = bestSample.parameters.poseAndShapeParameters
-  val bestTransformation = StandardFittingParameters.poseAndShapeTransformationForParameters(
-          bestPoseAndShapeParameter.translationParameters,
-          bestPoseAndShapeParameter.rotationParameters,
-          rotationCenter,
-          bestPoseAndShapeParameter.shapeParameters,
-          model.gp.interpolate(TriangleMeshInterpolator3D())
-        )
+val bestPoseAndShapeParameters = bestSample.parameters.poseAndShapeParameters
+val bestPoseTransformation = Parameters.poseTransformationForParameters(
+    bestPoseAndShapeParameters.translationParameters,
+    bestPoseAndShapeParameters.rotationParameters,
+    rotationCenter)    
+  
 
-
-  val bestFit = model.reference.transform(bestTransformation)
+  val bestFit = model.instance(bestPoseAndShapeParameters.shapeParameters.coefficients).transform(bestPoseTransformation)
   val resultGroup = ui.createGroup("result")
+
   ui.show(resultGroup, bestFit, "best fit")
 ```
 
@@ -516,7 +469,7 @@ of fitting a model to an image using an Active Shape Model as a likelihood funct
  applying this method successfully. The more prior knowledge about the target distribution we can incorporate into the proposals,
  the faster will the chain converge to the equilibrium distribution.
 
-For more complicated use-cases of this method in image analysis , we refer the interested reader is referred to the paper by S. Schönborn et al.
+For more complicated use-cases of this method in image analysis, the interested reader is referred to the paper by S. Schönborn et al.
 and references therein:
 
 * Schönborn, Sandro, et al. "Markov chain monte carlo for automated face image analysis." International Journal of Computer Vision 123.2 (2017): 160-183.

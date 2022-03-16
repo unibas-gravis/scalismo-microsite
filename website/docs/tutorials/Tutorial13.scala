@@ -1,5 +1,5 @@
 //> using scala "2.13"
-//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91-RC1"
 import scalismo.geometry._
 import scalismo.transformations._
 import scalismo.registration._
@@ -13,7 +13,7 @@ import breeze.linalg.{DenseVector}
 object Tutorial13 extends App {
 
   scalismo.initialize()
-  implicit val rng = scalismo.utils.Random(42)
+  implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 
   val ui = ScalismoUI()
   val asm = ActiveShapeModelIO.readActiveShapeModel(new java.io.File("datasets/femur-asm.h5")).get
@@ -51,7 +51,7 @@ object Tutorial13 extends App {
     modelCoefficientBounds = 3
   )
   // make sure we rotate around a reasonable center point
-  val modelBoundingBox = asm.statisticalModel.referenceMesh.boundingBox
+  val modelBoundingBox = asm.statisticalModel.reference.boundingBox
   val rotationCenter = modelBoundingBox.origin + modelBoundingBox.extent * 0.5
 
 // we start with the identity transform
@@ -97,8 +97,8 @@ object Tutorial13 extends App {
     }
     likelihoods.sum
   }
-  val sampleMesh1 = asm.statisticalModel.sample
-  val sampleMesh2 = asm.statisticalModel.sample
+  val sampleMesh1 = asm.statisticalModel.sample()
+  val sampleMesh2 = asm.statisticalModel.sample()
   println("Likelihood for mesh 1 = " + likelihoodForMesh(asm, sampleMesh1, preprocessedImage))
   println("Likelihood for mesh 2 = " + likelihoodForMesh(asm, sampleMesh2, preprocessedImage))
   ui.close()

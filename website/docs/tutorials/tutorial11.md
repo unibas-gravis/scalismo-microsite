@@ -39,7 +39,7 @@ import breeze.linalg.{DenseMatrix, DenseVector}
 
 ```scala
 scalismo.initialize()
-implicit val rng = scalismo.utils.Random(42)
+implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 
 val ui = ScalismoUI()
 ```
@@ -88,7 +88,7 @@ We start by first selecting the points for which we want to find the corresponde
 
 ```scala
 val sampler = UniformMeshSampler3D(model.reference, numberOfPoints = 5000)
-val points : Seq[Point[_3D]] = sampler.sample.map(pointWithProbability => pointWithProbability._1) // we only want the points
+val points : Seq[Point[_3D]] = sampler.sample().map(pointWithProbability => pointWithProbability._1) // we only want the points
 ```
 
 Instead of working directly with the points, it is easier to work with the point ids of the sampled points:
@@ -101,7 +101,7 @@ point of interest the closest point on the target.
 
 ```scala
 def attributeCorrespondences(movingMesh: TriangleMesh[_3D], ptIds : Seq[PointId]) : Seq[(PointId, Point[_3D])] = {
-  ptIds.map{ id : PointId =>
+  ptIds.map{ (id : PointId) =>
     val pt = movingMesh.pointSet.point(id)
     val closestPointOnMesh2 = targetMesh.pointSet.findClosestPoint(pt).point
     (id, closestPointOnMesh2)

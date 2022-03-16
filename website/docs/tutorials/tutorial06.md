@@ -40,7 +40,7 @@ import scalismo.numerics.PivotedCholesky.RelativeTolerance
 
 ```scala
 scalismo.initialize()
-implicit val rng = scalismo.utils.Random(42)
+implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 
 val ui = ScalismoUI()
 ```
@@ -112,7 +112,7 @@ from which we then build the model:
 
 ```scala
 val defFields = alignedMeshes.map{ m =>
-    val deformationVectors = reference.pointSet.pointIds.map{ id : PointId =>
+    val deformationVectors = reference.pointSet.pointIds.map{ (id : PointId) =>
         m.pointSet.point(id) - reference.pointSet.point(id)
     }.toIndexedSeq
     DiscreteField3D(reference, deformationVectors)

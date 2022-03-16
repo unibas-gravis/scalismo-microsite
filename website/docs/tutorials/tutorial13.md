@@ -35,7 +35,7 @@ import breeze.linalg.{DenseVector}
 
 ```scala
 scalismo.initialize()
-implicit val rng = scalismo.utils.Random(42)
+implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 
 val ui = ScalismoUI()
 ```
@@ -155,7 +155,7 @@ In order to allow it to optimize the rotation, it is important that we choose a 
 the center of mass of the model:
 ```scala
     // make sure we rotate around a reasonable center point
-val modelBoundingBox = asm.statisticalModel.referenceMesh.boundingBox
+val modelBoundingBox = asm.statisticalModel.reference.boundingBox
 val rotationCenter = modelBoundingBox.origin + modelBoundingBox.extent * 0.5
 ```
 
@@ -227,8 +227,8 @@ def likelihoodForMesh(asm : ActiveShapeModel, mesh : TriangleMesh[_3D], preproce
 This method allows us to compute for each mesh, represented by the model, how likely it is to correspond
 to the given image.
 ```scala
-val sampleMesh1 = asm.statisticalModel.sample
-val sampleMesh2 = asm.statisticalModel.sample
+val sampleMesh1 = asm.statisticalModel.sample()
+val sampleMesh2 = asm.statisticalModel.sample()
 println("Likelihood for mesh 1 = " + likelihoodForMesh(asm, sampleMesh1, preprocessedImage))
 println("Likelihood for mesh 2 = " + likelihoodForMesh(asm, sampleMesh2, preprocessedImage))
 ```

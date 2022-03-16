@@ -1,5 +1,5 @@
 //> using scala "2.13"
-//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91-RC1"
 import scalismo.ui.api._
 import scalismo.geometry._
 import scalismo.common._
@@ -11,7 +11,7 @@ import scalismo.statisticalmodel._
 object Tutorial5 extends App {
 
   scalismo.initialize()
-  implicit val rng = scalismo.utils.Random(42)
+  implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 
   val ui = ScalismoUI()
 
@@ -22,7 +22,7 @@ object Tutorial5 extends App {
   val modelGroup = ui.createGroup("modelGroup")
   val ssmView = ui.show(modelGroup, model, "model")
 
-  val sampleDF: DiscreteField[_3D, TriangleMesh, EuclideanVector[_3D]] = model.gp.sample
+  val sampleDF: DiscreteField[_3D, TriangleMesh, EuclideanVector[_3D]] = model.gp.sample()
 
   val sampleGroup = ui.createGroup("sample")
   ui.show(sampleGroup, sampleDF, "discreteSample")
@@ -30,7 +30,7 @@ object Tutorial5 extends App {
   val interpolator = TriangleMeshInterpolator3D[EuclideanVector[_3D]]()
   val contGP = model.gp.interpolate(interpolator)
 
-  val contSample: Field[_3D, EuclideanVector[_3D]] = contGP.sample
+  val contSample: Field[_3D, EuclideanVector[_3D]] = contGP.sample()
 
   val fullSample = contGP.sampleAtPoints(model.reference)
   val fullSampleView = ui.show(sampleGroup, fullSample, "fullSample")
@@ -46,10 +46,10 @@ object Tutorial5 extends App {
   val lowresMesh = model.reference.operations.decimate(1000)
   val lowResModel = model.newReference(lowresMesh, TriangleMeshInterpolator3D())
 
-  val defSample = model.gp.sample
+  val defSample = model.gp.sample()
   model.gp.pdf(defSample)
-  val defSample1 = model.gp.sample
-  val defSample2 = model.gp.sample
+  val defSample1 = model.gp.sample()
+  val defSample2 = model.gp.sample()
 
   val logPDF1 = model.gp.logpdf(defSample1)
   val logPDF2 = model.gp.logpdf(defSample2)

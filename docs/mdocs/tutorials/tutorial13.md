@@ -17,7 +17,7 @@ To run the code from this tutorial, download the following Scala file:
 
 ```scala mdoc:invisible
 //> using scala "2.13"
-//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91-RC1"
 ```
 
 ##### Preparation
@@ -42,7 +42,7 @@ object Tutorial13 extends App {
 
 ```scala mdoc:silent emptyLines:2
 scalismo.initialize()
-implicit val rng = scalismo.utils.Random(42)
+implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 
 val ui = ScalismoUI()
 ```
@@ -162,7 +162,7 @@ In order to allow it to optimize the rotation, it is important that we choose a 
 the center of mass of the model:
 ```scala mdoc:silent empytLines:2
     // make sure we rotate around a reasonable center point
-val modelBoundingBox = asm.statisticalModel.referenceMesh.boundingBox
+val modelBoundingBox = asm.statisticalModel.reference.boundingBox
 val rotationCenter = modelBoundingBox.origin + modelBoundingBox.extent * 0.5
 ```
 
@@ -234,8 +234,8 @@ def likelihoodForMesh(asm : ActiveShapeModel, mesh : TriangleMesh[_3D], preproce
 This method allows us to compute for each mesh, represented by the model, how likely it is to correspond
 to the given image.
 ```scala mdoc:silent empytLines:2
-val sampleMesh1 = asm.statisticalModel.sample
-val sampleMesh2 = asm.statisticalModel.sample
+val sampleMesh1 = asm.statisticalModel.sample()
+val sampleMesh2 = asm.statisticalModel.sample()
 println("Likelihood for mesh 1 = " + likelihoodForMesh(asm, sampleMesh1, preprocessedImage))
 println("Likelihood for mesh 2 = " + likelihoodForMesh(asm, sampleMesh2, preprocessedImage))
 ```

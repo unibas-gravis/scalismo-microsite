@@ -20,7 +20,7 @@ To run the code from this tutorial, download the following Scala file:
 
 ```scala mdoc:invisible
 //> using scala "2.13"
-//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.90.0"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91-RC1"
 ```
 
 ##### Preparation
@@ -45,7 +45,7 @@ object Tutorial10 extends App {
 
 ```scala mdoc:silent empytLines:2
 scalismo.initialize()
-implicit val rng = scalismo.utils.Random(42)
+implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 
 val ui = ScalismoUI()
 ```
@@ -90,7 +90,7 @@ In the next step, we find the corresponding points in the other mesh:
 
 ```scala mdoc:silent empytLines:2
 def attributeCorrespondences(movingMesh: TriangleMesh[_3D], ptIds : Seq[PointId]) : Seq[(Point[_3D], Point[_3D])] = {
-  ptIds.map{ id : PointId =>
+  ptIds.map{ (id : PointId) =>
     val pt = movingMesh.pointSet.point(id)
     val closestPointOnMesh2 = mesh2.pointSet.findClosestPoint(pt).point
     (pt, closestPointOnMesh2)
