@@ -1,5 +1,5 @@
 //> using scala "2.13"
-//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91-RC1"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91-RC3"
 
 import scalismo.sampling.MHSample
 import scalismo.sampling.MHDistributionEvaluator
