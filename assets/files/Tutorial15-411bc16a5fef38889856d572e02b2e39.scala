@@ -191,11 +191,12 @@ object Tutorial15 extends App {
 
   val poseAndShapeTranslationOnlyProposal =
     MHProductProposal(
-      identTranslationProposal,
+      translationProposal,
       identRotationProposal,
       identShapeProposal
     )
       .forType[PoseAndShapeParameters]
+      .relabel("translation-only")
   val poseAndShapeRotationOnlyProposal =
     MHProductProposal(
       identTranslationProposal,
@@ -203,6 +204,7 @@ object Tutorial15 extends App {
       identShapeProposal
     )
       .forType[PoseAndShapeParameters]
+      .relabel("rotation-only")
   val poseAndShapeLeadingShapeOnlyProposal =
     MHProductProposal(
       identTranslationProposal,
@@ -210,6 +212,7 @@ object Tutorial15 extends App {
       shapeProposalLeading
     )
       .forType[PoseAndShapeParameters]
+      .relabel("shape-leading-only")
 
   val poseAndShapeRemainingShapeOnlyProposal =
     MHProductProposal(
@@ -218,6 +221,7 @@ object Tutorial15 extends App {
       shapeProposalRemaining
     )
       .forType[PoseAndShapeParameters]
+      .relabel("shape-trailing-only")
 
   val mixturePoseAndShapeProposal = MHMixtureProposal(
     (0.2, poseAndShapeTranslationOnlyProposal),
