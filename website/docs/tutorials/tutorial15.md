@@ -318,7 +318,9 @@ val shapeProposalLeading =
 ```
 
 From these building blocks, we can define different proposal for shape and pose, which always
-only update a part of the parameters. 
+only update a part of the parameters. For better readability, we also give them simpler name, under
+which they later appear in the logs. 
+
 ```scala
   val identTranslationProposal =
     MHIdentityProposal.forType[TranslationParameters]
@@ -327,11 +329,12 @@ only update a part of the parameters.
 
   val poseAndShapeTranslationOnlyProposal =
     MHProductProposal(
-      identTranslationProposal,
+      translationProposal,
       identRotationProposal,
       identShapeProposal
     )
       .forType[PoseAndShapeParameters]
+      .relabel("translation-only")
   val poseAndShapeRotationOnlyProposal =
     MHProductProposal(
       identTranslationProposal,
@@ -339,6 +342,7 @@ only update a part of the parameters.
       identShapeProposal
     )
       .forType[PoseAndShapeParameters]
+      .relabel("rotation-only")
   val poseAndShapeLeadingShapeOnlyProposal =
     MHProductProposal(
       identTranslationProposal,
@@ -346,6 +350,7 @@ only update a part of the parameters.
       shapeProposalLeading
     )
       .forType[PoseAndShapeParameters]
+      .relabel("shape-leading-only")
 
   val poseAndShapeRemainingShapeOnlyProposal =
     MHProductProposal(
@@ -354,6 +359,7 @@ only update a part of the parameters.
       shapeProposalRemaining
     )
       .forType[PoseAndShapeParameters]
+      .relabel("shape-trailing-only")
 ```
 
 Using a mixture proposal, we can combine them to one proposal for pose and shape
