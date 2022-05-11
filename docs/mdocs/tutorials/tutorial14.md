@@ -17,7 +17,7 @@ To run the code from this tutorial, download the following Scala file:
 
 ```scala mdoc:invisible
 //> using scala "2.13"
-//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91-RC3"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91-RC4"
 ```
 
 ### Problem setting
