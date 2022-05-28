@@ -13,9 +13,9 @@ scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
 resolvers += Opts.resolver.sonatypeSnapshots
 resolvers += Opts.resolver.sonatypeReleases
-
+resolvers += Resolver.sonatypeRepo("chunibascsgravis-1065")
 libraryDependencies  ++= Seq(
-            "ch.unibas.cs.gravis" %% "scalismo-ui" % "0.91-RC3",
+            "ch.unibas.cs.gravis" %% "scalismo-ui" % "0.91.0",
             "dev.zio" %% "zio" % "2.0.0-RC2",
             "dev.zio" %% "zio-test" % "2.0.0-RC2" % "test",
             "dev.zio" %% "zio-test-sbt" % "2.0.0-RC2" % "test",

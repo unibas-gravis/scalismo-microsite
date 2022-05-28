@@ -31,6 +31,9 @@ null
 .bloop
 .metals
 .idea
+.bsp
 out
 tmp
 coursier
+metals.sbt
+*.tasty

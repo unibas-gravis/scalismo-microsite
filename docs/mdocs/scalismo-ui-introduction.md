@@ -10,8 +10,8 @@ To run the code from this tutorial, download the following Scala file:
 - [ScalismoUIIntroduction.scala](./ScalismoUiIntroduction.scala)
 
 ```scala mdoc:invisible
-//> using scala "2.13"
-//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91-RC4"
+//> using scala "3.1.2"
+//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91.0"
 ```
 
 
@@ -38,7 +38,7 @@ import breeze.stats.distributions.Gaussian
 ## Starting Scalismo-ui and creating groups
 
 ```scala mdoc:invisible emptyLines:2
-object Tutorial14 extends App {
+object ScalismoUIIntroduction extends App {
 ```
 
 
@@ -46,6 +46,10 @@ The first step is to create a ```ui``` object, with which we interact. This can 
 
 ```scala mdoc:silent
 val ui = ScalismoUI()
+```
+We will also define and seed the random number generator
+```scala mdoc:silent
+implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 ```
 
 You will see that this starts the graphical user interface. Scalismo-ui features different perspectives on the data. In this guide we use the orthogonal view, which you can select from the menu ```View->Perspective->Orthognonal Slices```. You should now see the following window:
