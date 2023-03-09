@@ -41,7 +41,7 @@ scala-cli run HelloScalismo.scala
 
 On MacOS, you might have to call instead 
 ```
-scala-cli --jvm system run HelloScalismo.scala
+scala-cli run --jvm system HelloScalismo.scala
 ```
 in order to instruct `scala-cli` to use the system JVM that you installed before. 
 
