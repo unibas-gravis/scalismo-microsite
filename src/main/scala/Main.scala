@@ -19,11 +19,10 @@ object Main extends zio.ZIOAppDefault {
 
   private def writeTextFile(text: String, file: File): zio.Task[Unit] = {
     import java.io._
-    ZIO
-      .succeed(new PrintWriter(file))
-      .acquireReleaseWith(pw => ZIO.succeed(pw.close()))(pw =>
-        ZIO.succeed(pw.write(text))
-      )
+    ZIO.acquireReleaseWith(ZIO.succeed(new PrintWriter(file)))(pw =>ZIO.succeed(pw.close())){pw => 
+      ZIO.succeed(pw.write(text))
+    }
+      
   }
 
   private def formatAndWriteScalaFile(
@@ -86,7 +85,7 @@ object Main extends zio.ZIOAppDefault {
   def processDirectory(
       dir: File,
       outDir: File
-  ): ZIO[zio.Console, Throwable, Seq[Throwable]] = {
+  ): ZIO[Any, Throwable, Seq[Throwable]] = {
 
     val filesOrDirectories = dir.listFiles.toSeq
     val (directories, files) = filesOrDirectories.partition(f => f.isDirectory)
@@ -123,7 +122,7 @@ object Main extends zio.ZIOAppDefault {
 
     val collectedFailures = processDirectory(inDir, outDir)
     collectedFailures.map(failures =>
-      ZIO.foreach(failures)(f => zio.Console.print(f.getMessage))
+      ZIO.foreach(failures)(f => zio.Console.printLine(f.getMessage))
     )
   }
 }
