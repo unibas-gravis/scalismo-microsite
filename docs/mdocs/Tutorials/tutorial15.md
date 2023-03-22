@@ -26,8 +26,8 @@ To run the code from this tutorial, download the following Scala file:
 - [Tutorial15.scala](./Tutorial15.scala)
 
 ```scala mdoc:invisible
-//> using scala "3.1.2"
-//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91.0"
+//> using scala "3.2"
+//> using dep "ch.unibas.cs.gravis::scalismo-ui:0.91.2"
 ```
 
 ##### Preparation

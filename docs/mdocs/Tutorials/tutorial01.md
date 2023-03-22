@@ -18,12 +18,12 @@ To run the code from this tutorial, download the following Scala file:
 ## Imports and Scalismo initialization
 
 ```scala mdoc:invisible
-//> using scala "3.1.2"
-//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91.0"
+//> using scala "3.2"
+//> using dep "ch.unibas.cs.gravis::scalismo-ui:0.91.2"
 ```
 
 Before we start with writing actual Scalismo code, we import all 
-objects from the Scalismo library, which we will need in this tutorial. 
+objects that we will need in this tutorial. 
 
 ```scala mdoc:silent
 

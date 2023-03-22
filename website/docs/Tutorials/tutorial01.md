@@ -19,7 +19,7 @@ To run the code from this tutorial, download the following Scala file:
 
 
 Before we start with writing actual Scalismo code, we import all 
-objects from the Scalismo library, which we will need in this tutorial. 
+objects that we will need in this tutorial. 
 
 ```scala
 
