@@ -1,5 +1,8 @@
 //> using scala "3.2"
-//> using dep "ch.unibas.cs.gravis::scalismo-ui:0.91.2"
+//> using repository "sonatype:snapshots"
+//> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92-SNAPSHOT"
+// !!! if you are working on a Mac with M1 or M2 processor, use the following import instead !!!
+// //> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92-SNAPSHOT,exclude=ch.unibas.cs.gravis%vtkjavanativesmacosimpl"
 import scalismo.geometry._
 import scalismo.common._
 import scalismo.mesh.TriangleMesh

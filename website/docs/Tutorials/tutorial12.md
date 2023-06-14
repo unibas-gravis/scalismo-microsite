@@ -15,8 +15,7 @@ from building the Gaussian process model to performing the actual optimization.
 
 ##### Related resources
 
-The following resources from our [online course](https://www.futurelearn.com/courses/statistical-shape-modelling) may provide
-some helpful context for this tutorial:
+To enhance your understanding of this tutorial, we recommend the following resources from our [online course](shapemodelling.cs.unibas.ch/ssm-course/):
 
 - Model-fitting and correspondence [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250371)
 

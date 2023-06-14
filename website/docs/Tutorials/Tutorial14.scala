@@ -24,19 +24,19 @@ object Tutorial14 extends App {
 
   val a = 0.2
   val b = 3
-  val sigma2 = 0.5
-  val errorDist = breeze.stats.distributions.Gaussian(0, sigma2)(rng.breezeRandBasis)
+  val sigma = 0.5
+  val errorDist = breeze.stats.distributions.Gaussian(0, sigma)(rng.breezeRandBasis)
   val data = for (x <- 0 until 100) yield {
     (x.toDouble, a * x + b + errorDist.draw())
   }
 
-  case class Parameters(a: Double, b: Double, sigma2: Double)
+  case class Parameters(a: Double, b: Double, sigma: Double)
 
   implicit object tuple3ParameterConversion
       extends ParameterConversion[Tuple3[Double, Double, Double], Parameters] {
-    def from(p: Parameters): Tuple3[Double, Double, Double] = (p.a, p.b, p.sigma2)
+    def from(p: Parameters): Tuple3[Double, Double, Double] = (p.a, p.b, p.sigma)
     def to(t: Tuple3[Double, Double, Double]): Parameters =
-      Parameters(a = t._1, b = t._2, sigma2 = t._3)
+      Parameters(a = t._1, b = t._2, sigma = t._3)
   }
   case class LikelihoodEvaluator(data: Seq[(Double, Double)])
       extends MHDistributionEvaluator[Parameters] {
@@ -46,7 +46,7 @@ object Tutorial14 extends App {
       val likelihoods = for ((x, y) <- data) yield {
         val likelihood = breeze.stats.distributions.Gaussian(
           theta.parameters.a * x + theta.parameters.b,
-          theta.parameters.sigma2
+          theta.parameters.sigma
         )
 
         likelihood.logPdf(y)
@@ -63,8 +63,8 @@ object Tutorial14 extends App {
 
     override def logValue(theta: MHSample[Parameters]): Double = {
       priorDistA.logPdf(theta.parameters.a)
-      +priorDistB.logPdf(theta.parameters.b)
-      +priorDistSigma.logPdf(theta.parameters.sigma2)
+        + priorDistB.logPdf(theta.parameters.b)
+        + priorDistSigma.logPdf(theta.parameters.sigma)
     }
   }
   val posteriorEvaluator = ProductEvaluator(PriorEvaluator, LikelihoodEvaluator(data))
@@ -95,9 +95,9 @@ object Tutorial14 extends App {
   println(
     s"Estimates for parameter b: mean = ${meanAndVarianceB.mean}, var = ${meanAndVarianceB.variance}"
   )
-  val meanAndVarianceSigma2 = meanAndVariance(samples.map(_.parameters.sigma2))
+  val meanAndVarianceSigma = meanAndVariance(samples.map(_.parameters.sigma))
   println(
-    s"Estimates for parameter sigma2: mean = ${meanAndVarianceSigma2.mean}, var = ${meanAndVarianceSigma2.variance}"
+    s"Estimates for parameter sigma: mean = ${meanAndVarianceSigma.mean}, var = ${meanAndVarianceSigma.variance}"
   )
   println("Acceptance ratios: " + logger.samples.acceptanceRatios)
   println(

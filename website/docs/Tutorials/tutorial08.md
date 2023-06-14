@@ -9,12 +9,11 @@ reconstruction of partial shapes.
 
 ##### Related resources
 
-The following resources from our [online course](https://www.futurelearn.com/courses/statistical-shape-modelling) may provide
-some helpful context for this tutorial:
+To enhance your understanding of this tutorial, we recommend the following resources from our [online course](shapemodelling.cs.unibas.ch/ssm-course/):
 
-- The regression problem [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250360)
-- Gaussian process regression [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250361)
-- Posterior models for different kernels [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250362)
+- The regression problem [(Article)](https://shapemodelling.cs.unibas.ch/ssm-course/week5/step5-2)
+- Gaussian process regression [(Video)](https://shapemodelling.cs.unibas.ch/ssm-course/week5/step5-3)
+- Posterior models for different kernels [(Article)](https://shapemodelling.cs.unibas.ch/ssm-course/week5/step5-4)
 
 To run the code from this tutorial, download the following Scala file:
 - [Tutorial08.scala](./Tutorial08.scala)

@@ -21,6 +21,7 @@ import breeze.stats.distributions.Rand.FixedSeed.randBasis
 object ScalismoUIIntroduction extends App {
   val ui = ScalismoUI()
   given rng: scalismo.utils.Random = scalismo.utils.Random(42)
+
   val group = ui.createGroup("object-1")
   val mesh = MeshIO.readMesh(new java.io.File("./datasets/Paola.ply")).get
   val meshView = ui.show(group, mesh, "mesh")
@@ -40,6 +41,9 @@ object ScalismoUIIntroduction extends App {
   val ssm = StatisticalModelIO.readStatisticalTriangleMeshModel3D(new File("datasets/bfm.h5")).get
   val ssmGroup = ui.createGroup("shape-model")
   val ssmView = ui.show(ssmGroup, ssm, "ssm")
+  ssmView.referenceView
+  ssmView.shapeModelTransformationView.shapeTransformationView
+  ssmView.shapeModelTransformationView.poseTransformationView
   val randCoeffs = DenseVector.rand[Double](ssm.rank, Gaussian(0, 1))
   ssmView.shapeModelTransformationView.shapeTransformationView.coefficients = randCoeffs
   val group2 = ui.createGroup("object-2")

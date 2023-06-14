@@ -1,33 +1,33 @@
-//> using scala "3.2"
-//> using dep "ch.unibas.cs.gravis::scalismo-ui:0.91.2"
+//> using scala "3.3"
+//> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92-RC1"
+// !!! if you are working on a Mac with M1 or M2 processor, use the following import instead !!!
+// //> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92-RC1,exclude=ch.unibas.cs.gravis%vtkjavanativesmacosimpl"
 
 // Basic geometric primitives
-import scalismo.geometry.{_3D, Point, Point3D}
-import scalismo.geometry.{EuclideanVector}
-import scalismo.geometry.{IntVector, IntVector3D}
-import scalismo.geometry.Landmark
-
+import scalismo.geometry.*
 import scalismo.common.PointId
 
 // Geometric objects
-import scalismo.mesh.TriangleMesh
+import scalismo.mesh.{TriangleMesh, TriangleId}
 import scalismo.mesh.TriangleId
 import scalismo.image.{DiscreteImage, DiscreteImage3D}
 import scalismo.statisticalmodel.PointDistributionModel
 
 // IO Methods
-import scalismo.io.ImageIO;
-import scalismo.io.StatisticalModelIO
-import scalismo.io.{MeshIO, StatisticalModelIO}
+import scalismo.io.*
 
 // Visualization
-import scalismo.ui.api.ScalismoUI
-import scalismo.ui.api.LandmarkView
+import scalismo.ui.api.*
 
-object Tutorial1 extends App {
+// File object from java
+import java.io.File
+
+// Choosing seeding mechanism for random number generator
+import scalismo.utils.Random.FixedSeed.randBasis
+
+@main def helloScalismo(): Unit =
 
   scalismo.initialize()
-  implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 
   val ui = ScalismoUI()
 
@@ -55,40 +55,38 @@ object Tutorial1 extends App {
     Point3D(10.0, 11.0, 12.0)
   )
   val vectors = pointList.map { (p: Point[_3D]) =>
-    p.toVector
+    p - Point3D(0, 0, 0)
   } // use map to turn points into vectors
   val vectorSum = vectors.reduce { (v1, v2) => v1 + v2 } // sum up all vectors in the collection
   val centerV: EuclideanVector[_3D] =
     vectorSum * (1.0 / pointList.length) // divide the sum by the number of points
-  val center = centerV.toPoint
+  val center = Point3D(0, 0, 0) + centerV
 
   val image: DiscreteImage[_3D, Short] =
-    ImageIO.read3DScalarImage[Short](new java.io.File("datasets/PaolaMRI.vtk")).get
+    ImageIO.read3DScalarImage[Short](File("datasets/PaolaMRI.vtk")).get
   val imageView = ui.show(paolaGroup, image, "mri")
   val origin: Point[_3D] = image.domain.origin
   val spacing: EuclideanVector[_3D] = image.domain.spacing
   val size: IntVector[_3D] = image.domain.size
-  val imagePoints: Iterator[Point[_3D]] = image.domain.pointSet.points.take(172)
-  val gridPointsView = ui.show(paolaGroup, imagePoints.toIndexedSeq, "imagePoints")
 
   val values: Iterator[Short] = image.values
-  image.values.next
+  println(image.values.take(10).toSeq)
   image(IntVector3D(0, 0, 0))
   image.values.size == image.domain.pointSet.numberOfPoints
 
   val threshValues = image.values.map { (v: Short) => if (v <= 300) v else 0.toShort }
   val thresholdedImage: DiscreteImage[_3D, Short] =
     DiscreteImage3D[Short](image.domain, threshValues.toIndexedSeq)
-  ui show (paolaGroup, thresholdedImage, "thresh")
+  ui.show(paolaGroup, thresholdedImage, "thresh")
   val thresholdedImage2 = image.map(v => if (v <= 300) v else 0.toShort)
 
   val faceModel: PointDistributionModel[_3D, TriangleMesh] =
-    StatisticalModelIO.readStatisticalTriangleMeshModel3D(new java.io.File("datasets/bfm.h5")).get
+    StatisticalModelIO.readStatisticalTriangleMeshModel3D(File("datasets/bfm.h5")).get
   val faceModelView = ui.show(faceModel, "faceModel")
 
   val randomFace: TriangleMesh[_3D] = faceModel.sample()
   val matchingLandmarkViews: Seq[LandmarkView] =
     ui.filter[LandmarkView](paolaGroup, (l: LandmarkView) => l.name == "noseLM")
   val matchingLandmarks: Seq[Landmark[_3D]] = matchingLandmarkViews.map(lmView => lmView.landmark)
+
   ui.close()
-}

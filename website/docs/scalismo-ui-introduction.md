@@ -26,6 +26,7 @@ import java.io.File
 import java.awt.Color
 import breeze.linalg.DenseVector
 import breeze.stats.distributions.Gaussian
+import breeze.stats.distributions.Rand.FixedSeed.randBasis
 
 ```
 
@@ -42,7 +43,7 @@ val ui = ScalismoUI()
 ```
 We will also define and seed the random number generator
 ```scala
-implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
+given rng: scalismo.utils.Random = scalismo.utils.Random(42)
 ```
 
 You will see that this starts the graphical user interface. Scalismo-ui features different perspectives on the data. In this guide we use the orthogonal view, which you can select from the menu ```View->Perspective->Orthognonal Slices```. You should now see the following window:
@@ -152,7 +153,7 @@ transformations:  one (rigid) transformation that controls the pose of the mesh 
 one that controls the actual shape. We can access the individual parts of an ssm using
 the ```ssmView``` object.
 
-```scala
+```scala 
  ssmView.referenceView
  ssmView.shapeModelTransformationView.shapeTransformationView
  ssmView.shapeModelTransformationView.poseTransformationView

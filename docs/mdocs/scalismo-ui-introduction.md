@@ -11,7 +11,10 @@ To run the code from this tutorial, download the following Scala file:
 
 ```scala mdoc:invisible
 //> using scala "3.2"
-//> using dep "ch.unibas.cs.gravis::scalismo-ui:0.91.2"
+//> using repository "sonatype:snapshots"
+//> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92-SNAPSHOT"
+// !!! if you are working on a Mac with M1 or M2 processor, use the following import instead !!!
+// //> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92-SNAPSHOT,exclude=ch.unibas.cs.gravis%vtkjavanativesmacosimpl"
 ```
 
 
@@ -30,6 +33,7 @@ import java.io.File
 import java.awt.Color
 import breeze.linalg.DenseVector
 import breeze.stats.distributions.Gaussian
+import breeze.stats.distributions.Rand.FixedSeed.randBasis
 
 ```
 
@@ -49,7 +53,7 @@ val ui = ScalismoUI()
 ```
 We will also define and seed the random number generator
 ```scala mdoc:silent
-implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
+given rng: scalismo.utils.Random = scalismo.utils.Random(42)
 ```
 
 You will see that this starts the graphical user interface. Scalismo-ui features different perspectives on the data. In this guide we use the orthogonal view, which you can select from the menu ```View->Perspective->Orthognonal Slices```. You should now see the following window:
@@ -159,7 +163,7 @@ transformations:  one (rigid) transformation that controls the pose of the mesh 
 one that controls the actual shape. We can access the individual parts of an ssm using
 the ```ssmView``` object.
 
-```scala mdoc:silent
+```scala 
  ssmView.referenceView
  ssmView.shapeModelTransformationView.shapeTransformationView
  ssmView.shapeModelTransformationView.poseTransformationView

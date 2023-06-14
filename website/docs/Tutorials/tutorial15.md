@@ -20,7 +20,7 @@ estimates.
 
 ##### Related resources
 
-Week 3 of our [online course](https://shapemodelling.cs.unibas.ch/probabilistic-fitting-course/) on shape model fitting may provide some helpful context for this tutorial.
+Week 3 of our [online course](https://shapemodelling.cs.unibas.ch/probabilistic-fitting-course/) on shape model fitting may provide helpful context for this tutorial.
 
 To run the code from this tutorial, download the following Scala file:
 - [Tutorial15.scala](./Tutorial15.scala)

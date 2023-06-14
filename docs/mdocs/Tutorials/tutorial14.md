@@ -10,7 +10,7 @@ to focus on the main components of the framework instead of technical details, w
 
 ##### Related resources
 
-Week 2 of our [online course](https://shapemodelling.cs.unibas.ch/probabilistic-fitting-course/) on shape model fitting may provide some helpful context for this tutorial.
+Week 2 of our [online course](https://shapemodelling.cs.unibas.ch/probabilistic-fitting-course/) on shape model fitting may provide helpful context for this tutorial.
 
 To run the code from this tutorial, download the following Scala file:
 - [Tutorial14.scala](./Tutorial14.scala)
@@ -109,8 +109,8 @@ how well we estimated the parameters.
   
       val a = 0.2
       val b = 3
-      val sigma2 = 0.5
-      val errorDist = breeze.stats.distributions.Gaussian(0, sigma2)(rng.breezeRandBasis)
+      val sigma = 0.5
+      val errorDist = breeze.stats.distributions.Gaussian(0, sigma)(rng.breezeRandBasis)
       val data = for (x <- 0 until 100) yield {
         (x.toDouble, a * x + b + errorDist.draw())
       }
@@ -120,15 +120,15 @@ how well we estimated the parameters.
 Before we discuss the two main components, the *Evaluator* and *Proposal generator* in detail, we first define a class for representing
 the parameters $$\theta = (a, b, \sigma^2)$$:
 ```scala mdoc:silent empytLines:2
-case class Parameters(a : Double, b:  Double, sigma2 : Double)
+case class Parameters(a : Double, b:  Double, sigma : Double)
 ```
 To be able to make use of the proposal generators that Scalismo provides, we will also need to define a conversion object, which 
 tells Scalismo how our parameters can be converted to a tuple and back. 
 
 ```scala mdoc:silent emptyLines:2
 implicit object tuple3ParameterConversion extends ParameterConversion[Tuple3[Double, Double, Double], Parameters] {
-    def from(p: Parameters): Tuple3[Double, Double, Double] = (p.a, p.b, p.sigma2)
-    def to(t: Tuple3[Double, Double, Double]): Parameters = Parameters(a = t._1, b = t._2, sigma2 = t._3)
+    def from(p: Parameters): Tuple3[Double, Double, Double] = (p.a, p.b, p.sigma)
+    def to(t: Tuple3[Double, Double, Double]): Parameters = Parameters(a = t._1, b = t._2, sigma = t._3)
   }
 ```
 
@@ -161,7 +161,7 @@ The likelihood function, defined above, can be implemented as follows:
       val likelihoods = for ((x, y) <- data) yield {
         val likelihood = breeze.stats.distributions.Gaussian(
           theta.parameters.a * x + theta.parameters.b,
-          theta.parameters.sigma2
+          theta.parameters.sigma
         )
 
         likelihood.logPdf(y)
@@ -185,7 +185,7 @@ In a similar way, we encode the prior distribution:
     override def logValue(theta: MHSample[Parameters]): Double = {
       priorDistA.logPdf(theta.parameters.a)
         + priorDistB.logPdf(theta.parameters.b)
-        + priorDistSigma.logPdf(theta.parameters.sigma2)
+        + priorDistSigma.logPdf(theta.parameters.sigma)
     }
   }
 ```
@@ -287,8 +287,8 @@ val meanAndVarianceA = meanAndVariance(samples.map(_.parameters.a))
 println(s"Estimates for parameter a: mean = ${meanAndVarianceA.mean}, var = ${meanAndVarianceA.variance}")
 val meanAndVarianceB = meanAndVariance(samples.map(_.parameters.b))
 println(s"Estimates for parameter b: mean = ${meanAndVarianceB.mean}, var = ${meanAndVarianceB.variance}")
-val meanAndVarianceSigma2 = meanAndVariance(samples.map(_.parameters.sigma2))
-println(s"Estimates for parameter sigma2: mean = ${meanAndVarianceSigma2.mean}, var = ${meanAndVarianceSigma2.variance}")
+val meanAndVarianceSigma = meanAndVariance(samples.map(_.parameters.sigma))
+println(s"Estimates for parameter sigma: mean = ${meanAndVarianceSigma.mean}, var = ${meanAndVarianceSigma.variance}")
 ```
 
 In the next tutorial, we see an example of how the exact same  mechanism can be used for

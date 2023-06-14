@@ -7,8 +7,7 @@ In this tutorial we show how rigid alignment of shapes can be performed in Scali
 
 ##### Related resources
 
-The following resources from our [online course](https://www.futurelearn.com/courses/statistical-shape-modelling) may provide
-some helpful context for this tutorial:
+To enhance your understanding of this tutorial, we recommend the following resources from our [online course](shapemodelling.cs.unibas.ch/ssm-course/):
 
 - Learning a model from example data [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250329)
 - Superimposing shapes [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250330)
@@ -19,7 +18,10 @@ To run the code from this tutorial, download the following Scala file:
 
 ```scala mdoc:invisible
 //> using scala "3.2"
-//> using dep "ch.unibas.cs.gravis::scalismo-ui:0.91.2"
+//> using repository "sonatype:snapshots"
+//> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92-SNAPSHOT"
+// !!! if you are working on a Mac with M1 or M2 processor, use the following import instead !!!
+// //> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92-SNAPSHOT,exclude=ch.unibas.cs.gravis%vtkjavanativesmacosimpl"
 ```
 
 ##### Preparation

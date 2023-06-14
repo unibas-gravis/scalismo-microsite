@@ -7,6 +7,15 @@ In this tutorial we will show how GP regression can be used to predict missing p
 
 ##### Related resources
 
+To enhance your understanding of this tutorial, we recommend the following resources from our [online course](shapemodelling.cs.unibas.ch/ssm-course/):
+
+- Covariance functions [(Video)](https://shapemodelling.cs.unibas.ch/ssm-course/week4/step4-2)
+- Enlarging the flexibility of statistical shape models [(Article)](https://shapemodelling.cs.unibas.ch/ssm-course/week4/step4-7)
+- The regression problem [(Article)](https://shapemodelling.cs.unibas.ch/ssm-course/week5/step5-2)
+- Gaussian process regression [(Video)](https://shapemodelling.cs.unibas.ch/ssm-course/week5/step5-3)
+- Posterior models for different kernels [(Article)](https://shapemodelling.cs.unibas.ch/ssm-course/week5/step5-4)
+
+
 To run the code from this tutorial, download the following Scala file:
 - [Tutorial09.scala](./Tutorial09.scala)
 

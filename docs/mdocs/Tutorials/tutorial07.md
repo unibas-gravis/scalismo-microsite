@@ -9,8 +9,7 @@ shape modelling.
 
 ##### Related resources
 
-The following resources from our [online course](https://www.futurelearn.com/courses/statistical-shape-modelling) may provide
-some helpful context for this tutorial:
+To enhance your understanding of this tutorial, we recommend the following resources from our [online course](shapemodelling.cs.unibas.ch/ssm-course/):
 
 - Covariance functions [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250350)
 - Constructing kernels for shape modelling [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250351)

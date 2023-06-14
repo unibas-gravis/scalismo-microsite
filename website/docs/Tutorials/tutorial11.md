@@ -3,8 +3,7 @@ id: tutorial11
 title: Model fitting with Iterative Closest Points
 ---
 
-The goal in this tutorial is to non-rigidly fit a shape model to a target surface using Iterative Closest Points (ICP)
-in order to establish correspondences among two surfaces.
+To enhance your understanding of this tutorial, we recommend the following resources from our [online course](shapemodelling.cs.unibas.ch/ssm-course/):
 
 ##### Related resources
 
