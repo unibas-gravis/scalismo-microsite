@@ -42,7 +42,7 @@ import java.io.File
 
 ```scala mdoc:invisible emptyLines:2
 @main 
-def helloScalismo() : Unit = 
+def tutorial2() : Unit = 
 ```
 
 
