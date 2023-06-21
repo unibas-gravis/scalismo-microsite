@@ -46,7 +46,6 @@ def tutorial4(): Unit =
 
 ```scala mdoc:silent emptyLines:2
     scalismo.initialize()
-    implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
 
     val ui = ScalismoUI()
 ```
