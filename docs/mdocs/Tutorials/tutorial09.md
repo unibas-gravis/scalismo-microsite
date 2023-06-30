@@ -49,8 +49,7 @@ import scalismo.utils.Random.FixedSeed.randBasis
 ```
 
 ```scala mdoc:invisible emptyLines:2
-@main
-def tutorial9(): Unit = 
+object Tutorial9 extends App:
 ```
 
 ```scala mdoc:silent emptyLines:2

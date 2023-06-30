@@ -41,8 +41,7 @@ import java.io.File
 ```
 
 ```scala mdoc:invisible emptyLines:2
-@main 
-def tutorial2() : Unit = 
+object Tutorial2 extends App:
 ```
 
 
