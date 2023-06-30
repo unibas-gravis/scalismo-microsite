@@ -198,10 +198,10 @@ Here is, howe we would visualize a 3D image:
  in scalismo-ui.
 
  * 3D image (```DiscreteScalarImage[_3D, _]```)
- * 3D vector field (```DiscreteField[_3D, Vector[_3D]]```)
+ * 3D vector field (```DiscreteField[_3D, _ <: DiscreteDomain[_3D], EuclideanVector[_3D]]```)
  * Point cloud (```IndexedSeq[Point[_3D]]```)
  * Landmark (```Landmark[_3D]```)
- * Scalar field (```DiscreteScalarField[_3D, _]```)
+ * Scalar field (```DiscreteScalarField[_3D, _ <: DiscreteDomain[_3D], _]```)
  * Triangle mesh (```TriangleMesh[_3D]```)
  * Scalar mesh field(```ScalarMeshField[_]```)
  * Line mesh (```LineMesh[_3D]```)
