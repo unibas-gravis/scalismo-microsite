@@ -28,7 +28,7 @@ there is a lot of processing that is done in the background and it might take a 
 Once all the importing is done, you should then be able to navigate through the project folder and find a file called ```build.sbt```.
 Add the following line to the ```settings``` section
 ```
-libraryDependencies += "ch.unibas.cs.gravis" %% "scalismo-ui" % "0.91.0"
+libraryDependencies += "ch.unibas.cs.gravis" %% "scalismo-ui" % "0.92.0"
 ```
 and then choose *Reload all sbt projects* on the sbt tab on the right:
 ![intellij-build-sbt](images/intellij-build-sbt.png)

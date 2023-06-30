@@ -3,7 +3,7 @@ id: tutorial11
 title: Model fitting with Iterative Closest Points
 ---
 
-To enhance your understanding of this tutorial, we recommend the following resources from our [online course](shapemodelling.cs.unibas.ch/ssm-course/):
+To enhance your understanding of this tutorial, we recommend the following resources from our [online course](https://shapemodelling.cs.unibas.ch/ssm-course/):
 
 ##### Related resources
 
@@ -18,9 +18,9 @@ To run the code from this tutorial, download the following Scala file:
 
 ```scala mdoc:invisible
 //> using scala "3.3"
-//> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92-RC1"
+//> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92.0"
 // !!! if you are working on a Mac with M1 or M2 processor, use the following import instead !!!
-// //> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92-RC1,exclude=ch.unibas.cs.gravis%vtkjavanativesmacosimpl"
+// //> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92.0,exclude=ch.unibas.cs.gravis%vtkjavanativesmacosimpl"
 ```
 
 

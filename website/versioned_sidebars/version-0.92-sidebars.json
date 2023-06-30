@@ -1,0 +1,28 @@
+{
+  "docs": {
+    "Setup": [
+      "Setup/ide",
+      "Setup/vscode"
+    ],
+    "Tutorials": [
+      "Tutorials/tutorial01",
+      "Tutorials/tutorial02",
+      "Tutorials/tutorial03",
+      "Tutorials/tutorial04",
+      "Tutorials/tutorial05",
+      "Tutorials/tutorial06",
+      "Tutorials/tutorial07",
+      "Tutorials/tutorial08",
+      "Tutorials/tutorial09",
+      "Tutorials/tutorial10",
+      "Tutorials/tutorial11",
+      "Tutorials/tutorial12",
+      "Tutorials/tutorial13",
+      "Tutorials/tutorial14",
+      "Tutorials/tutorial15"
+    ],
+    "Others": [
+      "scalismo-ui-introduction"
+    ]
+  }
+}

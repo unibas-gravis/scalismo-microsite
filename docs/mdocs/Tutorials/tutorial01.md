@@ -7,7 +7,7 @@ The goal in this tutorial is to present the most important data structures, as w
 
 ##### Related resources
 
-The ressources from week 1 of our [online course](shapemodelling.cs.unibas.ch/ssm-course/) may provide helpful context for this tutorial.
+The ressources from week 1 of our [online course](https://shapemodelling.cs.unibas.ch/ssm-course/) may provide helpful context for this tutorial.
 
 To run the code from this tutorial, download the following Scala file:
 - [Tutorial01.scala](./Tutorial01.scala)
@@ -16,9 +16,9 @@ To run the code from this tutorial, download the following Scala file:
 
 ```scala mdoc:invisible
 //> using scala "3.3"
-//> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92-RC1"
+//> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92.0"
 // !!! if you are working on a Mac with M1 or M2 processor, use the following import instead !!!
-// //> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92-RC1,exclude=ch.unibas.cs.gravis%vtkjavanativesmacosimpl"
+// //> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92.0,exclude=ch.unibas.cs.gravis%vtkjavanativesmacosimpl"
 ```
 
 Before we start with writing actual Scalismo code, we import all 

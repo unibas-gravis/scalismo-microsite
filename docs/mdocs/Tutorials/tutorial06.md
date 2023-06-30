@@ -8,7 +8,7 @@ from meshes in correspondence.
 
 ##### Related resources
 
-To enhance your understanding of this tutorial, we recommend the following resources from our [online course](shapemodelling.cs.unibas.ch/ssm-course/):
+To enhance your understanding of this tutorial, we recommend the following resources from our [online course](https://shapemodelling.cs.unibas.ch/ssm-course/):
 
 - Learning a model from example data [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250329)
 
@@ -20,9 +20,9 @@ To run the code from this tutorial, download the following Scala file:
 
 ```scala mdoc:invisible
 //> using scala "3.3"
-//> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92-RC1"
+//> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92.0"
 // !!! if you are working on a Mac with M1 or M2 processor, use the following import instead !!!
-// //> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92-RC1,exclude=ch.unibas.cs.gravis%vtkjavanativesmacosimpl"
+// //> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92.0,exclude=ch.unibas.cs.gravis%vtkjavanativesmacosimpl"
 ```
 
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.

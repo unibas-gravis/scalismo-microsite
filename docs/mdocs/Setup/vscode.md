@@ -24,8 +24,8 @@ Install [Scala-CLI](https://scala-cli.virtuslab.org/) by following the
 Now we are ready to run our first program. 
 Open an editor and create a file ```HelloScalismo.scala``` with the following content:
 ```scala
-//> using scala "3.1"
-//> using lib "ch.unibas.cs.gravis::scalismo-ui:0.91.0"
+//> using scala "3.3"
+//> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92.0"
 
 import scalismo.ui.api.ScalismoUI
 
