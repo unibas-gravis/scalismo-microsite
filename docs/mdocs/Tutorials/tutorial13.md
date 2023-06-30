@@ -15,8 +15,10 @@ To run the code from this tutorial, download the following Scala file:
 - [Tutorial13.scala](./Tutorial13.scala)
 
 ```scala mdoc:invisible
-//> using scala "3.2"
-//> using dep "ch.unibas.cs.gravis::scalismo-ui:0.91.2"
+//> using scala "3.3"
+//> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92-RC1"
+// !!! if you are working on a Mac with M1 or M2 processor, use the following import instead !!!
+// //> using dep "ch.unibas.cs.gravis::scalismo-ui:0.92-RC1,exclude=ch.unibas.cs.gravis%vtkjavanativesmacosimpl"
 ```
 
 ##### Preparation
@@ -24,106 +26,100 @@ To run the code from this tutorial, download the following Scala file:
 As in the previous tutorials, we start by importing some commonly used objects and initializing the system.
 
 ```scala mdoc:silent
-import scalismo.geometry._
-import scalismo.transformations._
-import scalismo.registration._
+import scalismo.geometry.*
+import scalismo.transformations.*
+import scalismo.registration.*
 import scalismo.mesh.TriangleMesh
-import scalismo.statisticalmodel.asm._
+import scalismo.statisticalmodel.asm.*
 import scalismo.io.{ActiveShapeModelIO, ImageIO}
 
-import scalismo.ui.api._
+import scalismo.ui.api.*
 import breeze.linalg.{DenseVector}
+
+import java.io.File
+
+import scalismo.utils.Random.FixedSeed.randBasis
 ```
 
 ```scala mdoc:invisible emptyLines:2
-object Tutorial13 extends App {
+@main
+def tutorial12(): Unit = 
 ```
 
 ```scala mdoc:silent emptyLines:2
-scalismo.initialize()
-implicit val rng: scalismo.utils.Random = scalismo.utils.Random(42)
+    scalismo.initialize()
 
-val ui = ScalismoUI()
+    val ui = ScalismoUI()
 ```
 
 
 ## Active Shape models in Scalismo
 
-Scalismo provides full support for Active Shape models. This means we can use it to learn active shape models from
-a set of images and corresponding contour, we can save these models, and we can use them to fit images. In this tutorial
-we will assume that the model has already been built and will only concentrate on model fitting.
+Scalismo provides comprehensive support for Active Shape models. This capability allows us to learn active shape models from a collection of images and their corresponding contours, save these models, and apply them to fit images. In this tutorial, we focus on model fitting, assuming the model has already been built.
 
 
-We can load an Active Shape Model as follows:
+The Active Shape Model can be loaded as follows:
 
 ```scala mdoc:silent empytLines:2
-val asm = ActiveShapeModelIO.readActiveShapeModel(new java.io.File("datasets/femur-asm.h5")).get
+    val asm = ActiveShapeModelIO.readActiveShapeModel(File("datasets/femur-asm.h5")).get
 ```
 
-An ActiveShapeModel instance in Scalismo is a combination of a statistical shape model and an intensity model.
-Using the method ```statisticalModel```, we can obtain the shape model part. Let's visualize this model:
+An Active Shape Model instance in Scalismo is a combination of a statistical shape model and an intensity model. The shape model part can be retrieved using the statisticalModel method. Let's visualize this model:
 
 ```scala mdoc:silent empytLines:2
-val modelGroup = ui.createGroup("modelGroup")
-val modelView = ui.show(modelGroup, asm.statisticalModel, "shapeModel")
+    val modelGroup = ui.createGroup("modelGroup")
+    val modelView = ui.show(modelGroup, asm.statisticalModel, "shapeModel")
+```
+The other component of the model, the intensity model, comprises a set of profiles linked to specific vertices of the shape model, designated by the pointId. Each profile has a defined probability distribution, representing the expected intensity variation for that profile.
+
+The following code demonstrates how to access this information:
+
+```scala mdoc:silent empytLines:2
+    val profiles = asm.profiles
+    profiles.map(profile => 
+        val pointId = profile.pointId
+        val distribution = profile.distribution
+    )
 ```
 
-The second part of the model is the intensity model. This model consists of a set of profiles,
-which are attached to specific vertices of the shape model, indicated by the ```pointId```.
-For each profile, a probability distribution is defined. This distribution represent the intensity variation that we
-expect for this profile.
+#### Identifying Likely Model Correspondences in an Image
+The main use of the profile distribution is to locate points in the image that likely correspond to the given profile points in the model. 
 
-The following code shows how this information can be accessed:
+Let $p_i$​ denote the i-th profile in the model. We can utilize this information to evaluate the likelihood that a point $x_j$ corresponds to the profile point $p_i$, based on the image intensity patterns $$\rho(x_1), \ldots, \rho(x_n)$$ at these points in an image.
+
+To illustrate, we first load an image:
+
 ```scala mdoc:silent empytLines:2
-val profiles = asm.profiles
-profiles.map(profile => {
-  val pointId = profile.pointId
-  val distribution = profile.distribution
-})
+    val image = ImageIO.read3DScalarImage[Short](new java.io.File("datasets/femur-image.nii")).get.map(_.toFloat)
+    val targetGroup = ui.createGroup("target")
+
+    val imageView = ui.show(targetGroup, image, "image")
 ```
 
-#### Finding likely model correspondences in an image
-
-The main usage of the profile distribution is to identify the points in the image, which are most likely to correspond to the given profile points in the model.
-More precisely, let $$p_i$$ denote the i-th profile in the model. We can use the information to evaluate for any set of points
-$(x_1, \ldots, x_n)$, how likely it is that a point $x_j$ corresponds to the profile point $p_i$, based on the image intensity patterns
-$$\rho(x_1), \ldots, \rho(x_n)$$ we find at these points in an image.
-
-To illustrate this, we first load an image:
+Scalismo's ASM implementation can work not only with raw intensities, but also with preprocessed images that have undergone transformations
+ such as smoothing or gradient transformations. This preprocessed image can be obtained using the preprocessor method of the asm object:
 
 ```scala mdoc:silent empytLines:2
-val image = ImageIO.read3DScalarImage[Short](new java.io.File("datasets/femur-image.nii")).get.map(_.toFloat)
-val targetGroup = ui.createGroup("target")
-
-val imageView = ui.show(targetGroup, image, "image")
-```
-
-The ASM implementation in Scalismo, is not restricted to work with the raw intensities, but the active shape model may first apply some preprocessing,
- such as smooth, applying a gradient transform, etc.  Thus in a first step we obtain this preprocess iamge uing the prepocessor method of the ```asm``` object:
-
-```scala mdoc:silent empytLines:2
-val preprocessedImage = asm.preprocessor(image)
+    val preprocessedImage = asm.preprocessor(image)
 ```
 
 We can now extract features at a given point:
 ```scala mdoc:silent empytLines:2
-val point1 = image.domain.origin + EuclideanVector3D(10.0, 10.0, 10.0)
-val profile = asm.profiles.head
-val feature1 : DenseVector[Double] = asm.featureExtractor(preprocessedImage, point1, asm.statisticalModel.mean, profile.pointId).get
+    val point1 = image.domain.origin + EuclideanVector3D(10.0, 10.0, 10.0)
+    val profile = asm.profiles.head
+    val feature1 : DenseVector[Double] = asm.featureExtractor(preprocessedImage, point1, asm.statisticalModel.mean, profile.pointId).get
 ```
-Here we specified the preprocessed image, a point in the image where whe want the evaluate the feature vector, a mesh instance and a point id for the mesh.
-The mesh instance and point id are needed, since a feature extractor might choose to extract the feature based on mesh information, such as the normal direction
-of a line at this point.
+Here we've passed the preprocessed image to the extractor, together with a point in the image where we wish to evaluate the feature vector, a mesh instance, and a mesh point id. The mesh instance and point id are necessary since the feature extractor might opt to extract the feature based on mesh data, such as the normal direction of a line at this point.
 
-We can retrieve the likelihood that each corresponding point corresponds to a given profile point:
+We can also assess the likelihood of each point corresponding to a given profile point:
 
 ```scala mdoc:silent empytLines:2
-val point2 = image.domain.origin + EuclideanVector3D(20.0, 10.0, 10.0)
-val featureVec1 = asm.featureExtractor(preprocessedImage, point1, asm.statisticalModel.mean, profile.pointId).get
-val featureVec2 = asm.featureExtractor(preprocessedImage, point2, asm.statisticalModel.mean, profile.pointId).get
+    val point2 = image.domain.origin + EuclideanVector3D(20.0, 10.0, 10.0)
+    val featureVec1 = asm.featureExtractor(preprocessedImage, point1, asm.statisticalModel.mean, profile.pointId).get
+    val featureVec2 = asm.featureExtractor(preprocessedImage, point2, asm.statisticalModel.mean, profile.pointId).get
 
-val probabilityPoint1 = profile.distribution.logpdf(featureVec1)
-val probabilityPoint2 = profile.distribution.logpdf(featureVec2)
+    val probabilityPoint1 = profile.distribution.logpdf(featureVec1)
+    val probabilityPoint2 = profile.distribution.logpdf(featureVec2)
 ```
 
 Based on this information, we can decide, which point is more likely to correspond to the model point. This idea forms the
@@ -142,12 +138,12 @@ the ICP algorithm that we described in the previous tutorials.
 One search strategy that is already implemented in Scalismo is to search along
 the normal direction of a model point. This behavior is provided by the ```NormalDirectionSearchPointSampler```
 ```scala mdoc:silent empytLines:2
-val searchSampler = NormalDirectionSearchPointSampler(numberOfPoints = 100, searchDistance = 3)
+    val searchSampler = NormalDirectionSearchPointSampler(numberOfPoints = 100, searchDistance = 3)
 ```
 
 In addition to the search strategy, we can specify some additional configuration parameters to control the fitting process:
 ```scala mdoc:silent empytLines:2
-val config = FittingConfiguration(featureDistanceThreshold = 3, pointDistanceThreshold = 5, modelCoefficientBounds = 3)
+    val config = FittingConfiguration(featureDistanceThreshold = 3, pointDistanceThreshold = 5, modelCoefficientBounds = 3)
 ```
 The first parameter determines how far away (as measured by the mahalanobis distance) an intensity feature can be, such that it is still
 chosen as corresponding. The ```pointDistanceThreshold``` does the same for the distance of the points; I.e. in this  case points which are
@@ -159,93 +155,83 @@ from becoming too unlikely.
 The ASM fitting algorithm optimizes both the pose (as defined by a rigid transformation) and the shape.
 In order to allow it to optimize the rotation, it is important that we choose a rotation center, which is approximately
 the center of mass of the model:
+
 ```scala mdoc:silent empytLines:2
-    // make sure we rotate around a reasonable center point
-val modelBoundingBox = asm.statisticalModel.reference.boundingBox
-val rotationCenter = modelBoundingBox.origin + modelBoundingBox.extent * 0.5
+    val rotationCenter = asm.statisticalModel.reference.pointSet.centerOfMass
 ```
 
 To initialize the fitting process, we also need to set up the initial transformation:
 ```scala mdoc:silent
 
 // we start with the identity transform
-val translationTransformation = Translation3D(EuclideanVector3D(0, 0, 0))
-val rotationTransformation = Rotation3D(0, 0, 0, rotationCenter)
-val initialRigidTransformation = TranslationAfterRotation3D(translationTransformation, rotationTransformation)
-val initialModelCoefficients = DenseVector.zeros[Double](asm.statisticalModel.rank)
-val initialTransformation = ModelTransformations(initialModelCoefficients, initialRigidTransformation)
+    val translationTransformation = Translation3D(EuclideanVector3D(0, 0, 0))
+    val rotationTransformation = Rotation3D(0, 0, 0, rotationCenter)
+    val initialRigidTransformation = TranslationAfterRotation3D(translationTransformation, rotationTransformation)
+    val initialModelCoefficients = DenseVector.zeros[Double](asm.statisticalModel.rank)
+    val initialTransformation = ModelTransformations(initialModelCoefficients, initialRigidTransformation)
 ```
 
 To start the fitting, we obtain an iterator, which we subsequently use to drive the iteration.
 ```scala mdoc:silent empytLines:2
-val numberOfIterations = 20
-val asmIterator = asm.fitIterator(image, searchSampler, numberOfIterations, config, initialTransformation)
+    val numberOfIterations = 20
+    val asmIterator = asm.fitIterator(image, searchSampler, numberOfIterations, config, initialTransformation)
 ```
 
-Especially in a debugging phase, we want to visualize the result in every iteration. The following code shows,
-how we can obtain a new iterator, which updates the pose transformation and model coefficients in the ```ui```
+Especially in a debugging phase, we visualize the result in every iteration is useful. The following code shows,
+how to obtain a new iterator, which updates the pose transformation and model coefficients in the ```ui```
 in every iteration:
 ```scala mdoc:silent empytLines:2
-val asmIteratorWithVisualization = asmIterator.map(it => {
-    it match {
-        case scala.util.Success(iterationResult) => {
+    val asmIteratorWithVisualization = asmIterator.map(it => 
+        it match 
+        case scala.util.Success(iterationResult) => 
             modelView.shapeModelTransformationView.poseTransformationView.transformation = iterationResult.transformations.rigidTransform
-            modelView.shapeModelTransformationView.shapeTransformationView.coefficients = iterationResult.transformations.coefficients
-        }
-        case scala.util.Failure(error) => System.out.println(error.getMessage)
-    }
-    it
-})
+            modelView.shapeModelTransformationView.shapeTransformationView.coefficients = iterationResult.transformations.coefficients        
+        case scala.util.Failure(error) => System.out.println(error.getMessage)    
+        it
+    )
 ```
 
 To run the fitting, and get the result, we finally consume the iterator:
 ```scala mdoc:silent empytLines:2
-val result = asmIteratorWithVisualization.toIndexedSeq.last
-val finalMesh = result.get.mesh
-
+    val result = asmIteratorWithVisualization.toIndexedSeq.last
+    val finalMesh = result.get.mesh
 ```
 
 ## Evaluating the likelihood of a model instance under the image
 
-In the previous section we have used the intensity distribution to find the best corresponding image point to a
-given point in the model. Sometimes we are also interested in finding out how well a model fits an image.
-To compute this, we can extend the method used above to compute the likelihood for all profile points of an Active Shape Model.
+In the preceding section, we utilized the intensity distribution to pinpoint the best image point corresponding 
+to a specific model point. However, there are instances when we're also want to determine how accurately a model fits an image. 
+To calculate this, we can enhance the previous method to compute the likelihood for all profile points in an Active Shape Model.
 
-Given the model instance, we will get the position of each profile point in the current instance,
-evaluate its likelihood and then compute the joint likelihood for all profiles. Assuming independence, the joint probability is just the product of the probability at the individual profile points.
-In order not to get too extreme values, we use log probabilities here (and consequently the product becomes a sum).
+Given the model instance, we can identify the position of each profile point in the current instance, evaluate its likelihood, and then calculate the joint likelihood for all profiles. Assuming independence, the joint probability is simply the multiplication of the probabilities at each individual profile point. To avoid extreme values, we employ log probabilities (turning the product into a sum).
 
 ```scala mdoc:silent empytLines:2
-def likelihoodForMesh(asm : ActiveShapeModel, mesh : TriangleMesh[_3D], preprocessedImage: PreprocessedImage) : Double = {
+    def likelihoodForMesh(asm : ActiveShapeModel, mesh : TriangleMesh[_3D], preprocessedImage: PreprocessedImage) : Double = 
 
-    val ids = asm.profiles.ids
+        val ids = asm.profiles.ids
 
-    val likelihoods = for (id <- ids) yield {
-      val profile = asm.profiles(id)
-      val profilePointOnMesh = mesh.pointSet.point(profile.pointId)
-      val featureAtPoint = asm.featureExtractor(preprocessedImage, profilePointOnMesh, mesh, profile.pointId).get
-      profile.distribution.logpdf(featureAtPoint)
-    }
-    likelihoods.sum
-}
+        val likelihoods = for (id <- ids) yield 
+            val profile = asm.profiles(id)
+            val profilePointOnMesh = mesh.pointSet.point(profile.pointId)
+            // if the feature point is outside the image, we assign it a very low likelihood
+            val featureAtPoint = asm.featureExtractor(preprocessedImage, profilePointOnMesh, mesh, profile.pointId).getOrElse(-1e10)
+            profile.distribution.logpdf(featureAtPoint)
+        
+        likelihoods.sum    
 ```
 
 This method allows us to compute for each mesh, represented by the model, how likely it is to correspond
 to the given image.
 ```scala mdoc:silent empytLines:2
-val sampleMesh1 = asm.statisticalModel.sample()
-val sampleMesh2 = asm.statisticalModel.sample()
-println("Likelihood for mesh 1 = " + likelihoodForMesh(asm, sampleMesh1, preprocessedImage))
-println("Likelihood for mesh 2 = " + likelihoodForMesh(asm, sampleMesh2, preprocessedImage))
+    val sampleMesh1 = asm.statisticalModel.sample()
+    val sampleMesh2 = asm.statisticalModel.sample()
+    println("Likelihood for mesh 1 = " + likelihoodForMesh(asm, sampleMesh1, preprocessedImage))
+    println("Likelihood for mesh 2 = " + likelihoodForMesh(asm, sampleMesh2, preprocessedImage))
 ```
 
 This information is all that is need to write probabilistic fitting methods methods using Markov Chain Monte Carlo
 methods, which will be discussed in a later tutorial.
 
 ```scala mdoc:invisible empytLines:2
-ui.close()
-```
-
-```scala mdoc:invisible
-}
+    ui.close()
 ```
