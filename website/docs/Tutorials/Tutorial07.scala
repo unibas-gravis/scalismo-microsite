@@ -31,15 +31,17 @@ object Tutorial7 extends App:
 
   val zeroMean = Field(EuclideanSpace3D, (pt: Point[_3D]) => EuclideanVector3D(0, 0, 0))
 
-  case class MatrixValuedGaussianKernel3D(sigma2: Double) extends MatrixValuedPDKernel[_3D]():
+  case class GaussianKernel[D](sigma: Double, scaleFactor: Double = 1) extends PDKernel[D]:
+    val sigma2 = sigma * sigma
+    val s2 = scaleFactor * scaleFactor
 
-    override def outputDim: Int = 3
-    override def domain: Domain[_3D] = EuclideanSpace3D;
+    override def domain = EuclideanSpace[D]
 
-    override def k(x: Point[_3D], y: Point[_3D]): DenseMatrix[Double] =
-      DenseMatrix.eye[Double](outputDim) * Math.exp(-(x - y).norm2 / sigma2)
+    override def k(x: Point[D], y: Point[D]): Double =
+      val r = x - y
+      scala.math.exp(-r.norm2 / sigma2) * s2
 
-  val scalarValuedGaussianKernel: PDKernel[_3D] = GaussianKernel3D(sigma = 100.0)
+  val scalarValuedGaussianKernel: PDKernel[_3D] = GaussianKernel3D(sigma = 100.0, scaleFactor = 10)
   val matrixValuedGaussianKernel = DiagonalKernel3D(
     scalarValuedGaussianKernel,
     scalarValuedGaussianKernel,
@@ -75,7 +77,7 @@ object Tutorial7 extends App:
   val gpSSM = pcaModel.gp.interpolate(TriangleMeshInterpolator3D())
 
   val covSSM: MatrixValuedPDKernel[_3D] = gpSSM.cov
-  val augmentedCov = covSSM + DiagonalKernel(GaussianKernel[_3D](100.0), 3)
+  val augmentedCov = covSSM + DiagonalKernel(GaussianKernel[_3D](100.0, 1.0), 3)
 
   val augmentedGP = GaussianProcess(gpSSM.mean, augmentedCov)
 
@@ -101,8 +103,8 @@ object Tutorial7 extends App:
       val sy = s(y)
       kernel1(x, y) * sx * sy + kernel2(x, y) * (1 - sx) * (1 - sy)
 
-  val gk1 = DiagonalKernel3D(GaussianKernel3D(100.0), 3)
-  val gk2 = DiagonalKernel3D(GaussianKernel3D(10.0), 3)
+  val gk1 = DiagonalKernel3D(GaussianKernel3D(100.0, 1.0), 3)
+  val gk2 = DiagonalKernel3D(GaussianKernel3D(10.0, 1.0), 3)
   val changePointKernel = ChangePointKernel(gk1, gk2)
   val gpCP = GaussianProcess3D(zeroMean, changePointKernel)
   val sampleCP = gpCP.sampleAtPoints(referenceMesh)
@@ -118,7 +120,7 @@ object Tutorial7 extends App:
     val k2 = DiagonalKernel(xmirrored * -1f, xmirrored, xmirrored)
     k1 + k2
 
-  val symmetrizedGaussian = symmetrizeKernel(GaussianKernel[_3D](100))
+  val symmetrizedGaussian = symmetrizeKernel(GaussianKernel[_3D](100, 1.0))
 
   val gpSym = GaussianProcess3D(zeroMean, symmetrizedGaussian)
   val sampleGpSym = gpSym.sampleAtPoints(referenceMesh)

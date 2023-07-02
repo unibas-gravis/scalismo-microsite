@@ -112,23 +112,25 @@ Lastly, `k` denotes the covariance function.
 
 A frequently used kernel is the Gaussian kernel. Here's how it's defined in Scalismo:
 ```scala mdoc:silent emptyLines:2
-  case class MatrixValuedGaussianKernel3D(sigma2 : Double) extends MatrixValuedPDKernel[_3D]():
+  case class GaussianKernel[D](sigma: Double, scaleFactor: Double = 1) extends PDKernel[D]:
+    val sigma2 = sigma * sigma
+    val s2 = scaleFactor * scaleFactor
 
-    override def outputDim: Int = 3
-    override def domain: Domain[_3D] = EuclideanSpace3D;
+    override def domain = EuclideanSpace[D]
 
-    override def k(x: Point[_3D], y: Point[_3D]): DenseMatrix[Double] = 
-      DenseMatrix.eye[Double](outputDim) * Math.exp(- (x - y).norm2 / sigma2)
-    
-  
+    override def k(x: Point[D], y: Point[D]): Double = 
+      val r = x - y
+      scala.math.exp(-r.norm2 / sigma2) * s2    
 ```
-The most commonly used covariance-functions are readily available in Scalismo. 
-Most are defined not as matrix-valued kernels, but as scalar-valued kernels. 
-The scalar valued kernels can then be turned in Matrix-valued kernels, using the 
+A Gaussian kernel is defined by two parameters, named `sigma` and `scaleFactor`. The parameter `sigma` determines how strongly neighboring points are correlated (i.e. how smooth likely functions are) 
+and  `scaleFactor` determines the amplitude of the function values. 
+
+Note that `GaussianKernel` is not a `MatrixValued` kernel, but a `PDKernel`. This means, it outputs only a scalar value. 
+It can be turned into Matrix-valued kernels, using the 
 class `DiagonalKernel`:
 
 ```scala mdoc:silent emptyLines:2
-  val scalarValuedGaussianKernel : PDKernel[_3D]= GaussianKernel3D(sigma = 100.0)
+  val scalarValuedGaussianKernel : PDKernel[_3D]= GaussianKernel3D(sigma = 100.0, scaleFactor = 10)
   val matrixValuedGaussianKernel = DiagonalKernel3D(scalarValuedGaussianKernel, scalarValuedGaussianKernel, scalarValuedGaussianKernel)
 ```
 
@@ -234,7 +236,7 @@ In a first step, we get the Gaussian process from the model an interpolate it.
 We can then access its covariance function and add to it additional variance using a Gaussian kernel:
 ```scala mdoc:silent emptyLines:2
   val covSSM : MatrixValuedPDKernel[_3D] = gpSSM.cov
-  val augmentedCov = covSSM + DiagonalKernel(GaussianKernel[_3D](100.0), 3)  
+  val augmentedCov = covSSM + DiagonalKernel(GaussianKernel[_3D](100.0, 1.0), 3)  
 ```
 
 Finally, we build the Gaussian process with the new kernel.
@@ -259,7 +261,9 @@ Another very useful kernel is the *changepoint kernel*.
 A changepoint kernel is a combination of different kernels, where each kernel is active only in
 a certain region of the space.
 
-Here we show how we can define a kernel, which has different behavior in two different regions.
+Here we show how we can define a kernel, which has different behavior in two different regions. The function $s$
+acts as a (soft) switch, which determines which kernel is active. 
+
 ```scala mdoc:silent emptyLines:2
   case class ChangePointKernel(kernel1 : MatrixValuedPDKernel[_3D], kernel2 : MatrixValuedPDKernel[_3D])
     extends MatrixValuedPDKernel[_3D]():
@@ -279,8 +283,8 @@ Here we show how we can define a kernel, which has different behavior in two dif
 Let's visualize its effect with two different Gaussian Kernels
 
 ```scala mdoc:silent emptyLines:2
-  val gk1 = DiagonalKernel3D(GaussianKernel3D(100.0), 3)
-  val gk2 = DiagonalKernel3D(GaussianKernel3D(10.0), 3)
+  val gk1 = DiagonalKernel3D(GaussianKernel3D(100.0, 1.0), 3)
+  val gk2 = DiagonalKernel3D(GaussianKernel3D(10.0, 1.0), 3)
   val changePointKernel = ChangePointKernel(gk1, gk2)
   val gpCP = GaussianProcess3D(zeroMean, changePointKernel)
   val sampleCP =  gpCP.sampleAtPoints(referenceMesh)
@@ -314,7 +318,7 @@ Let's turn it into code:
     k1 + k2
   
 
-  val symmetrizedGaussian = symmetrizeKernel(GaussianKernel[_3D](100))
+  val symmetrizedGaussian = symmetrizeKernel(GaussianKernel[_3D](100, 1.0))
 ```
 
 ```scala mdoc:silent emptyLines:2
