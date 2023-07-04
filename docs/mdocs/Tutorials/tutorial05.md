@@ -9,7 +9,7 @@ focusing on the conversion between continuous and discrete representations of th
 
 ##### Related resources
 
-To enhance your understanding of this tutorial, we recommend the following resources from our [online course](shapemodelling.cs.unibas.ch/ssm-course/):
+To enhance your understanding of this tutorial, we recommend the following resources from our [online course](https://shapemodelling.cs.unibas.ch/ssm-course/):
 
 - The marginalization property [(Video)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250339)
 - Sampling from a shape model [(Article)](https://www.futurelearn.com/courses/statistical-shape-modelling/3/steps/250340)
