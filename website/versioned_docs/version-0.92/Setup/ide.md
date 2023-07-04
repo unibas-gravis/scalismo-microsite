@@ -26,11 +26,16 @@ Now the IDE should set up the project. When you start the IDE for the first time
 there is a lot of processing that is done in the background and it might take a few minutes before the project is ready for use. In the bottom right you can spot an indication for the ongoing work.
 
 Once all the importing is done, you should then be able to navigate through the project folder and find a file called ```build.sbt```.
-Add the following line to the ```settings``` section
+If you are on Windows, Linux or on a Mac with an Intel processer, add the following line to the ```settings``` section
 ```
 libraryDependencies += "ch.unibas.cs.gravis" %% "scalismo-ui" % "0.92.0"
 ```
-and then choose *Reload all sbt projects* on the sbt tab on the right:
+If you are using a Mac with an M1 or M2 processor, add instead the following line:
+```
+ libraryDependencies += "ch.unibas.cs.gravis" %% "scalismo-ui" % "0.92.0" exclude("ch.unibas.cs.gravis", "vtkjavanativesmacosimpl")     
+```
+
+*Reload all sbt projects* on the sbt tab on the right:
 ![intellij-build-sbt](images/intellij-build-sbt.png)
 
 This should now add the scalismo library to your project. 
